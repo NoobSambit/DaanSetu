@@ -300,6 +300,26 @@ export interface Database {
           created_at?: string
         }
       }
+      analytics_logs: {
+        Row: {
+          id: string
+          event_type: 'donation_created' | 'campaign_created' | 'volunteer_applied'
+          related_id: string
+          timestamp: string
+        }
+        Insert: {
+          id?: string
+          event_type: 'donation_created' | 'campaign_created' | 'volunteer_applied'
+          related_id: string
+          timestamp?: string
+        }
+        Update: {
+          id?: string
+          event_type?: 'donation_created' | 'campaign_created' | 'volunteer_applied'
+          related_id?: string
+          timestamp?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
@@ -329,3 +349,5 @@ export type VolunteerOpportunityStatus = Database['public']['Tables']['volunteer
 export type VolunteerApplicationStatus = Database['public']['Tables']['volunteer_applications']['Row']['status']
 export type AIFlag = Database['public']['Tables']['ai_flags']['Row']
 export type AIFlagEntityType = Database['public']['Tables']['ai_flags']['Row']['entity_type']
+export type AnalyticsLog = Database['public']['Tables']['analytics_logs']['Row']
+export type AnalyticsEventType = Database['public']['Tables']['analytics_logs']['Row']['event_type']
