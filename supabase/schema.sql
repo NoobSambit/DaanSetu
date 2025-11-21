@@ -225,3 +225,167 @@ CREATE POLICY "NGO users can delete updates for their campaigns"
 -- ('Health First', 'Free medical camps and healthcare services in remote villages', 'Bangalore', 'Karnataka', 'health', 12.9716, 77.5946, 'YOUR_USER_ID_HERE'),
 -- ('Women Empowerment Trust', 'Skill development and employment opportunities for women', 'Pune', 'Maharashtra', 'women', 18.5204, 73.8567, 'YOUR_USER_ID_HERE'),
 -- ('Animal Rescue Foundation', 'Rescuing and rehabilitating stray and injured animals', 'Chennai', 'Tamil Nadu', 'animals', 13.0827, 80.2707, 'YOUR_USER_ID_HERE');
+
+-- ====================================
+-- Phase 4: Volunteer System
+-- ====================================
+
+-- Create volunteer_profiles table
+CREATE TABLE IF NOT EXISTS volunteer_profiles (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+  bio TEXT,
+  city TEXT NOT NULL,
+  skills TEXT[] NOT NULL DEFAULT '{}',
+  availability TEXT[] NOT NULL DEFAULT '{}',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create indexes for volunteer_profiles table
+CREATE INDEX IF NOT EXISTS idx_volunteer_profiles_user_id ON volunteer_profiles(user_id);
+CREATE INDEX IF NOT EXISTS idx_volunteer_profiles_city ON volunteer_profiles(city);
+CREATE INDEX IF NOT EXISTS idx_volunteer_profiles_skills ON volunteer_profiles USING GIN(skills);
+
+-- Create volunteer_opportunities table
+CREATE TABLE IF NOT EXISTS volunteer_opportunities (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  ngo_id UUID NOT NULL REFERENCES ngos(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  description TEXT NOT NULL,
+  city TEXT NOT NULL,
+  required_skills TEXT[] NOT NULL DEFAULT '{}',
+  date TIMESTAMP WITH TIME ZONE NOT NULL,
+  total_needed INTEGER NOT NULL CHECK (total_needed > 0),
+  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'closed', 'cancelled')),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create indexes for volunteer_opportunities table
+CREATE INDEX IF NOT EXISTS idx_volunteer_opportunities_ngo_id ON volunteer_opportunities(ngo_id);
+CREATE INDEX IF NOT EXISTS idx_volunteer_opportunities_city ON volunteer_opportunities(city);
+CREATE INDEX IF NOT EXISTS idx_volunteer_opportunities_date ON volunteer_opportunities(date);
+CREATE INDEX IF NOT EXISTS idx_volunteer_opportunities_status ON volunteer_opportunities(status);
+CREATE INDEX IF NOT EXISTS idx_volunteer_opportunities_skills ON volunteer_opportunities USING GIN(required_skills);
+
+-- Create volunteer_applications table
+CREATE TABLE IF NOT EXISTS volunteer_applications (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  opportunity_id UUID NOT NULL REFERENCES volunteer_opportunities(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected')),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(opportunity_id, user_id)
+);
+
+-- Create indexes for volunteer_applications table
+CREATE INDEX IF NOT EXISTS idx_volunteer_applications_opportunity_id ON volunteer_applications(opportunity_id);
+CREATE INDEX IF NOT EXISTS idx_volunteer_applications_user_id ON volunteer_applications(user_id);
+CREATE INDEX IF NOT EXISTS idx_volunteer_applications_status ON volunteer_applications(status);
+
+-- Enable Row Level Security
+ALTER TABLE volunteer_profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE volunteer_opportunities ENABLE ROW LEVEL SECURITY;
+ALTER TABLE volunteer_applications ENABLE ROW LEVEL SECURITY;
+
+-- Volunteer profiles table policies
+CREATE POLICY "Anyone can view volunteer profiles"
+  ON volunteer_profiles FOR SELECT
+  TO authenticated, anon
+  USING (true);
+
+CREATE POLICY "Users can create their own volunteer profile"
+  ON volunteer_profiles FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own volunteer profile"
+  ON volunteer_profiles FOR UPDATE
+  TO authenticated
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own volunteer profile"
+  ON volunteer_profiles FOR DELETE
+  TO authenticated
+  USING (auth.uid() = user_id);
+
+-- Volunteer opportunities table policies
+CREATE POLICY "Anyone can view active volunteer opportunities"
+  ON volunteer_opportunities FOR SELECT
+  TO authenticated, anon
+  USING (true);
+
+CREATE POLICY "NGO users can create volunteer opportunities"
+  ON volunteer_opportunities FOR INSERT
+  TO authenticated
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM ngos
+      WHERE ngos.id = volunteer_opportunities.ngo_id
+      AND ngos.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "NGO users can update their volunteer opportunities"
+  ON volunteer_opportunities FOR UPDATE
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM ngos
+      WHERE ngos.id = volunteer_opportunities.ngo_id
+      AND ngos.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "NGO users can delete their volunteer opportunities"
+  ON volunteer_opportunities FOR DELETE
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM ngos
+      WHERE ngos.id = volunteer_opportunities.ngo_id
+      AND ngos.user_id = auth.uid()
+    )
+  );
+
+-- Volunteer applications table policies
+CREATE POLICY "Users can view their own applications"
+  ON volunteer_applications FOR SELECT
+  TO authenticated
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "NGO users can view applications for their opportunities"
+  ON volunteer_applications FOR SELECT
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM volunteer_opportunities vo
+      JOIN ngos ON vo.ngo_id = ngos.id
+      WHERE vo.id = volunteer_applications.opportunity_id
+      AND ngos.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Authenticated users can create applications"
+  ON volunteer_applications FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "NGO users can update applications for their opportunities"
+  ON volunteer_applications FOR UPDATE
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM volunteer_opportunities vo
+      JOIN ngos ON vo.ngo_id = ngos.id
+      WHERE vo.id = volunteer_applications.opportunity_id
+      AND ngos.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can delete their own applications"
+  ON volunteer_applications FOR DELETE
+  TO authenticated
+  USING (auth.uid() = user_id);

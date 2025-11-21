@@ -64,6 +64,16 @@ export default function Header() {
               Campaigns
             </Link>
             <Link
+              href="/volunteer/opportunities"
+              className={`${
+                pathname?.startsWith('/volunteer')
+                  ? 'text-blue-600 font-semibold'
+                  : 'text-gray-600 hover:text-gray-900'
+              } transition`}
+            >
+              Volunteer
+            </Link>
+            <Link
               href="/map"
               className={`${
                 isActive('/map')
@@ -139,6 +149,14 @@ export default function Header() {
             } text-sm py-2`}
           >
             Campaigns
+          </Link>
+          <Link
+            href="/volunteer/opportunities"
+            className={`${
+              pathname?.startsWith('/volunteer') ? 'text-blue-600' : 'text-gray-600'
+            } text-sm py-2`}
+          >
+            Volunteer
           </Link>
           <Link
             href="/map"
