@@ -63,6 +63,48 @@ CREATE POLICY "Users can delete their own NGOs"
   TO authenticated
   USING (auth.uid() = user_id);
 
+-- Create donations table
+CREATE TABLE IF NOT EXISTS donations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  ngo_id UUID NOT NULL REFERENCES ngos(id) ON DELETE CASCADE,
+  amount DECIMAL(10, 2) NOT NULL CHECK (amount > 0),
+  cause TEXT NOT NULL CHECK (cause IN ('education', 'hunger', 'healthcare', 'disaster', 'general')),
+  is_anonymous BOOLEAN NOT NULL DEFAULT false,
+  payment_status TEXT NOT NULL DEFAULT 'completed' CHECK (payment_status IN ('pending', 'completed', 'failed')),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create indexes for donations table
+CREATE INDEX IF NOT EXISTS idx_donations_user_id ON donations(user_id);
+CREATE INDEX IF NOT EXISTS idx_donations_ngo_id ON donations(ngo_id);
+CREATE INDEX IF NOT EXISTS idx_donations_created_at ON donations(created_at);
+
+-- Enable Row Level Security for donations
+ALTER TABLE donations ENABLE ROW LEVEL SECURITY;
+
+-- Donations table policies
+CREATE POLICY "Users can view their own donations"
+  ON donations FOR SELECT
+  TO authenticated
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "NGOs can view donations made to them"
+  ON donations FOR SELECT
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM ngos
+      WHERE ngos.id = donations.ngo_id
+      AND ngos.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Authenticated users can create donations"
+  ON donations FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = user_id);
+
 -- Insert some sample data (optional - for testing)
 -- Note: You'll need to replace the user_id with an actual user ID from your auth.users table
 

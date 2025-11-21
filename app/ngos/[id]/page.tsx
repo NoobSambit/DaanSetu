@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import NGOMap from '@/components/NGOMap'
+import DonateButton from '@/components/DonateButton'
 import type { NGO, NGOCategory } from '@/lib/types/database.types'
 
 export const dynamic = 'force-dynamic'
@@ -13,6 +14,9 @@ export default async function NGOProfilePage({
 }) {
   const { id } = await params
   const supabase = await createClient()
+
+  // Check if user is authenticated
+  const { data: { user } } = await supabase.auth.getUser()
 
   const { data, error } = await supabase
     .from('ngos')
@@ -55,7 +59,7 @@ export default async function NGOProfilePage({
         {/* NGO Header */}
         <div className="bg-white rounded-lg shadow-sm p-8 mb-6">
           <div className="flex items-start justify-between mb-4">
-            <div>
+            <div className="flex-1">
               <h1 className="text-4xl font-bold text-gray-900 mb-2">{ngo.name}</h1>
               <div className="flex items-center gap-4 text-gray-600">
                 <span className="flex items-center">
@@ -67,9 +71,12 @@ export default async function NGOProfilePage({
                 </span>
               </div>
             </div>
-            <span className={`px-4 py-2 rounded-full text-sm font-semibold ${categoryColors[ngo.category]}`}>
-              {categoryEmojis[ngo.category]} {ngo.category.charAt(0).toUpperCase() + ngo.category.slice(1)}
-            </span>
+            <div className="flex items-center gap-4">
+              <span className={`px-4 py-2 rounded-full text-sm font-semibold ${categoryColors[ngo.category]}`}>
+                {categoryEmojis[ngo.category]} {ngo.category.charAt(0).toUpperCase() + ngo.category.slice(1)}
+              </span>
+              <DonateButton ngoId={ngo.id} ngoName={ngo.name} isAuthenticated={!!user} />
+            </div>
           </div>
 
           <div className="prose max-w-none">

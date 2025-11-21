@@ -70,6 +70,38 @@ export interface Database {
           created_at?: string
         }
       }
+      donations: {
+        Row: {
+          id: string
+          user_id: string
+          ngo_id: string
+          amount: number
+          cause: 'education' | 'hunger' | 'healthcare' | 'disaster' | 'general'
+          is_anonymous: boolean
+          payment_status: 'pending' | 'completed' | 'failed'
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          ngo_id: string
+          amount: number
+          cause: 'education' | 'hunger' | 'healthcare' | 'disaster' | 'general'
+          is_anonymous?: boolean
+          payment_status?: 'pending' | 'completed' | 'failed'
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          ngo_id?: string
+          amount?: number
+          cause?: 'education' | 'hunger' | 'healthcare' | 'disaster' | 'general'
+          is_anonymous?: boolean
+          payment_status?: 'pending' | 'completed' | 'failed'
+          created_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
@@ -86,3 +118,5 @@ export interface Database {
 export type NGO = Database['public']['Tables']['ngos']['Row']
 export type User = Database['public']['Tables']['users']['Row']
 export type NGOCategory = Database['public']['Tables']['ngos']['Row']['category']
+export type Donation = Database['public']['Tables']['donations']['Row']
+export type DonationCause = Database['public']['Tables']['donations']['Row']['cause']
