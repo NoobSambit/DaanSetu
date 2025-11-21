@@ -175,6 +175,105 @@ export interface Database {
           created_at?: string
         }
       }
+      volunteer_profiles: {
+        Row: {
+          id: string
+          user_id: string
+          bio: string | null
+          city: string
+          skills: string[]
+          availability: string[]
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          bio?: string | null
+          city: string
+          skills?: string[]
+          availability?: string[]
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          bio?: string | null
+          city?: string
+          skills?: string[]
+          availability?: string[]
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      volunteer_opportunities: {
+        Row: {
+          id: string
+          ngo_id: string
+          title: string
+          description: string
+          city: string
+          required_skills: string[]
+          date: string
+          total_needed: number
+          status: 'active' | 'closed' | 'cancelled'
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          ngo_id: string
+          title: string
+          description: string
+          city: string
+          required_skills?: string[]
+          date: string
+          total_needed: number
+          status?: 'active' | 'closed' | 'cancelled'
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          ngo_id?: string
+          title?: string
+          description?: string
+          city?: string
+          required_skills?: string[]
+          date?: string
+          total_needed?: number
+          status?: 'active' | 'closed' | 'cancelled'
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      volunteer_applications: {
+        Row: {
+          id: string
+          opportunity_id: string
+          user_id: string
+          status: 'pending' | 'accepted' | 'rejected'
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          opportunity_id: string
+          user_id: string
+          status?: 'pending' | 'accepted' | 'rejected'
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          opportunity_id?: string
+          user_id?: string
+          status?: 'pending' | 'accepted' | 'rejected'
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
@@ -197,3 +296,8 @@ export type Campaign = Database['public']['Tables']['campaigns']['Row']
 export type CampaignCategory = Database['public']['Tables']['campaigns']['Row']['category']
 export type CampaignStatus = Database['public']['Tables']['campaigns']['Row']['status']
 export type CampaignUpdate = Database['public']['Tables']['campaign_updates']['Row']
+export type VolunteerProfile = Database['public']['Tables']['volunteer_profiles']['Row']
+export type VolunteerOpportunity = Database['public']['Tables']['volunteer_opportunities']['Row']
+export type VolunteerApplication = Database['public']['Tables']['volunteer_applications']['Row']
+export type VolunteerOpportunityStatus = Database['public']['Tables']['volunteer_opportunities']['Row']['status']
+export type VolunteerApplicationStatus = Database['public']['Tables']['volunteer_applications']['Row']['status']

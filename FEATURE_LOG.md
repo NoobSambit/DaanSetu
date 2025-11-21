@@ -209,3 +209,135 @@
 - Full TypeScript coverage
 
 ---
+
+## Phase 4 – Volunteer System ✅
+
+### Implemented Features:
+
+- **Volunteer Profile System**
+  - User profile creation and editing at `/volunteer/profile`
+  - Profile fields: bio, city, skills (multi-select), availability
+  - 7 skill categories: Teaching, Medical, Event Support, Fundraising, Logistics, Technical, Other
+  - 3 availability options: Weekdays, Weekends, Flexible
+  - Form validation and user-friendly interface
+  - Authentication-protected routes
+
+- **Volunteer Opportunities (NGO Side)**
+  - NGO dashboard for volunteer management at `/ngo/dashboard/volunteers`
+  - Create volunteer opportunity form with comprehensive fields
+  - Opportunity fields: title, description, city, required skills, date, volunteers needed
+  - View all opportunities created by the NGO
+  - Status tracking (active, closed, cancelled)
+  - Integrated with NGO authentication and permissions
+
+- **Public Volunteer Feed**
+  - Public opportunities page at `/volunteer/opportunities`
+  - Clean card-based layout with opportunity details
+  - Advanced filtering system:
+    - Filter by skill
+    - Filter by city
+    - Dynamic city list from active opportunities
+  - Real-time application status tracking
+  - Display of NGO information for each opportunity
+  - Responsive grid layout
+
+- **Volunteer Application System**
+  - One-click application to opportunities
+  - Duplicate application prevention
+  - Application status: pending, accepted, rejected
+  - Success notifications with toast messages
+  - Application history tracking
+
+- **NGO Application Management**
+  - View all applicants for each opportunity
+  - Detailed applicant information including:
+    - User profile (name, email)
+    - Volunteer profile (city, skills, availability)
+  - Application actions:
+    - Accept applicant
+    - Reject applicant
+  - Status badges for visual feedback
+  - Collapsible application panels per opportunity
+
+- **Navigation Updates**
+  - Added "Volunteer" link to main navigation
+  - Active state highlighting for volunteer pages
+  - Mobile-responsive navigation menu
+  - Consistent styling with existing navigation
+
+### Database Changes:
+
+- **volunteer_profiles table:**
+  - user_id (unique reference to users)
+  - bio, city, skills (array), availability (array)
+  - Timestamps for created_at and updated_at
+  - RLS policies for secure access
+
+- **volunteer_opportunities table:**
+  - ngo_id, title, description, city, required_skills (array)
+  - date, total_needed, status
+  - GIN indexes for array fields (skills)
+  - Status tracking (active/closed/cancelled)
+  - Comprehensive RLS policies
+
+- **volunteer_applications table:**
+  - opportunity_id, user_id, status
+  - Unique constraint preventing duplicate applications
+  - Status tracking (pending/accepted/rejected)
+  - Timestamps for audit trail
+  - RLS policies for users and NGOs
+
+### Service Layer:
+
+- **lib/services/volunteers.ts:**
+  - createVolunteerProfile() - Create user volunteer profile
+  - getVolunteerProfile() - Fetch profile by user ID
+  - updateVolunteerProfile() - Update existing profile
+  - hasVolunteerProfile() - Check profile existence
+  - Exported skill and availability constants
+
+- **lib/services/volunteer-opportunities.ts:**
+  - createVolunteerOpportunity() - NGO creates opportunity
+  - getVolunteerOpportunities() - Fetch with filters
+  - getVolunteerOpportunity() - Single opportunity details
+  - getNGOOpportunities() - NGO-specific opportunities
+  - applyToOpportunity() - Submit application
+  - hasApplied() - Check application status
+  - getOpportunityApplications() - Fetch applicants
+  - getUserApplications() - User's application history
+  - updateApplicationStatus() - NGO accepts/rejects
+  - getOpportunityCities() - Dynamic city list
+
+### Components & Pages Created:
+
+- `/app/volunteer/profile/page.tsx` - Profile management
+- `/app/volunteer/opportunities/page.tsx` - Public feed
+- `/app/ngo/dashboard/volunteers/page.tsx` - NGO dashboard
+
+### Type Safety:
+
+- VolunteerProfile, VolunteerOpportunity, VolunteerApplication types
+- VolunteerOpportunityStatus, VolunteerApplicationStatus enums
+- OpportunityWithNGO, ApplicationWithDetails extended types
+- Full TypeScript coverage across all components and services
+
+### UI/UX Highlights:
+
+- Consistent light theme design
+- Skill selection with visual toggle buttons
+- Filter system with real-time updates
+- Status badges with color coding
+- Loading states and error handling
+- Responsive design for mobile and desktop
+- Clean card-based layouts
+- Accessible form controls
+
+### Integration & Compatibility:
+
+- Fully backward compatible with Phases 1-3
+- No breaking changes to existing features
+- Integrated navigation system
+- Consistent authentication flow
+- Shared component patterns
+
+---
