@@ -63,11 +63,49 @@ CREATE POLICY "Users can delete their own NGOs"
   TO authenticated
   USING (auth.uid() = user_id);
 
+-- Create campaigns table
+CREATE TABLE IF NOT EXISTS campaigns (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  ngo_id UUID NOT NULL REFERENCES ngos(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  short_description TEXT NOT NULL,
+  description TEXT NOT NULL,
+  goal_amount DECIMAL(10, 2) NOT NULL CHECK (goal_amount > 0),
+  current_amount DECIMAL(10, 2) NOT NULL DEFAULT 0 CHECK (current_amount >= 0),
+  deadline TIMESTAMP WITH TIME ZONE NOT NULL,
+  image_url TEXT,
+  category TEXT NOT NULL CHECK (category IN ('education', 'food', 'health', 'disaster', 'women', 'animals')),
+  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'completed', 'cancelled')),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create indexes for campaigns table
+CREATE INDEX IF NOT EXISTS idx_campaigns_ngo_id ON campaigns(ngo_id);
+CREATE INDEX IF NOT EXISTS idx_campaigns_category ON campaigns(category);
+CREATE INDEX IF NOT EXISTS idx_campaigns_status ON campaigns(status);
+CREATE INDEX IF NOT EXISTS idx_campaigns_deadline ON campaigns(deadline);
+CREATE INDEX IF NOT EXISTS idx_campaigns_created_at ON campaigns(created_at);
+
+-- Create campaign_updates table
+CREATE TABLE IF NOT EXISTS campaign_updates (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  campaign_id UUID NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+  text TEXT NOT NULL,
+  image_url TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create indexes for campaign_updates table
+CREATE INDEX IF NOT EXISTS idx_campaign_updates_campaign_id ON campaign_updates(campaign_id);
+CREATE INDEX IF NOT EXISTS idx_campaign_updates_created_at ON campaign_updates(created_at);
+
 -- Create donations table
 CREATE TABLE IF NOT EXISTS donations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   ngo_id UUID NOT NULL REFERENCES ngos(id) ON DELETE CASCADE,
+  campaign_id UUID REFERENCES campaigns(id) ON DELETE SET NULL,
   amount DECIMAL(10, 2) NOT NULL CHECK (amount > 0),
   cause TEXT NOT NULL CHECK (cause IN ('education', 'hunger', 'healthcare', 'disaster', 'general')),
   is_anonymous BOOLEAN NOT NULL DEFAULT false,
@@ -78,9 +116,12 @@ CREATE TABLE IF NOT EXISTS donations (
 -- Create indexes for donations table
 CREATE INDEX IF NOT EXISTS idx_donations_user_id ON donations(user_id);
 CREATE INDEX IF NOT EXISTS idx_donations_ngo_id ON donations(ngo_id);
+CREATE INDEX IF NOT EXISTS idx_donations_campaign_id ON donations(campaign_id);
 CREATE INDEX IF NOT EXISTS idx_donations_created_at ON donations(created_at);
 
--- Enable Row Level Security for donations
+-- Enable Row Level Security
+ALTER TABLE campaigns ENABLE ROW LEVEL SECURITY;
+ALTER TABLE campaign_updates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE donations ENABLE ROW LEVEL SECURITY;
 
 -- Donations table policies
@@ -104,6 +145,75 @@ CREATE POLICY "Authenticated users can create donations"
   ON donations FOR INSERT
   TO authenticated
   WITH CHECK (auth.uid() = user_id);
+
+-- Campaigns table policies
+CREATE POLICY "Anyone can view active campaigns"
+  ON campaigns FOR SELECT
+  TO authenticated, anon
+  USING (true);
+
+CREATE POLICY "NGO users can create campaigns"
+  ON campaigns FOR INSERT
+  TO authenticated
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM ngos
+      WHERE ngos.id = campaigns.ngo_id
+      AND ngos.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "NGO users can update their campaigns"
+  ON campaigns FOR UPDATE
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM ngos
+      WHERE ngos.id = campaigns.ngo_id
+      AND ngos.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "NGO users can delete their campaigns"
+  ON campaigns FOR DELETE
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM ngos
+      WHERE ngos.id = campaigns.ngo_id
+      AND ngos.user_id = auth.uid()
+    )
+  );
+
+-- Campaign updates table policies
+CREATE POLICY "Anyone can view campaign updates"
+  ON campaign_updates FOR SELECT
+  TO authenticated, anon
+  USING (true);
+
+CREATE POLICY "NGO users can create updates for their campaigns"
+  ON campaign_updates FOR INSERT
+  TO authenticated
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM campaigns
+      JOIN ngos ON campaigns.ngo_id = ngos.id
+      WHERE campaigns.id = campaign_updates.campaign_id
+      AND ngos.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "NGO users can delete updates for their campaigns"
+  ON campaign_updates FOR DELETE
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM campaigns
+      JOIN ngos ON campaigns.ngo_id = ngos.id
+      WHERE campaigns.id = campaign_updates.campaign_id
+      AND ngos.user_id = auth.uid()
+    )
+  );
 
 -- Insert some sample data (optional - for testing)
 -- Note: You'll need to replace the user_id with an actual user ID from your auth.users table

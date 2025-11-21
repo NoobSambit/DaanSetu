@@ -7,6 +7,8 @@ import type { DonationCause } from '@/lib/types/database.types'
 interface DonationModalProps {
   ngoId: string
   ngoName: string
+  campaignId?: string
+  campaignTitle?: string
   isOpen: boolean
   onClose: () => void
   onSuccess: () => void
@@ -25,6 +27,8 @@ const CAUSES: { value: DonationCause; label: string; emoji: string }[] = [
 export default function DonationModal({
   ngoId,
   ngoName,
+  campaignId,
+  campaignTitle,
   isOpen,
   onClose,
   onSuccess,
@@ -72,6 +76,7 @@ export default function DonationModal({
         amount: donationAmount,
         cause,
         isAnonymous,
+        campaignId,
       })
 
       // Success!
@@ -107,6 +112,11 @@ export default function DonationModal({
           <div>
             <h2 className="text-2xl font-bold text-gray-900">Make a Donation</h2>
             <p className="text-sm text-gray-600 mt-1">to {ngoName}</p>
+            {campaignTitle && (
+              <p className="text-sm text-blue-600 mt-1 font-medium">
+                for: {campaignTitle}
+              </p>
+            )}
           </div>
           <button
             onClick={handleClose}
