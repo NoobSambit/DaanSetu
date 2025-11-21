@@ -389,3 +389,53 @@ CREATE POLICY "Users can delete their own applications"
   ON volunteer_applications FOR DELETE
   TO authenticated
   USING (auth.uid() = user_id);
+
+-- ====================================
+-- Phase 5: AI Recommendation System
+-- ====================================
+
+-- Create ai_flags table for AI quality flagging
+CREATE TABLE IF NOT EXISTS ai_flags (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  entity_type TEXT NOT NULL CHECK (entity_type IN ('ngo', 'campaign')),
+  entity_id UUID NOT NULL,
+  reason TEXT NOT NULL,
+  confidence TEXT NOT NULL DEFAULT 'medium' CHECK (confidence IN ('low', 'medium', 'high')),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create indexes for ai_flags table
+CREATE INDEX IF NOT EXISTS idx_ai_flags_entity_type ON ai_flags(entity_type);
+CREATE INDEX IF NOT EXISTS idx_ai_flags_entity_id ON ai_flags(entity_id);
+CREATE INDEX IF NOT EXISTS idx_ai_flags_created_at ON ai_flags(created_at);
+
+-- Enable Row Level Security
+ALTER TABLE ai_flags ENABLE ROW LEVEL SECURITY;
+
+-- AI flags table policies
+CREATE POLICY "Admin users can view all AI flags"
+  ON ai_flags FOR SELECT
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM users
+      WHERE users.id = auth.uid()
+      AND users.role = 'admin'
+    )
+  );
+
+CREATE POLICY "System can create AI flags"
+  ON ai_flags FOR INSERT
+  TO authenticated
+  WITH CHECK (true);
+
+CREATE POLICY "Admin users can delete AI flags"
+  ON ai_flags FOR DELETE
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM users
+      WHERE users.id = auth.uid()
+      AND users.role = 'admin'
+    )
+  );

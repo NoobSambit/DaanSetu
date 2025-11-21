@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import type { DonationCause } from '@/lib/types/database.types'
+import AIRecommendations from './components/AIRecommendations'
 
 export const dynamic = 'force-dynamic'
 
@@ -115,6 +116,11 @@ export default async function DashboardPage() {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* AI Recommendations */}
+        <div className="mb-8">
+          <AIRecommendations userId={user.id} />
         </div>
 
         {/* Donation History */}

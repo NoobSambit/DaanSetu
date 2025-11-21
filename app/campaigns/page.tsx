@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { getAllCampaigns, type CampaignWithNGO } from '@/lib/services/campaigns'
 import type { CampaignCategory } from '@/lib/types/database.types'
+import AICampaignSuggestions from './components/AICampaignSuggestions'
 
 export default function CampaignsPage() {
   const [campaigns, setCampaigns] = useState<CampaignWithNGO[]>([])
@@ -70,6 +71,9 @@ export default function CampaignsPage() {
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Active Campaigns</h1>
           <p className="text-gray-600">Support NGO campaigns and make a difference</p>
         </div>
+
+        {/* AI Campaign Suggestions */}
+        <AICampaignSuggestions />
 
         {/* Filters */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
