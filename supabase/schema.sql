@@ -439,3 +439,34 @@ CREATE POLICY "Admin users can delete AI flags"
       AND users.role = 'admin'
     )
   );
+
+-- ====================================
+-- Phase 6: Analytics & Transparency Layer
+-- ====================================
+
+-- Create analytics_logs table for time-series analytics
+CREATE TABLE IF NOT EXISTS analytics_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  event_type TEXT NOT NULL CHECK (event_type IN ('donation_created', 'campaign_created', 'volunteer_applied')),
+  related_id UUID NOT NULL,
+  timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create indexes for analytics_logs table
+CREATE INDEX IF NOT EXISTS idx_analytics_logs_event_type ON analytics_logs(event_type);
+CREATE INDEX IF NOT EXISTS idx_analytics_logs_related_id ON analytics_logs(related_id);
+CREATE INDEX IF NOT EXISTS idx_analytics_logs_timestamp ON analytics_logs(timestamp);
+
+-- Enable Row Level Security
+ALTER TABLE analytics_logs ENABLE ROW LEVEL SECURITY;
+
+-- Analytics logs table policies
+CREATE POLICY "Anyone can view analytics logs"
+  ON analytics_logs FOR SELECT
+  TO authenticated, anon
+  USING (true);
+
+CREATE POLICY "System can create analytics logs"
+  ON analytics_logs FOR INSERT
+  TO authenticated
+  WITH CHECK (true);
