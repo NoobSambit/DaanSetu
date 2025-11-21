@@ -341,3 +341,134 @@
 - Shared component patterns
 
 ---
+
+## Phase 5 – AI Recommendation System ✅
+
+### Implemented Features:
+
+- **AI Smart NGO Recommendations**
+  - User dashboard component showing personalized NGO suggestions
+  - Context-aware recommendations based on:
+    - Past donation causes
+    - Browsed NGO categories
+    - Volunteer skills (if profile exists)
+  - Interactive "Get Recommendations" button
+  - Clean card layout with reasons for each recommendation
+  - Real-time loading states and error handling
+
+- **AI Campaign Suggestions**
+  - Campaign page integration with "Find Campaigns For Me" button
+  - Personalized campaign recommendations based on user interests
+  - Beautiful gradient banner design
+  - AI-powered matching with active campaigns
+  - Detailed campaign cards with reasons and categories
+  - One-click navigation to recommended campaigns
+
+- **Ask DaanSetu Chatbot**
+  - Floating chat widget accessible on all pages
+  - Bottom-right corner placement with smooth animations
+  - Real-time conversational AI powered by Gemini
+  - Context-aware responses using real NGO and campaign data
+  - No hallucinated recommendations - only real entities
+  - Message history with timestamps
+  - Typing indicators and loading states
+  - Clean, minimal UI design
+
+- **AI Quality Flagging System**
+  - Automated content analysis for NGOs and campaigns
+  - AI-powered detection of:
+    - Vague or unclear descriptions
+    - Unrealistic promises or claims
+    - Poor grammar or unprofessional language
+    - Missing crucial information
+    - Potential scam indicators
+  - Confidence levels: low, medium, high
+  - Admin dashboard at `/admin/ai-flags`
+  - Visual stats cards showing flag counts
+  - Detailed flag information with reasons
+  - Direct links to flagged content for review
+
+### Database Changes:
+
+- **ai_flags table:**
+  - entity_type (ngo/campaign)
+  - entity_id (UUID reference)
+  - reason (TEXT)
+  - confidence (low/medium/high)
+  - created_at timestamp
+  - RLS policies for admin-only access
+  - Indexes for performance optimization
+
+### API Routes Created:
+
+- `/api/ai/recommend-ngos` - POST endpoint for NGO recommendations
+- `/api/ai/recommend-campaigns` - POST endpoint for campaign suggestions
+- `/api/ai/chat` - POST endpoint for chatbot conversations
+- `/api/ai/analyze-content` - POST endpoint for content quality analysis
+
+### Service Layer:
+
+- **lib/services/gemini.ts:**
+  - generateNGORecommendations() - AI-powered NGO matching
+  - generateCampaignRecommendations() - Campaign suggestion engine
+  - chatWithDaanSetu() - Conversational AI with context
+  - analyzeContentQuality() - Content fraud detection
+
+- **lib/services/ai-flags.ts:**
+  - flagEntity() - Create AI flags
+  - getAllFlags() - Fetch all flags (admin)
+  - deleteFlag() - Remove flags (admin)
+  - analyzeAndFlagNGO() - Automated NGO analysis
+  - analyzeAndFlagCampaign() - Automated campaign analysis
+
+### Components Created:
+
+- `/app/dashboard/components/AIRecommendations.tsx` - Dashboard recommendations
+- `/app/campaigns/components/AICampaignSuggestions.tsx` - Campaign suggestions
+- `/components/AskDaanSetuChatbot.tsx` - Global chatbot widget
+- `/app/admin/ai-flags/page.tsx` - Admin flag management
+
+### Technology Stack:
+
+- Google Gemini API (gemini-1.5-flash model)
+- @google/generative-ai NPM package
+- Real-time AI processing with streaming responses
+- Hybrid approach: AI + real database data
+
+### Security & Safety:
+
+- All AI responses sanitized and rendered safely
+- No hallucinated NGO or campaign names
+- Confidence-based flagging system
+- Admin-only access to flag management
+- RLS policies protecting AI flags table
+- User authentication required for personalized features
+
+### UI/UX Highlights:
+
+- Minimal, clean design across all AI features
+- Soft transitions and smooth animations
+- Loading states with spinners and indicators
+- Error handling with user-friendly messages
+- Mobile-responsive layouts
+- Accessible form controls
+- Floating chat bubble with unobtrusive design
+- Color-coded confidence levels for flags
+
+### Integration & Compatibility:
+
+- Fully backward compatible with Phases 1-4
+- No breaking changes to existing features
+- Global chatbot available on all pages
+- Dashboard and campaign page enhancements
+- Admin-only features properly secured
+- Environment variable configuration required
+
+### Configuration:
+
+- Added NEXT_PUBLIC_GEMINI_API_KEY to .env.example
+- Free-tier Gemini API usage
+- No additional costs for basic usage
+- Scalable architecture for future enhancements
+
+---

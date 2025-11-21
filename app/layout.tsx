@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Header from "@/components/Header";
+import AskDaanSetuChatbot from "@/components/AskDaanSetuChatbot";
 
 export const metadata: Metadata = {
   title: "DaanSetu - NGO Discovery Platform",
@@ -17,6 +18,7 @@ export default function RootLayout({
       <body className="antialiased min-h-screen bg-gray-50">
         <Header />
         <main>{children}</main>
+        <AskDaanSetuChatbot />
       </body>
     </html>
   );

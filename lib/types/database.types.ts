@@ -274,6 +274,32 @@ export interface Database {
           updated_at?: string
         }
       }
+      ai_flags: {
+        Row: {
+          id: string
+          entity_type: 'ngo' | 'campaign'
+          entity_id: string
+          reason: string
+          confidence: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          entity_type: 'ngo' | 'campaign'
+          entity_id: string
+          reason: string
+          confidence?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          entity_type?: 'ngo' | 'campaign'
+          entity_id?: string
+          reason?: string
+          confidence?: string
+          created_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
@@ -301,3 +327,5 @@ export type VolunteerOpportunity = Database['public']['Tables']['volunteer_oppor
 export type VolunteerApplication = Database['public']['Tables']['volunteer_applications']['Row']
 export type VolunteerOpportunityStatus = Database['public']['Tables']['volunteer_opportunities']['Row']['status']
 export type VolunteerApplicationStatus = Database['public']['Tables']['volunteer_applications']['Row']['status']
+export type AIFlag = Database['public']['Tables']['ai_flags']['Row']
+export type AIFlagEntityType = Database['public']['Tables']['ai_flags']['Row']['entity_type']
