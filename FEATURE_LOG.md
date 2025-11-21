@@ -645,3 +645,224 @@
 - Efficient data transformations
 
 ---
+
+## Phase 7 – Corporate CSR Module ✅
+
+### Implemented Features:
+
+- **Corporate Account System**
+  - Added 'corporate' user role to authentication
+  - Corporate-specific registration flow during signup
+  - Role-based dashboard redirection
+  - Dedicated corporate profile management
+
+- **Corporate Profile Management** (`/corporate/profile`)
+  - Comprehensive company profile creation and editing
+  - Fields: company name, industry, company size, description, website, logo
+  - Industry selector with 15+ categories
+  - Company size ranges: 1-50, 51-200, 201-500, 501-1000, 1000+
+  - Profile validation and update functionality
+
+- **Corporate Dashboard** (`/corporate/dashboard`)
+  - Real-time CSR analytics and metrics:
+    - Total CSR funds donated
+    - Number of CSR campaigns created
+    - NGOs supported count
+    - Employees engaged tracking
+  - Interactive charts using Recharts:
+    - Donations over time (Line chart)
+    - Campaign funding progress (Bar chart)
+  - Quick action cards for common tasks
+  - Professional enterprise-grade UI
+
+- **CSR Campaign Management**
+  - Campaign creation at `/corporate/campaigns/create`
+  - Campaign listing at `/corporate/campaigns`
+  - Campaign detail view at `/corporate/campaigns/[id]`
+  - Fields: title, description, cause, goal amount, deadline, cover image
+  - 7 cause categories: education, food, health, disaster, women, animals, environment
+  - Status tracking: active, completed, cancelled
+  - Real-time progress tracking with visual indicators
+  - Partnership request management interface
+
+- **Public CSR Campaigns Page** (`/csr-campaigns`)
+  - Browse all active CSR campaigns
+  - Filter by cause category
+  - View campaign details and progress
+  - NGOs can apply for partnerships
+  - Displays corporate sponsor information
+  - Partnership application tracking
+
+- **NGO-Corporate Partnership System**
+  - NGOs can apply to CSR campaigns
+  - Application with optional message
+  - Corporate approval/rejection workflow
+  - Status tracking: pending, accepted, rejected
+  - Partnership requests visible to campaign owners
+  - Duplicate application prevention
+  - Real-time application status updates
+
+- **Employee Engagement System** (`/corporate/employees`)
+  - Add and manage employee records
+  - Fields: name, email, designation
+  - Employee listing with table view
+  - Remove employee functionality
+  - Track employees invited to CSR initiatives
+  - Employee count displayed in dashboard
+
+- **Navigation Updates**
+  - Added "CSR" link to main navigation
+  - Role-aware dashboard routing (Corporate users → Corporate Dashboard)
+  - Mobile-responsive navigation with CSR link
+  - Active state highlighting for CSR pages
+
+- **Authentication Enhancements**
+  - Updated signup page with role selector
+  - Three roles: User, NGO, Corporate
+  - Role-specific field labels (e.g., "Official Email" for corporate)
+  - Automatic redirect based on selected role
+  - Profile setup flow for corporate users
+
+### Database Changes:
+
+- **Modified users table:**
+  - Updated role constraint to include 'corporate'
+  - Supports: 'user', 'ngo', 'admin', 'corporate'
+
+- **corporate_profiles table:**
+  - user_id (unique reference to users)
+  - company_name, industry, company_size, description, website, logo_url
+  - Timestamps for created_at and updated_at
+  - Indexes on user_id and industry
+
+- **corporate_campaigns table:**
+  - corporate_id (reference to corporate_profiles)
+  - title, description, cause, goal_amount, current_amount, deadline
+  - image_url, status (active/completed/cancelled)
+  - Indexes on corporate_id, cause, status, deadline, created_at
+
+- **partnership_requests table:**
+  - corporate_campaign_id, ngo_id
+  - status (pending/accepted/rejected)
+  - message (optional)
+  - Unique constraint on (corporate_campaign_id, ngo_id)
+  - Timestamps for audit trail
+
+- **corporate_employees table:**
+  - corporate_id, name, email, designation
+  - joined_at timestamp
+  - Unique constraint on (corporate_id, email)
+  - Indexes for performance
+
+- **Modified donations table:**
+  - Added corporate_campaign_id (nullable reference)
+  - Supports donations to CSR campaigns
+  - Index on corporate_campaign_id
+
+### Service Layer:
+
+- **lib/services/corporate.ts:**
+  - createCorporateProfile() - Company profile creation
+  - getCorporateProfile() - Fetch profile by user
+  - getCorporateProfileById() - Fetch by corporate ID
+  - updateCorporateProfile() - Update company info
+  - hasCorporateProfile() - Check profile existence
+  - getAllCorporateProfiles() - List all corporates
+  - Industry and company size constants
+
+- **lib/services/corporate-campaigns.ts:**
+  - createCorporateCampaign() - CSR campaign creation
+  - getCorporateCampaigns() - Fetch with filters (cause, status)
+  - getCorporateCampaign() - Single campaign with corporate info
+  - getCorporateCampaignsByCorporate() - Corporate-specific campaigns
+  - updateCorporateCampaign() - Campaign updates
+  - incrementCorporateCampaignAmount() - Donation tracking
+  - Campaign cause constants
+
+- **lib/services/partnerships.ts:**
+  - createPartnershipRequest() - NGO applies to campaign
+  - getPartnershipRequestsForNGO() - NGO's applications
+  - getPartnershipRequestsForCampaign() - Campaign applicants
+  - updatePartnershipRequestStatus() - Accept/reject applications
+  - hasAppliedForPartnership() - Duplicate check
+  - deletePartnershipRequest() - Remove application
+
+- **lib/services/corporate-employees.ts:**
+  - createEmployee() - Add employee record
+  - getEmployeesByCorporate() - List all employees
+  - getEmployeeById() - Single employee lookup
+  - updateEmployee() - Update employee info
+  - deleteEmployee() - Remove employee
+  - getEmployeeCount() - Count for analytics
+
+- **lib/services/corporate-analytics.ts:**
+  - getCorporateAnalytics() - Comprehensive CSR metrics
+  - Aggregates donations, campaigns, NGOs, employees
+  - Time-series data for charts
+  - Campaign funding progress data
+
+### Components & Pages Created:
+
+- `/app/corporate/profile/page.tsx` - Profile management
+- `/app/corporate/dashboard/page.tsx` - Corporate dashboard
+- `/app/corporate/campaigns/page.tsx` - Campaign listing
+- `/app/corporate/campaigns/create/page.tsx` - Campaign creation
+- `/app/corporate/campaigns/[id]/page.tsx` - Campaign details
+- `/app/corporate/employees/page.tsx` - Employee management
+- `/app/csr-campaigns/page.tsx` - Public CSR campaigns
+
+### Type Safety:
+
+- Updated Database types with corporate tables
+- CorporateProfile, CorporateSize types
+- CorporateCampaign, CorporateCampaignCause, CorporateCampaignStatus types
+- PartnershipRequest, PartnershipRequestStatus types
+- CorporateEmployee type
+- UserRole type includes 'corporate'
+- Full TypeScript coverage across all services
+
+### Security & Access Control:
+
+- RLS policies for all corporate tables
+- Corporate users can only manage their own data
+- NGOs can view and apply to active campaigns
+- Corporates can view partnership requests for their campaigns
+- Public can view active CSR campaigns
+- Employee data protected by corporate ownership
+- Proper authentication checks on all routes
+
+### UI/UX Highlights:
+
+- Enterprise-grade professional design
+- Clean, minimal corporate aesthetic
+- Consistent light theme throughout
+- Interactive charts with Recharts integration
+- Real-time progress bars and metrics
+- Status badges with color coding
+- Responsive grid layouts
+- Loading states and error handling
+- Role-specific navigation and routing
+- Mobile-optimized interfaces
+
+### Integration & Compatibility:
+
+- Fully backward compatible with Phases 1-6
+- No breaking changes to existing features
+- Seamless integration with existing authentication
+- Consistent navigation patterns
+- Shared component design system
+- Reuses existing donation infrastructure
+- Compatible with existing analytics layer
+
+### Enterprise Features:
+
+- Corporate CSR campaign lifecycle management
+- NGO partnership facilitation
+- Employee engagement tracking
+- Comprehensive analytics and reporting
+- Multi-campaign management
+- Cause-based filtering and organization
+- Progress tracking and transparency
+- Professional dashboard experience
+
+---

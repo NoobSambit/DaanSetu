@@ -9,18 +9,38 @@ import type { User } from '@supabase/supabase-js'
 export default function Header() {
   const pathname = usePathname()
   const [user, setUser] = useState<User | null>(null)
+  const [userRole, setUserRole] = useState<string | null>(null)
   const supabase = createClient()
 
   useEffect(() => {
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       setUser(user)
+
+      if (user) {
+        const { data: userData } = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', user.id)
+          .single()
+
+        if (userData) {
+          setUserRole(userData.role)
+        }
+      } else {
+        setUserRole(null)
+      }
     }
 
     getUser()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
+      if (!session?.user) {
+        setUserRole(null)
+      } else {
+        getUser()
+      }
     })
 
     return () => subscription.unsubscribe()
@@ -56,12 +76,22 @@ export default function Header() {
             <Link
               href="/campaigns"
               className={`${
-                pathname?.startsWith('/campaigns')
+                pathname?.startsWith('/campaigns') && !pathname?.startsWith('/campaigns/create')
                   ? 'text-blue-600 font-semibold'
                   : 'text-gray-600 hover:text-gray-900'
               } transition`}
             >
               Campaigns
+            </Link>
+            <Link
+              href="/csr-campaigns"
+              className={`${
+                pathname?.startsWith('/csr-campaigns')
+                  ? 'text-blue-600 font-semibold'
+                  : 'text-gray-600 hover:text-gray-900'
+              } transition`}
+            >
+              CSR
             </Link>
             <Link
               href="/volunteer/opportunities"
@@ -85,9 +115,9 @@ export default function Header() {
             </Link>
             {user && (
               <Link
-                href="/dashboard"
+                href={userRole === 'corporate' ? '/corporate/dashboard' : '/dashboard'}
                 className={`${
-                  isActive('/dashboard')
+                  (userRole === 'corporate' ? pathname?.startsWith('/corporate/dashboard') : isActive('/dashboard'))
                     ? 'text-blue-600 font-semibold'
                     : 'text-gray-600 hover:text-gray-900'
                 } transition`}
@@ -133,12 +163,12 @@ export default function Header() {
 
       {/* Mobile Navigation */}
       <div className="md:hidden border-t border-gray-200">
-        <div className="flex justify-around py-2">
+        <div className="flex justify-around py-2 overflow-x-auto">
           <Link
             href="/ngos"
             className={`${
               isActive('/ngos') ? 'text-blue-600' : 'text-gray-600'
-            } text-sm py-2`}
+            } text-xs py-2 px-2 whitespace-nowrap`}
           >
             NGOs
           </Link>
@@ -146,15 +176,23 @@ export default function Header() {
             href="/campaigns"
             className={`${
               pathname?.startsWith('/campaigns') ? 'text-blue-600' : 'text-gray-600'
-            } text-sm py-2`}
+            } text-xs py-2 px-2 whitespace-nowrap`}
           >
             Campaigns
+          </Link>
+          <Link
+            href="/csr-campaigns"
+            className={`${
+              pathname?.startsWith('/csr-campaigns') ? 'text-blue-600' : 'text-gray-600'
+            } text-xs py-2 px-2 whitespace-nowrap`}
+          >
+            CSR
           </Link>
           <Link
             href="/volunteer/opportunities"
             className={`${
               pathname?.startsWith('/volunteer') ? 'text-blue-600' : 'text-gray-600'
-            } text-sm py-2`}
+            } text-xs py-2 px-2 whitespace-nowrap`}
           >
             Volunteer
           </Link>
@@ -162,16 +200,16 @@ export default function Header() {
             href="/map"
             className={`${
               isActive('/map') ? 'text-blue-600' : 'text-gray-600'
-            } text-sm py-2`}
+            } text-xs py-2 px-2 whitespace-nowrap`}
           >
             Map
           </Link>
           {user && (
             <Link
-              href="/dashboard"
+              href={userRole === 'corporate' ? '/corporate/dashboard' : '/dashboard'}
               className={`${
-                isActive('/dashboard') ? 'text-blue-600' : 'text-gray-600'
-              } text-sm py-2`}
+                (userRole === 'corporate' ? pathname?.startsWith('/corporate/dashboard') : isActive('/dashboard')) ? 'text-blue-600' : 'text-gray-600'
+              } text-xs py-2 px-2 whitespace-nowrap`}
             >
               Dashboard
             </Link>
