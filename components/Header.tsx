@@ -10,6 +10,7 @@ export default function Header() {
   const pathname = usePathname()
   const [user, setUser] = useState<User | null>(null)
   const [userRole, setUserRole] = useState<string | null>(null)
+  const [unreadCount, setUnreadCount] = useState(0)
   const supabase = createClient()
 
   useEffect(() => {
@@ -27,8 +28,18 @@ export default function Header() {
         if (userData) {
           setUserRole(userData.role)
         }
+
+        // Fetch unread notification count
+        const { count } = await supabase
+          .from('notifications')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('is_read', false)
+
+        setUnreadCount(count || 0)
       } else {
         setUserRole(null)
+        setUnreadCount(0)
       }
     }
 
@@ -38,13 +49,24 @@ export default function Header() {
       setUser(session?.user ?? null)
       if (!session?.user) {
         setUserRole(null)
+        setUnreadCount(0)
       } else {
         getUser()
       }
     })
 
-    return () => subscription.unsubscribe()
-  }, [supabase.auth])
+    // Set up interval to refresh notification count every 30 seconds
+    const interval = setInterval(() => {
+      if (user) {
+        getUser()
+      }
+    }, 30000)
+
+    return () => {
+      subscription.unsubscribe()
+      clearInterval(interval)
+    }
+  }, [supabase.auth, user?.id])
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
@@ -84,16 +106,6 @@ export default function Header() {
               Campaigns
             </Link>
             <Link
-              href="/csr-campaigns"
-              className={`${
-                pathname?.startsWith('/csr-campaigns')
-                  ? 'text-blue-600 font-semibold'
-                  : 'text-gray-600 hover:text-gray-900'
-              } transition`}
-            >
-              CSR
-            </Link>
-            <Link
               href="/volunteer/opportunities"
               className={`${
                 pathname?.startsWith('/volunteer')
@@ -104,14 +116,24 @@ export default function Header() {
               Volunteer
             </Link>
             <Link
-              href="/map"
+              href="/community"
               className={`${
-                isActive('/map')
+                pathname?.startsWith('/community')
                   ? 'text-blue-600 font-semibold'
                   : 'text-gray-600 hover:text-gray-900'
               } transition`}
             >
-              Map
+              Community
+            </Link>
+            <Link
+              href="/leaderboard"
+              className={`${
+                isActive('/leaderboard')
+                  ? 'text-blue-600 font-semibold'
+                  : 'text-gray-600 hover:text-gray-900'
+              } transition`}
+            >
+              Leaderboard
             </Link>
             {user && (
               <Link
@@ -131,6 +153,29 @@ export default function Header() {
           <div className="flex items-center space-x-4">
             {user ? (
               <>
+                {/* Notification Bell */}
+                <Link href="/notifications" className="relative">
+                  <svg
+                    className={`w-6 h-6 ${
+                      isActive('/notifications') ? 'text-blue-600' : 'text-gray-600 hover:text-gray-900'
+                    } transition`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                    />
+                  </svg>
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </Link>
                 <span className="text-sm text-gray-600 hidden md:block">
                   {user.email}
                 </span>
@@ -181,14 +226,6 @@ export default function Header() {
             Campaigns
           </Link>
           <Link
-            href="/csr-campaigns"
-            className={`${
-              pathname?.startsWith('/csr-campaigns') ? 'text-blue-600' : 'text-gray-600'
-            } text-xs py-2 px-2 whitespace-nowrap`}
-          >
-            CSR
-          </Link>
-          <Link
             href="/volunteer/opportunities"
             className={`${
               pathname?.startsWith('/volunteer') ? 'text-blue-600' : 'text-gray-600'
@@ -197,12 +234,20 @@ export default function Header() {
             Volunteer
           </Link>
           <Link
-            href="/map"
+            href="/community"
             className={`${
-              isActive('/map') ? 'text-blue-600' : 'text-gray-600'
+              pathname?.startsWith('/community') ? 'text-blue-600' : 'text-gray-600'
             } text-xs py-2 px-2 whitespace-nowrap`}
           >
-            Map
+            Community
+          </Link>
+          <Link
+            href="/leaderboard"
+            className={`${
+              isActive('/leaderboard') ? 'text-blue-600' : 'text-gray-600'
+            } text-xs py-2 px-2 whitespace-nowrap`}
+          >
+            Leaderboard
           </Link>
           {user && (
             <Link

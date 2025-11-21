@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import type { DonationCause } from '@/lib/types/database.types'
 import AIRecommendations from './components/AIRecommendations'
+import BadgesDisplay from './components/BadgesDisplay'
 
 export const dynamic = 'force-dynamic'
 
@@ -121,6 +122,11 @@ export default async function DashboardPage() {
         {/* AI Recommendations */}
         <div className="mb-8">
           <AIRecommendations userId={user.id} />
+        </div>
+
+        {/* Badges Display */}
+        <div className="mb-8">
+          <BadgesDisplay userId={user.id} />
         </div>
 
         {/* Donation History */}

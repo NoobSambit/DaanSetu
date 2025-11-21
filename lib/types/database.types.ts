@@ -460,6 +460,139 @@ export interface Database {
           joined_at?: string
         }
       }
+      posts: {
+        Row: {
+          id: string
+          author_id: string
+          author_role: 'ngo' | 'corporate' | 'admin'
+          title: string
+          content: string
+          image_url: string | null
+          category: 'update' | 'story' | 'announcement'
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          author_id: string
+          author_role: 'ngo' | 'corporate' | 'admin'
+          title: string
+          content: string
+          image_url?: string | null
+          category: 'update' | 'story' | 'announcement'
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          author_id?: string
+          author_role?: 'ngo' | 'corporate' | 'admin'
+          title?: string
+          content?: string
+          image_url?: string | null
+          category?: 'update' | 'story' | 'announcement'
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      post_likes: {
+        Row: {
+          id: string
+          post_id: string
+          user_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          post_id: string
+          user_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          post_id?: string
+          user_id?: string
+          created_at?: string
+        }
+      }
+      post_comments: {
+        Row: {
+          id: string
+          post_id: string
+          user_id: string
+          content: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          post_id: string
+          user_id: string
+          content: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          post_id?: string
+          user_id?: string
+          content?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      user_badges: {
+        Row: {
+          id: string
+          user_id: string
+          badge_type: 'donor_hero' | 'volunteer_champ' | 'csr_star' | 'campaign_supporter' | 'community_builder' | 'impact_maker'
+          earned_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          badge_type: 'donor_hero' | 'volunteer_champ' | 'csr_star' | 'campaign_supporter' | 'community_builder' | 'impact_maker'
+          earned_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          badge_type?: 'donor_hero' | 'volunteer_champ' | 'csr_star' | 'campaign_supporter' | 'community_builder' | 'impact_maker'
+          earned_at?: string
+        }
+      }
+      notifications: {
+        Row: {
+          id: string
+          user_id: string
+          type: 'campaign_milestone' | 'volunteer_accepted' | 'badge_unlocked' | 'post_liked' | 'post_commented' | 'partnership_accepted'
+          title: string
+          message: string
+          link: string | null
+          is_read: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          type: 'campaign_milestone' | 'volunteer_accepted' | 'badge_unlocked' | 'post_liked' | 'post_commented' | 'partnership_accepted'
+          title: string
+          message: string
+          link?: string | null
+          is_read?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          type?: 'campaign_milestone' | 'volunteer_accepted' | 'badge_unlocked' | 'post_liked' | 'post_commented' | 'partnership_accepted'
+          title?: string
+          message?: string
+          link?: string | null
+          is_read?: boolean
+          created_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
@@ -500,3 +633,12 @@ export type CorporateCampaignStatus = Database['public']['Tables']['corporate_ca
 export type PartnershipRequest = Database['public']['Tables']['partnership_requests']['Row']
 export type PartnershipRequestStatus = Database['public']['Tables']['partnership_requests']['Row']['status']
 export type CorporateEmployee = Database['public']['Tables']['corporate_employees']['Row']
+export type Post = Database['public']['Tables']['posts']['Row']
+export type PostCategory = Database['public']['Tables']['posts']['Row']['category']
+export type PostAuthorRole = Database['public']['Tables']['posts']['Row']['author_role']
+export type PostLike = Database['public']['Tables']['post_likes']['Row']
+export type PostComment = Database['public']['Tables']['post_comments']['Row']
+export type UserBadge = Database['public']['Tables']['user_badges']['Row']
+export type BadgeType = Database['public']['Tables']['user_badges']['Row']['badge_type']
+export type Notification = Database['public']['Tables']['notifications']['Row']
+export type NotificationType = Database['public']['Tables']['notifications']['Row']['type']

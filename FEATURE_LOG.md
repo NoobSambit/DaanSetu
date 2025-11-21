@@ -866,3 +866,185 @@
 - Professional dashboard experience
 
 ---
+
+## Phase 8 – Social Network & Community Layer ✅
+
+### Implemented Features:
+
+- **Community Feed System** (`/community`)
+  - Global feed page displaying posts from all contributors
+  - Posts from NGOs, Corporates, and Admins
+  - Post categories: Update, Success Story, Announcement
+  - Real-time engagement metrics (likes and comments count)
+  - Clean card-based UI with author information
+  - Category badges with color coding
+  - Timestamp display with relative time
+  - Empty state with call-to-action
+
+- **Post Creation System** (`/community/create`)
+  - Dedicated post creation form for eligible users (NGO, Corporate, Admin)
+  - Form fields: title (200 char limit), content (5000 char limit), category, optional image URL
+  - Image preview functionality
+  - Character counters for title and content
+  - Category selection with descriptive labels
+  - Form validation and error handling
+  - Automatic redirect after post creation
+  - Permission checks based on user role
+
+- **Like and Comment Interactions**
+  - Toggle like functionality with real-time count updates
+  - Heart icon fills when liked
+  - Comment section with collapsible display
+  - Add comments with real-time posting
+  - Comment display with user avatars and timestamps
+  - Loading states for comment fetching
+  - Notification system for post interactions
+  - Author notification when post is liked or commented
+  - Clean, minimal interaction UI
+
+- **User Badges System**
+  - 6 badge types with unique criteria:
+    - 💛 Donor Hero: Donated over ₹10,000
+    - 🌟 Volunteer Champ: Completed 5+ volunteer opportunities
+    - 🏆 CSR Star: Corporate with 3+ CSR campaigns
+    - 🎯 Campaign Supporter: Supported 5+ campaigns
+    - 🤝 Community Builder: Created 10+ posts
+    - ✨ Impact Maker: Donated, volunteered, and supported campaigns
+  - Automatic badge awarding based on user activity
+  - Badge display in user dashboard
+  - Badge unlock notifications
+  - Beautiful gradient card design for badges
+  - Badge descriptions showing earning criteria
+  - Empty state with motivational message
+
+- **Public Leaderboards** (`/leaderboard`)
+  - Four leaderboard categories:
+    - Top Donors (ranked by total donated amount)
+    - Top Volunteers (ranked by accepted applications)
+    - Top NGOs (ranked by funds received)
+    - Top Corporates (ranked by CSR contributions)
+  - Medal emojis for top 3 positions (🥇🥈🥉)
+  - Rank display with position numbers
+  - Detailed stats for each entry
+  - Badge indicators showing donation/campaign counts
+  - Responsive grid layout (2 columns on desktop)
+  - Professional gradient headers for each leaderboard
+  - Empty states with encouraging messages
+  - Top 10 rankings per category
+
+- **Notifications System** (`/notifications`)
+  - Comprehensive notification types:
+    - Campaign milestones reached
+    - Volunteer application accepted
+    - Badge unlocked
+    - Post liked
+    - Post commented
+    - Partnership request accepted
+  - Notification bell icon in header with unread count
+  - Red badge showing unread count (9+ for 10 or more)
+  - Auto-refresh every 30 seconds
+  - Mark individual notifications as read
+  - Mark all notifications as read
+  - Delete individual notifications
+  - Notification links to relevant pages
+  - Timestamp with relative time display
+  - Visual distinction for unread notifications (blue left border)
+  - Empty state with bell icon
+
+- **Navigation Updates**
+  - Added "Community" link to main navigation
+  - Added "Leaderboard" link to main navigation
+  - Notification bell icon with real-time unread count
+  - Active state highlighting for new routes
+  - Mobile-responsive navigation menu
+  - Removed "CSR" and "Map" from main nav to accommodate new links
+  - Consistent styling across desktop and mobile
+
+### Database Changes:
+
+- **posts table:**
+  - author_id, author_role, title, content, image_url, category
+  - Timestamps for created_at and updated_at
+  - Indexes on author_id, author_role, category, created_at
+  - RLS policies for viewing, creating, updating, deleting posts
+
+- **post_likes table:**
+  - post_id, user_id
+  - Unique constraint on (post_id, user_id)
+  - Indexes for performance
+  - RLS policies for liking/unliking
+
+- **post_comments table:**
+  - post_id, user_id, content
+  - Timestamps for created_at and updated_at
+  - Indexes on post_id, user_id, created_at
+  - RLS policies for commenting
+
+- **user_badges table:**
+  - user_id, badge_type, earned_at
+  - Unique constraint on (user_id, badge_type)
+  - 6 badge types
+  - Indexes on user_id, badge_type, earned_at
+  - RLS policies for public viewing
+
+- **notifications table:**
+  - user_id, type, title, message, link, is_read
+  - 6 notification types
+  - Indexes on user_id, type, is_read, created_at
+  - RLS policies for user-specific access
+
+- **Helper Functions:**
+  - get_post_like_count() - Returns like count for a post
+  - get_post_comment_count() - Returns comment count for a post
+  - get_unread_notification_count() - Returns unread notification count
+
+### Service Layer:
+
+- **lib/services/posts.ts:** Complete post management with likes and comments
+- **lib/services/badges.ts:** Badge awarding and management system
+- **lib/services/notifications.ts:** Notification creation and management
+- **lib/services/leaderboard.ts:** Leaderboard data aggregation
+
+### API Routes Created:
+
+- `/api/posts/create` - POST: Create new post
+- `/api/posts/like` - POST: Toggle like on post
+- `/api/posts/comment` - POST: Add comment to post
+- `/api/posts/[postId]/comments` - GET: Fetch comments
+- `/api/badges/[userId]` - GET: Fetch user badges
+- `/api/notifications/mark-read` - POST: Mark notification as read
+- `/api/notifications/mark-all-read` - POST: Mark all as read
+- `/api/notifications/delete` - POST: Delete notification
+
+### Type Safety:
+
+- Updated Database types with Post, PostLike, PostComment, UserBadge, Notification
+- Extended types for API responses (PostWithAuthor, PostCommentWithUser)
+- Full TypeScript coverage across all components and services
+
+### Security & Access Control:
+
+- RLS policies for all social feature tables
+- Role-based post creation (NGO, Corporate, Admin only)
+- User-specific notification access
+- Protected API routes with authentication checks
+
+### UI/UX Highlights:
+
+- Consistent light theme design
+- Soft card layouts with rounded corners
+- Minimal motion with smooth transitions
+- Real-time engagement updates
+- Loading states and empty states
+- Mobile-responsive designs
+- Interactive like/comment buttons
+- Professional gradient backgrounds for badges and leaderboards
+
+### Integration & Compatibility:
+
+- Fully backward compatible with Phases 1-7
+- No breaking changes to existing features
+- Seamless integration with existing authentication
+- Badge awarding tied to existing user activities
+
+---
