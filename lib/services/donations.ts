@@ -1,11 +1,13 @@
 import { createClient } from '@/lib/supabase/client'
 import type { DonationCause } from '@/lib/types/database.types'
+import { incrementCampaignAmount } from './campaigns'
 
 export interface CreateDonationParams {
   ngoId: string
   amount: number
   cause: DonationCause
   isAnonymous: boolean
+  campaignId?: string
 }
 
 export interface DonationWithNGO {
@@ -62,6 +64,7 @@ export async function createDonation(params: CreateDonationParams) {
     .insert({
       user_id: user.id,
       ngo_id: params.ngoId,
+      campaign_id: params.campaignId || null,
       amount: params.amount,
       cause: params.cause,
       is_anonymous: params.isAnonymous,
@@ -72,6 +75,16 @@ export async function createDonation(params: CreateDonationParams) {
 
   if (error) {
     throw error
+  }
+
+  // If this donation is for a campaign, increment the campaign amount
+  if (params.campaignId) {
+    try {
+      await incrementCampaignAmount(params.campaignId, params.amount)
+    } catch (campaignError) {
+      console.error('Failed to update campaign amount:', campaignError)
+      // Don't throw - donation was successful
+    }
   }
 
   return data

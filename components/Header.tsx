@@ -54,6 +54,16 @@ export default function Header() {
               NGOs
             </Link>
             <Link
+              href="/campaigns"
+              className={`${
+                pathname?.startsWith('/campaigns')
+                  ? 'text-blue-600 font-semibold'
+                  : 'text-gray-600 hover:text-gray-900'
+              } transition`}
+            >
+              Campaigns
+            </Link>
+            <Link
               href="/map"
               className={`${
                 isActive('/map')
@@ -121,6 +131,14 @@ export default function Header() {
             } text-sm py-2`}
           >
             NGOs
+          </Link>
+          <Link
+            href="/campaigns"
+            className={`${
+              pathname?.startsWith('/campaigns') ? 'text-blue-600' : 'text-gray-600'
+            } text-sm py-2`}
+          >
+            Campaigns
           </Link>
           <Link
             href="/map"

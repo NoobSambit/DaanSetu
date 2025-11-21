@@ -9,9 +9,17 @@ interface DonateButtonProps {
   ngoId: string
   ngoName: string
   isAuthenticated: boolean
+  campaignId?: string
+  campaignTitle?: string
 }
 
-export default function DonateButton({ ngoId, ngoName, isAuthenticated }: DonateButtonProps) {
+export default function DonateButton({
+  ngoId,
+  ngoName,
+  isAuthenticated,
+  campaignId,
+  campaignTitle,
+}: DonateButtonProps) {
   const router = useRouter()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
@@ -53,6 +61,8 @@ export default function DonateButton({ ngoId, ngoName, isAuthenticated }: Donate
         <DonationModal
           ngoId={ngoId}
           ngoName={ngoName}
+          campaignId={campaignId}
+          campaignTitle={campaignTitle}
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           onSuccess={handleDonationSuccess}

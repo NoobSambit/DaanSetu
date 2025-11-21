@@ -70,11 +70,82 @@ export interface Database {
           created_at?: string
         }
       }
+      campaigns: {
+        Row: {
+          id: string
+          ngo_id: string
+          title: string
+          short_description: string
+          description: string
+          goal_amount: number
+          current_amount: number
+          deadline: string
+          image_url: string | null
+          category: 'education' | 'food' | 'health' | 'disaster' | 'women' | 'animals'
+          status: 'active' | 'completed' | 'cancelled'
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          ngo_id: string
+          title: string
+          short_description: string
+          description: string
+          goal_amount: number
+          current_amount?: number
+          deadline: string
+          image_url?: string | null
+          category: 'education' | 'food' | 'health' | 'disaster' | 'women' | 'animals'
+          status?: 'active' | 'completed' | 'cancelled'
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          ngo_id?: string
+          title?: string
+          short_description?: string
+          description?: string
+          goal_amount?: number
+          current_amount?: number
+          deadline?: string
+          image_url?: string | null
+          category?: 'education' | 'food' | 'health' | 'disaster' | 'women' | 'animals'
+          status?: 'active' | 'completed' | 'cancelled'
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      campaign_updates: {
+        Row: {
+          id: string
+          campaign_id: string
+          text: string
+          image_url: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          campaign_id: string
+          text: string
+          image_url?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          campaign_id?: string
+          text?: string
+          image_url?: string | null
+          created_at?: string
+        }
+      }
       donations: {
         Row: {
           id: string
           user_id: string
           ngo_id: string
+          campaign_id: string | null
           amount: number
           cause: 'education' | 'hunger' | 'healthcare' | 'disaster' | 'general'
           is_anonymous: boolean
@@ -85,6 +156,7 @@ export interface Database {
           id?: string
           user_id: string
           ngo_id: string
+          campaign_id?: string | null
           amount: number
           cause: 'education' | 'hunger' | 'healthcare' | 'disaster' | 'general'
           is_anonymous?: boolean
@@ -95,6 +167,7 @@ export interface Database {
           id?: string
           user_id?: string
           ngo_id?: string
+          campaign_id?: string | null
           amount?: number
           cause?: 'education' | 'hunger' | 'healthcare' | 'disaster' | 'general'
           is_anonymous?: boolean
@@ -120,3 +193,7 @@ export type User = Database['public']['Tables']['users']['Row']
 export type NGOCategory = Database['public']['Tables']['ngos']['Row']['category']
 export type Donation = Database['public']['Tables']['donations']['Row']
 export type DonationCause = Database['public']['Tables']['donations']['Row']['cause']
+export type Campaign = Database['public']['Tables']['campaigns']['Row']
+export type CampaignCategory = Database['public']['Tables']['campaigns']['Row']['category']
+export type CampaignStatus = Database['public']['Tables']['campaigns']['Row']['status']
+export type CampaignUpdate = Database['public']['Tables']['campaign_updates']['Row']
