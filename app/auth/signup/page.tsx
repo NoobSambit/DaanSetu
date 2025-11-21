@@ -10,6 +10,7 @@ export default function SignupPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [role, setRole] = useState<'user' | 'ngo' | 'corporate'>('user')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
@@ -53,7 +54,7 @@ export default function SignupPage() {
             id: authData.user.id,
             name,
             email,
-            role: 'user',
+            role,
           })
 
         if (profileError) {
@@ -61,7 +62,12 @@ export default function SignupPage() {
           // Continue anyway, profile can be created later
         }
 
-        router.push('/ngos')
+        // Redirect based on role
+        if (role === 'corporate') {
+          router.push('/corporate/profile')
+        } else {
+          router.push('/ngos')
+        }
         router.refresh()
       }
     } catch (err: any) {
@@ -87,8 +93,49 @@ export default function SignupPage() {
 
           <form onSubmit={handleSignup} className="space-y-6">
             <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                I am registering as
+              </label>
+              <div className="grid grid-cols-3 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setRole('user')}
+                  className={`py-2 px-3 rounded-lg border-2 text-sm font-medium transition ${
+                    role === 'user'
+                      ? 'border-blue-600 bg-blue-50 text-blue-700'
+                      : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                  }`}
+                >
+                  User
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRole('ngo')}
+                  className={`py-2 px-3 rounded-lg border-2 text-sm font-medium transition ${
+                    role === 'ngo'
+                      ? 'border-blue-600 bg-blue-50 text-blue-700'
+                      : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                  }`}
+                >
+                  NGO
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRole('corporate')}
+                  className={`py-2 px-3 rounded-lg border-2 text-sm font-medium transition ${
+                    role === 'corporate'
+                      ? 'border-blue-600 bg-blue-50 text-blue-700'
+                      : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                  }`}
+                >
+                  Corporate
+                </button>
+              </div>
+            </div>
+
+            <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                Full Name
+                {role === 'corporate' ? 'Contact Name' : 'Full Name'}
               </label>
               <input
                 id="name"
@@ -103,7 +150,7 @@ export default function SignupPage() {
 
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address
+                {role === 'corporate' ? 'Official Email' : 'Email Address'}
               </label>
               <input
                 id="email"

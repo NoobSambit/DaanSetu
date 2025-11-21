@@ -52,21 +52,21 @@ export interface Database {
           id: string
           name: string
           email: string
-          role: 'user' | 'ngo' | 'admin'
+          role: 'user' | 'ngo' | 'admin' | 'corporate'
           created_at: string
         }
         Insert: {
           id: string
           name: string
           email: string
-          role?: 'user' | 'ngo' | 'admin'
+          role?: 'user' | 'ngo' | 'admin' | 'corporate'
           created_at?: string
         }
         Update: {
           id?: string
           name?: string
           email?: string
-          role?: 'user' | 'ngo' | 'admin'
+          role?: 'user' | 'ngo' | 'admin' | 'corporate'
           created_at?: string
         }
       }
@@ -146,6 +146,7 @@ export interface Database {
           user_id: string
           ngo_id: string
           campaign_id: string | null
+          corporate_campaign_id: string | null
           amount: number
           cause: 'education' | 'hunger' | 'healthcare' | 'disaster' | 'general'
           is_anonymous: boolean
@@ -157,6 +158,7 @@ export interface Database {
           user_id: string
           ngo_id: string
           campaign_id?: string | null
+          corporate_campaign_id?: string | null
           amount: number
           cause: 'education' | 'hunger' | 'healthcare' | 'disaster' | 'general'
           is_anonymous?: boolean
@@ -168,6 +170,7 @@ export interface Database {
           user_id?: string
           ngo_id?: string
           campaign_id?: string | null
+          corporate_campaign_id?: string | null
           amount?: number
           cause?: 'education' | 'hunger' | 'healthcare' | 'disaster' | 'general'
           is_anonymous?: boolean
@@ -320,6 +323,143 @@ export interface Database {
           timestamp?: string
         }
       }
+      corporate_profiles: {
+        Row: {
+          id: string
+          user_id: string
+          company_name: string
+          industry: string
+          company_size: '1-50' | '51-200' | '201-500' | '501-1000' | '1000+'
+          description: string | null
+          website: string | null
+          logo_url: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          company_name: string
+          industry: string
+          company_size: '1-50' | '51-200' | '201-500' | '501-1000' | '1000+'
+          description?: string | null
+          website?: string | null
+          logo_url?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          company_name?: string
+          industry?: string
+          company_size?: '1-50' | '51-200' | '201-500' | '501-1000' | '1000+'
+          description?: string | null
+          website?: string | null
+          logo_url?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      corporate_campaigns: {
+        Row: {
+          id: string
+          corporate_id: string
+          title: string
+          description: string
+          cause: 'education' | 'food' | 'health' | 'disaster' | 'women' | 'animals' | 'environment'
+          goal_amount: number
+          current_amount: number
+          deadline: string
+          image_url: string | null
+          status: 'active' | 'completed' | 'cancelled'
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          corporate_id: string
+          title: string
+          description: string
+          cause: 'education' | 'food' | 'health' | 'disaster' | 'women' | 'animals' | 'environment'
+          goal_amount: number
+          current_amount?: number
+          deadline: string
+          image_url?: string | null
+          status?: 'active' | 'completed' | 'cancelled'
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          corporate_id?: string
+          title?: string
+          description?: string
+          cause?: 'education' | 'food' | 'health' | 'disaster' | 'women' | 'animals' | 'environment'
+          goal_amount?: number
+          current_amount?: number
+          deadline?: string
+          image_url?: string | null
+          status?: 'active' | 'completed' | 'cancelled'
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      partnership_requests: {
+        Row: {
+          id: string
+          corporate_campaign_id: string
+          ngo_id: string
+          status: 'pending' | 'accepted' | 'rejected'
+          message: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          corporate_campaign_id: string
+          ngo_id: string
+          status?: 'pending' | 'accepted' | 'rejected'
+          message?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          corporate_campaign_id?: string
+          ngo_id?: string
+          status?: 'pending' | 'accepted' | 'rejected'
+          message?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      corporate_employees: {
+        Row: {
+          id: string
+          corporate_id: string
+          name: string
+          email: string
+          designation: string | null
+          joined_at: string
+        }
+        Insert: {
+          id?: string
+          corporate_id: string
+          name: string
+          email: string
+          designation?: string | null
+          joined_at?: string
+        }
+        Update: {
+          id?: string
+          corporate_id?: string
+          name?: string
+          email?: string
+          designation?: string | null
+          joined_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
@@ -335,6 +475,7 @@ export interface Database {
 
 export type NGO = Database['public']['Tables']['ngos']['Row']
 export type User = Database['public']['Tables']['users']['Row']
+export type UserRole = Database['public']['Tables']['users']['Row']['role']
 export type NGOCategory = Database['public']['Tables']['ngos']['Row']['category']
 export type Donation = Database['public']['Tables']['donations']['Row']
 export type DonationCause = Database['public']['Tables']['donations']['Row']['cause']
@@ -351,3 +492,11 @@ export type AIFlag = Database['public']['Tables']['ai_flags']['Row']
 export type AIFlagEntityType = Database['public']['Tables']['ai_flags']['Row']['entity_type']
 export type AnalyticsLog = Database['public']['Tables']['analytics_logs']['Row']
 export type AnalyticsEventType = Database['public']['Tables']['analytics_logs']['Row']['event_type']
+export type CorporateProfile = Database['public']['Tables']['corporate_profiles']['Row']
+export type CorporateSize = Database['public']['Tables']['corporate_profiles']['Row']['company_size']
+export type CorporateCampaign = Database['public']['Tables']['corporate_campaigns']['Row']
+export type CorporateCampaignCause = Database['public']['Tables']['corporate_campaigns']['Row']['cause']
+export type CorporateCampaignStatus = Database['public']['Tables']['corporate_campaigns']['Row']['status']
+export type PartnershipRequest = Database['public']['Tables']['partnership_requests']['Row']
+export type PartnershipRequestStatus = Database['public']['Tables']['partnership_requests']['Row']['status']
+export type CorporateEmployee = Database['public']['Tables']['corporate_employees']['Row']
