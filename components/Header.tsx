@@ -63,6 +63,18 @@ export default function Header() {
             >
               Map
             </Link>
+            {user && (
+              <Link
+                href="/dashboard"
+                className={`${
+                  isActive('/dashboard')
+                    ? 'text-blue-600 font-semibold'
+                    : 'text-gray-600 hover:text-gray-900'
+                } transition`}
+              >
+                Dashboard
+              </Link>
+            )}
           </nav>
 
           {/* Auth Buttons */}
@@ -118,6 +130,16 @@ export default function Header() {
           >
             Map
           </Link>
+          {user && (
+            <Link
+              href="/dashboard"
+              className={`${
+                isActive('/dashboard') ? 'text-blue-600' : 'text-gray-600'
+              } text-sm py-2`}
+            >
+              Dashboard
+            </Link>
+          )}
         </div>
       </div>
     </header>
