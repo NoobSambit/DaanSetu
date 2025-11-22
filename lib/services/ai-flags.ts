@@ -1,4 +1,5 @@
-import { createClient } from '@/lib/supabase/client'
+import { getBrowserClient } from '@/lib/supabase'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { analyzeContentQuality } from './gemini'
 import type { AIFlag } from '../types/database.types'
 
@@ -9,9 +10,10 @@ export async function flagEntity(
   entityType: 'ngo' | 'campaign',
   entityId: string,
   reason: string,
-  confidence: string
+  confidence: string,
+  supabaseClient?: SupabaseClient
 ) {
-  const supabase = createClient()
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data, error } = await supabase
     .from('ai_flags')
@@ -31,8 +33,8 @@ export async function flagEntity(
 /**
  * Get all AI flags (admin only)
  */
-export async function getAllFlags() {
-  const supabase = createClient()
+export async function getAllFlags(supabaseClient?: SupabaseClient) {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data, error } = await supabase
     .from('ai_flags')
@@ -58,8 +60,8 @@ export async function getAllFlags() {
 /**
  * Delete an AI flag (admin only)
  */
-export async function deleteFlag(flagId: string) {
-  const supabase = createClient()
+export async function deleteFlag(flagId: string, supabaseClient?: SupabaseClient) {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { error } = await supabase
     .from('ai_flags')
@@ -72,11 +74,11 @@ export async function deleteFlag(flagId: string) {
 /**
  * Analyze and flag NGO content if suspicious
  */
-export async function analyzeAndFlagNGO(ngoId: string, title: string, description: string) {
+export async function analyzeAndFlagNGO(ngoId: string, title: string, description: string, supabaseClient?: SupabaseClient) {
   const analysis = await analyzeContentQuality('ngo', { title, description })
 
   if (analysis.is_suspicious && analysis.confidence !== 'low') {
-    await flagEntity('ngo', ngoId, analysis.reason, analysis.confidence)
+    await flagEntity('ngo', ngoId, analysis.reason, analysis.confidence, supabaseClient)
   }
 
   return analysis
@@ -85,11 +87,11 @@ export async function analyzeAndFlagNGO(ngoId: string, title: string, descriptio
 /**
  * Analyze and flag campaign content if suspicious
  */
-export async function analyzeAndFlagCampaign(campaignId: string, title: string, description: string) {
+export async function analyzeAndFlagCampaign(campaignId: string, title: string, description: string, supabaseClient?: SupabaseClient) {
   const analysis = await analyzeContentQuality('campaign', { title, description })
 
   if (analysis.is_suspicious && analysis.confidence !== 'low') {
-    await flagEntity('campaign', campaignId, analysis.reason, analysis.confidence)
+    await flagEntity('campaign', campaignId, analysis.reason, analysis.confidence, supabaseClient)
   }
 
   return analysis

@@ -1,4 +1,5 @@
-import { createClient } from '@/lib/supabase/client'
+import { getBrowserClient } from '@/lib/supabase'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import type { CorporateEmployee } from '@/lib/types/database.types'
 
 export interface CreateEmployeeParams {
@@ -15,8 +16,8 @@ export interface UpdateEmployeeParams {
   designation?: string
 }
 
-export async function createEmployee(params: CreateEmployeeParams) {
-  const supabase = createClient()
+export async function createEmployee(params: CreateEmployeeParams, supabaseClient?: SupabaseClient) {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data: { user }, error: userError } = await supabase.auth.getUser()
 
@@ -42,8 +43,8 @@ export async function createEmployee(params: CreateEmployeeParams) {
   return data
 }
 
-export async function getEmployeesByCorporate(corporateId: string): Promise<CorporateEmployee[]> {
-  const supabase = createClient()
+export async function getEmployeesByCorporate(corporateId: string, supabaseClient?: SupabaseClient): Promise<CorporateEmployee[]> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data, error } = await supabase
     .from('corporate_employees')
@@ -58,8 +59,8 @@ export async function getEmployeesByCorporate(corporateId: string): Promise<Corp
   return data
 }
 
-export async function getEmployeeById(employeeId: string): Promise<CorporateEmployee | null> {
-  const supabase = createClient()
+export async function getEmployeeById(employeeId: string, supabaseClient?: SupabaseClient): Promise<CorporateEmployee | null> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data, error } = await supabase
     .from('corporate_employees')
@@ -77,8 +78,8 @@ export async function getEmployeeById(employeeId: string): Promise<CorporateEmpl
   return data
 }
 
-export async function updateEmployee(params: UpdateEmployeeParams) {
-  const supabase = createClient()
+export async function updateEmployee(params: UpdateEmployeeParams, supabaseClient?: SupabaseClient) {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data: { user }, error: userError } = await supabase.auth.getUser()
 
@@ -106,8 +107,8 @@ export async function updateEmployee(params: UpdateEmployeeParams) {
   return data
 }
 
-export async function deleteEmployee(employeeId: string) {
-  const supabase = createClient()
+export async function deleteEmployee(employeeId: string, supabaseClient?: SupabaseClient) {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data: { user }, error: userError } = await supabase.auth.getUser()
 
@@ -125,8 +126,8 @@ export async function deleteEmployee(employeeId: string) {
   }
 }
 
-export async function getEmployeeCount(corporateId: string): Promise<number> {
-  const supabase = createClient()
+export async function getEmployeeCount(corporateId: string, supabaseClient?: SupabaseClient): Promise<number> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data, error } = await supabase
     .from('corporate_employees')

@@ -1,4 +1,5 @@
-import { createClient } from '@/lib/supabase/client'
+import { getBrowserClient } from '@/lib/supabase'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import type { CorporateProfile, CorporateSize } from '@/lib/types/database.types'
 
 export interface CreateCorporateProfileParams {
@@ -19,8 +20,8 @@ export interface UpdateCorporateProfileParams {
   logoUrl?: string
 }
 
-export async function createCorporateProfile(params: CreateCorporateProfileParams) {
-  const supabase = createClient()
+export async function createCorporateProfile(params: CreateCorporateProfileParams, supabaseClient?: SupabaseClient) {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data: { user }, error: userError } = await supabase.auth.getUser()
 
@@ -49,8 +50,8 @@ export async function createCorporateProfile(params: CreateCorporateProfileParam
   return data
 }
 
-export async function getCorporateProfile(userId?: string): Promise<CorporateProfile | null> {
-  const supabase = createClient()
+export async function getCorporateProfile(userId?: string, supabaseClient?: SupabaseClient): Promise<CorporateProfile | null> {
+  const supabase = supabaseClient || getBrowserClient()
 
   let targetUserId = userId
 
@@ -78,8 +79,8 @@ export async function getCorporateProfile(userId?: string): Promise<CorporatePro
   return data
 }
 
-export async function getCorporateProfileById(corporateId: string): Promise<CorporateProfile | null> {
-  const supabase = createClient()
+export async function getCorporateProfileById(corporateId: string, supabaseClient?: SupabaseClient): Promise<CorporateProfile | null> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data, error } = await supabase
     .from('corporate_profiles')
@@ -97,8 +98,8 @@ export async function getCorporateProfileById(corporateId: string): Promise<Corp
   return data
 }
 
-export async function updateCorporateProfile(params: UpdateCorporateProfileParams) {
-  const supabase = createClient()
+export async function updateCorporateProfile(params: UpdateCorporateProfileParams, supabaseClient?: SupabaseClient) {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data: { user }, error: userError } = await supabase.auth.getUser()
 
@@ -131,8 +132,8 @@ export async function updateCorporateProfile(params: UpdateCorporateProfileParam
   return data
 }
 
-export async function hasCorporateProfile(): Promise<boolean> {
-  const supabase = createClient()
+export async function hasCorporateProfile(supabaseClient?: SupabaseClient): Promise<boolean> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -156,8 +157,8 @@ export async function hasCorporateProfile(): Promise<boolean> {
   return !!data
 }
 
-export async function getAllCorporateProfiles(): Promise<CorporateProfile[]> {
-  const supabase = createClient()
+export async function getAllCorporateProfiles(supabaseClient?: SupabaseClient): Promise<CorporateProfile[]> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data, error } = await supabase
     .from('corporate_profiles')

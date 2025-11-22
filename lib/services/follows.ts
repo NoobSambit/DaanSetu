@@ -1,4 +1,5 @@
-import { createClient } from '@/lib/supabase/server'
+import { getBrowserClient } from '@/lib/supabase'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 export type FollowingType = 'user' | 'ngo' | 'corporate'
 
@@ -23,9 +24,10 @@ export interface FollowWithDetails extends Follow {
 export async function followEntity(
   followerId: string,
   followingId: string,
-  followingType: FollowingType
+  followingType: FollowingType,
+  supabaseClient?: SupabaseClient
 ): Promise<Follow> {
-  const supabase = await createClient()
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data: follow, error } = await supabase
     .from('follows')
@@ -49,9 +51,10 @@ export async function followEntity(
 export async function unfollowEntity(
   followerId: string,
   followingId: string,
-  followingType: FollowingType
+  followingType: FollowingType,
+  supabaseClient?: SupabaseClient
 ): Promise<void> {
-  const supabase = await createClient()
+  const supabase = supabaseClient || getBrowserClient()
 
   const { error } = await supabase
     .from('follows')
@@ -70,9 +73,10 @@ export async function unfollowEntity(
 export async function isFollowing(
   followerId: string,
   followingId: string,
-  followingType: FollowingType
+  followingType: FollowingType,
+  supabaseClient?: SupabaseClient
 ): Promise<boolean> {
-  const supabase = await createClient()
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data, error } = await supabase
     .rpc('is_following', {
@@ -90,8 +94,8 @@ export async function isFollowing(
 }
 
 // Get follower count for an entity
-export async function getFollowerCount(entityId: string, entityType: FollowingType): Promise<number> {
-  const supabase = await createClient()
+export async function getFollowerCount(entityId: string, entityType: FollowingType, supabaseClient?: SupabaseClient): Promise<number> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data, error } = await supabase
     .rpc('get_follower_count', {
@@ -108,8 +112,8 @@ export async function getFollowerCount(entityId: string, entityType: FollowingTy
 }
 
 // Get following count for a user
-export async function getFollowingCount(userId: string): Promise<number> {
-  const supabase = await createClient()
+export async function getFollowingCount(userId: string, supabaseClient?: SupabaseClient): Promise<number> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data, error } = await supabase
     .rpc('get_following_count', { user_uuid: userId })
@@ -123,8 +127,8 @@ export async function getFollowingCount(userId: string): Promise<number> {
 }
 
 // Get list of users that a user is following
-export async function getFollowing(userId: string): Promise<Follow[]> {
-  const supabase = await createClient()
+export async function getFollowing(userId: string, supabaseClient?: SupabaseClient): Promise<Follow[]> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data: follows, error } = await supabase
     .from('follows')
@@ -141,8 +145,8 @@ export async function getFollowing(userId: string): Promise<Follow[]> {
 }
 
 // Get list of followers for an entity
-export async function getFollowers(entityId: string, entityType: FollowingType): Promise<FollowWithDetails[]> {
-  const supabase = await createClient()
+export async function getFollowers(entityId: string, entityType: FollowingType, supabaseClient?: SupabaseClient): Promise<FollowWithDetails[]> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data: follows, error } = await supabase
     .from('follows')
@@ -166,8 +170,8 @@ export async function getFollowers(entityId: string, entityType: FollowingType):
 }
 
 // Get posts from followed entities
-export async function getFollowingFeed(userId: string): Promise<any[]> {
-  const supabase = await createClient()
+export async function getFollowingFeed(userId: string, supabaseClient?: SupabaseClient): Promise<any[]> {
+  const supabase = supabaseClient || getBrowserClient()
 
   // Get all entities the user is following
   const { data: follows, error: followError } = await supabase

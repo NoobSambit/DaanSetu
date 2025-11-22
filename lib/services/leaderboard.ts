@@ -1,4 +1,5 @@
-import { createClient } from '@/lib/supabase/server'
+import { getBrowserClient } from '@/lib/supabase'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 export interface DonorLeaderboardEntry {
   user_id: string
@@ -36,8 +37,8 @@ export interface CorporateLeaderboardEntry {
 }
 
 // Get top donors
-export async function getTopDonors(limit = 10): Promise<DonorLeaderboardEntry[]> {
-  const supabase = await createClient()
+export async function getTopDonors(limit = 10, supabaseClient?: SupabaseClient): Promise<DonorLeaderboardEntry[]> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data, error } = await supabase
     .from('donations')
@@ -94,8 +95,8 @@ export async function getTopDonors(limit = 10): Promise<DonorLeaderboardEntry[]>
 }
 
 // Get top volunteers
-export async function getTopVolunteers(limit = 10): Promise<VolunteerLeaderboardEntry[]> {
-  const supabase = await createClient()
+export async function getTopVolunteers(limit = 10, supabaseClient?: SupabaseClient): Promise<VolunteerLeaderboardEntry[]> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data, error } = await supabase
     .from('volunteer_applications')
@@ -149,8 +150,8 @@ export async function getTopVolunteers(limit = 10): Promise<VolunteerLeaderboard
 }
 
 // Get top NGOs
-export async function getTopNGOs(limit = 10): Promise<NGOLeaderboardEntry[]> {
-  const supabase = await createClient()
+export async function getTopNGOs(limit = 10, supabaseClient?: SupabaseClient): Promise<NGOLeaderboardEntry[]> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data, error } = await supabase
     .from('donations')
@@ -214,8 +215,8 @@ export async function getTopNGOs(limit = 10): Promise<NGOLeaderboardEntry[]> {
 }
 
 // Get top corporates
-export async function getTopCorporates(limit = 10): Promise<CorporateLeaderboardEntry[]> {
-  const supabase = await createClient()
+export async function getTopCorporates(limit = 10, supabaseClient?: SupabaseClient): Promise<CorporateLeaderboardEntry[]> {
+  const supabase = supabaseClient || getBrowserClient()
 
   // Get all corporate campaigns with their profiles
   const { data: campaigns, error: campaignsError } = await supabase
@@ -275,15 +276,15 @@ export async function getTopCorporates(limit = 10): Promise<CorporateLeaderboard
 }
 
 // Get user's rank in donor leaderboard
-export async function getUserDonorRank(userId: string): Promise<number | null> {
-  const donors = await getTopDonors(1000) // Get more entries to find user's rank
+export async function getUserDonorRank(userId: string, supabaseClient?: SupabaseClient): Promise<number | null> {
+  const donors = await getTopDonors(1000, supabaseClient) // Get more entries to find user's rank
   const userEntry = donors.find(d => d.user_id === userId)
   return userEntry ? userEntry.rank : null
 }
 
 // Get user's rank in volunteer leaderboard
-export async function getUserVolunteerRank(userId: string): Promise<number | null> {
-  const volunteers = await getTopVolunteers(1000)
+export async function getUserVolunteerRank(userId: string, supabaseClient?: SupabaseClient): Promise<number | null> {
+  const volunteers = await getTopVolunteers(1000, supabaseClient)
   const userEntry = volunteers.find(v => v.user_id === userId)
   return userEntry ? userEntry.rank : null
 }

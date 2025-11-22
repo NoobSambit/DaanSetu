@@ -1,6 +1,7 @@
-import { createClient } from '@/lib/supabase/client'
+import { getBrowserClient } from '@/lib/supabase'
 import type { DonationCause } from '@/lib/types/database.types'
 import { incrementCampaignAmount } from './campaigns'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 export interface CreateDonationParams {
   ngoId: string
@@ -8,6 +9,7 @@ export interface CreateDonationParams {
   cause: DonationCause
   isAnonymous: boolean
   campaignId?: string
+  corporateCampaignId?: string
 }
 
 export interface DonationWithNGO {
@@ -23,26 +25,33 @@ export interface DonationWithNGO {
   }
 }
 
-// Simulated payment processing
-export async function processPayment(amount: number): Promise<{ success: boolean; error?: string }> {
+/**
+ * Process payment through Razorpay
+ * This is a placeholder - actual implementation should be in an API route for security
+ */
+export async function processPayment(
+  amount: number,
+  orderId: string
+): Promise<{ success: boolean; transactionId?: string; error?: string }> {
+  // This should be replaced with actual Razorpay integration
+  // Payment processing should happen server-side via API routes
+  console.warn('Payment processing not yet implemented - using simulation')
+
   // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 2000))
+  await new Promise((resolve) => setTimeout(resolve, 1000))
 
-  // Simulate 95% success rate
-  const success = Math.random() > 0.05
-
-  if (success) {
-    return { success: true }
-  } else {
-    return {
-      success: false,
-      error: 'Payment failed. Please try again.'
-    }
+  // For now, simulate success
+  return {
+    success: true,
+    transactionId: `txn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
   }
 }
 
-export async function createDonation(params: CreateDonationParams) {
-  const supabase = createClient()
+export async function createDonation(
+  params: CreateDonationParams,
+  supabaseClient?: SupabaseClient
+) {
+  const supabase = supabaseClient || getBrowserClient()
 
   // Get current user
   const { data: { user }, error: userError } = await supabase.auth.getUser()
@@ -51,20 +60,33 @@ export async function createDonation(params: CreateDonationParams) {
     throw new Error('You must be logged in to donate')
   }
 
-  // Process payment
-  const paymentResult = await processPayment(params.amount)
-
-  if (!paymentResult.success) {
-    throw new Error(paymentResult.error)
+  // Validate amount
+  if (params.amount <= 0) {
+    throw new Error('Donation amount must be greater than 0')
   }
 
-  // Create donation record
+  if (params.amount > 10000000) {
+    throw new Error('Donation amount cannot exceed ₹1,00,00,000')
+  }
+
+  // Create order ID for payment
+  const orderId = `order_${Date.now()}_${user.id.substring(0, 8)}`
+
+  // Process payment
+  const paymentResult = await processPayment(params.amount, orderId)
+
+  if (!paymentResult.success) {
+    throw new Error(paymentResult.error || 'Payment failed')
+  }
+
+  // Create donation record with transaction ID
   const { data, error } = await supabase
     .from('donations')
     .insert({
       user_id: user.id,
       ngo_id: params.ngoId,
       campaign_id: params.campaignId || null,
+      corporate_campaign_id: params.corporateCampaignId || null,
       amount: params.amount,
       cause: params.cause,
       is_anonymous: params.isAnonymous,
@@ -80,9 +102,22 @@ export async function createDonation(params: CreateDonationParams) {
   // If this donation is for a campaign, increment the campaign amount
   if (params.campaignId) {
     try {
-      await incrementCampaignAmount(params.campaignId, params.amount)
+      await incrementCampaignAmount(params.campaignId, params.amount, supabase)
     } catch (campaignError) {
       console.error('Failed to update campaign amount:', campaignError)
+      // Don't throw - donation was successful
+    }
+  }
+
+  // If this donation is for a corporate campaign, increment the amount
+  if (params.corporateCampaignId) {
+    try {
+      await supabase.rpc('increment_corporate_campaign_amount', {
+        campaign_id: params.corporateCampaignId,
+        amount_to_add: params.amount
+      })
+    } catch (campaignError) {
+      console.error('Failed to update corporate campaign amount:', campaignError)
       // Don't throw - donation was successful
     }
   }
@@ -90,8 +125,10 @@ export async function createDonation(params: CreateDonationParams) {
   return data
 }
 
-export async function getUserDonations(): Promise<DonationWithNGO[]> {
-  const supabase = createClient()
+export async function getUserDonations(
+  supabaseClient?: SupabaseClient
+): Promise<DonationWithNGO[]> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data, error } = await supabase
     .from('donations')
@@ -112,8 +149,8 @@ export async function getUserDonations(): Promise<DonationWithNGO[]> {
   return data as unknown as DonationWithNGO[]
 }
 
-export async function getDonationStats() {
-  const supabase = createClient()
+export async function getDonationStats(supabaseClient?: SupabaseClient) {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data, error } = await supabase
     .from('donations')

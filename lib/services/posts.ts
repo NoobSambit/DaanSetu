@@ -1,4 +1,5 @@
-import { createClient } from '@/lib/supabase/server'
+import { getBrowserClient } from '@/lib/supabase'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Post, PostCategory, PostAuthorRole, PostLike, PostComment } from '@/lib/types/database.types'
 
 export interface PostWithAuthor extends Post {
@@ -38,8 +39,8 @@ export interface UpdatePostData {
 }
 
 // Create a new post
-export async function createPost(data: CreatePostData): Promise<Post> {
-  const supabase = await createClient()
+export async function createPost(data: CreatePostData, supabaseClient?: SupabaseClient): Promise<Post> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data: post, error } = await supabase
     .from('posts')
@@ -56,8 +57,8 @@ export async function createPost(data: CreatePostData): Promise<Post> {
 }
 
 // Get all posts with author info, like/comment counts
-export async function getPosts(userId?: string): Promise<PostWithAuthor[]> {
-  const supabase = await createClient()
+export async function getPosts(userId?: string, supabaseClient?: SupabaseClient): Promise<PostWithAuthor[]> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data: posts, error } = await supabase
     .from('posts')
@@ -76,9 +77,9 @@ export async function getPosts(userId?: string): Promise<PostWithAuthor[]> {
   const postsWithCounts = await Promise.all(
     posts.map(async (post) => {
       const [likeCount, commentCount, userHasLiked] = await Promise.all([
-        getPostLikeCount(post.id),
-        getPostCommentCount(post.id),
-        userId ? hasUserLikedPost(post.id, userId) : false
+        getPostLikeCount(post.id, supabaseClient),
+        getPostCommentCount(post.id, supabaseClient),
+        userId ? hasUserLikedPost(post.id, userId, supabaseClient) : false
       ])
 
       return {
@@ -95,8 +96,8 @@ export async function getPosts(userId?: string): Promise<PostWithAuthor[]> {
 }
 
 // Get a single post by ID
-export async function getPost(postId: string, userId?: string): Promise<PostWithAuthor | null> {
-  const supabase = await createClient()
+export async function getPost(postId: string, userId?: string, supabaseClient?: SupabaseClient): Promise<PostWithAuthor | null> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data: post, error } = await supabase
     .from('posts')
@@ -112,9 +113,9 @@ export async function getPost(postId: string, userId?: string): Promise<PostWith
   }
 
   const [likeCount, commentCount, userHasLiked] = await Promise.all([
-    getPostLikeCount(post.id),
-    getPostCommentCount(post.id),
-    userId ? hasUserLikedPost(post.id, userId) : false
+    getPostLikeCount(post.id, supabaseClient),
+    getPostCommentCount(post.id, supabaseClient),
+    userId ? hasUserLikedPost(post.id, userId, supabaseClient) : false
   ])
 
   return {
@@ -127,8 +128,8 @@ export async function getPost(postId: string, userId?: string): Promise<PostWith
 }
 
 // Update a post
-export async function updatePost(postId: string, data: UpdatePostData): Promise<Post> {
-  const supabase = await createClient()
+export async function updatePost(postId: string, data: UpdatePostData, supabaseClient?: SupabaseClient): Promise<Post> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data: post, error } = await supabase
     .from('posts')
@@ -146,8 +147,8 @@ export async function updatePost(postId: string, data: UpdatePostData): Promise<
 }
 
 // Delete a post
-export async function deletePost(postId: string): Promise<void> {
-  const supabase = await createClient()
+export async function deletePost(postId: string, supabaseClient?: SupabaseClient): Promise<void> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { error } = await supabase
     .from('posts')
@@ -161,8 +162,8 @@ export async function deletePost(postId: string): Promise<void> {
 }
 
 // Like a post
-export async function likePost(postId: string, userId: string): Promise<PostLike> {
-  const supabase = await createClient()
+export async function likePost(postId: string, userId: string, supabaseClient?: SupabaseClient): Promise<PostLike> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data: like, error } = await supabase
     .from('post_likes')
@@ -179,8 +180,8 @@ export async function likePost(postId: string, userId: string): Promise<PostLike
 }
 
 // Unlike a post
-export async function unlikePost(postId: string, userId: string): Promise<void> {
-  const supabase = await createClient()
+export async function unlikePost(postId: string, userId: string, supabaseClient?: SupabaseClient): Promise<void> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { error } = await supabase
     .from('post_likes')
@@ -195,8 +196,8 @@ export async function unlikePost(postId: string, userId: string): Promise<void> 
 }
 
 // Check if user has liked a post
-export async function hasUserLikedPost(postId: string, userId: string): Promise<boolean> {
-  const supabase = await createClient()
+export async function hasUserLikedPost(postId: string, userId: string, supabaseClient?: SupabaseClient): Promise<boolean> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data, error } = await supabase
     .from('post_likes')
@@ -209,8 +210,8 @@ export async function hasUserLikedPost(postId: string, userId: string): Promise<
 }
 
 // Get like count for a post
-export async function getPostLikeCount(postId: string): Promise<number> {
-  const supabase = await createClient()
+export async function getPostLikeCount(postId: string, supabaseClient?: SupabaseClient): Promise<number> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { count, error } = await supabase
     .from('post_likes')
@@ -226,8 +227,8 @@ export async function getPostLikeCount(postId: string): Promise<number> {
 }
 
 // Add a comment to a post
-export async function addComment(postId: string, userId: string, content: string): Promise<PostComment> {
-  const supabase = await createClient()
+export async function addComment(postId: string, userId: string, content: string, supabaseClient?: SupabaseClient): Promise<PostComment> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data: comment, error } = await supabase
     .from('post_comments')
@@ -244,8 +245,8 @@ export async function addComment(postId: string, userId: string, content: string
 }
 
 // Get comments for a post
-export async function getPostComments(postId: string): Promise<PostCommentWithUser[]> {
-  const supabase = await createClient()
+export async function getPostComments(postId: string, supabaseClient?: SupabaseClient): Promise<PostCommentWithUser[]> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data: comments, error } = await supabase
     .from('post_comments')
@@ -268,8 +269,8 @@ export async function getPostComments(postId: string): Promise<PostCommentWithUs
 }
 
 // Get comment count for a post
-export async function getPostCommentCount(postId: string): Promise<number> {
-  const supabase = await createClient()
+export async function getPostCommentCount(postId: string, supabaseClient?: SupabaseClient): Promise<number> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { count, error } = await supabase
     .from('post_comments')
@@ -285,8 +286,8 @@ export async function getPostCommentCount(postId: string): Promise<number> {
 }
 
 // Delete a comment
-export async function deleteComment(commentId: string): Promise<void> {
-  const supabase = await createClient()
+export async function deleteComment(commentId: string, supabaseClient?: SupabaseClient): Promise<void> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { error } = await supabase
     .from('post_comments')
@@ -310,8 +311,8 @@ export const POST_CATEGORY_LABELS: Record<PostCategory, string> = {
 }
 
 // Get trending posts (most engagement in last 7 days)
-export async function getTrendingPosts(limit: number = 10): Promise<PostWithAuthor[]> {
-  const supabase = await createClient()
+export async function getTrendingPosts(limit: number = 10, supabaseClient?: SupabaseClient): Promise<PostWithAuthor[]> {
+  const supabase = supabaseClient || getBrowserClient()
 
   // Get trending post IDs from database function
   const { data: trendingData, error: trendingError } = await supabase
@@ -341,8 +342,8 @@ export async function getTrendingPosts(limit: number = 10): Promise<PostWithAuth
   const postsWithCounts = await Promise.all(
     posts.map(async (post) => {
       const [likeCount, commentCount] = await Promise.all([
-        getPostLikeCount(post.id),
-        getPostCommentCount(post.id)
+        getPostLikeCount(post.id, supabaseClient),
+        getPostCommentCount(post.id, supabaseClient)
       ])
 
       return {
@@ -358,8 +359,8 @@ export async function getTrendingPosts(limit: number = 10): Promise<PostWithAuth
 }
 
 // Get featured posts
-export async function getFeaturedPosts(limit: number = 5): Promise<PostWithAuthor[]> {
-  const supabase = await createClient()
+export async function getFeaturedPosts(limit: number = 5, supabaseClient?: SupabaseClient): Promise<PostWithAuthor[]> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data: posts, error } = await supabase
     .from('posts')
@@ -379,8 +380,8 @@ export async function getFeaturedPosts(limit: number = 5): Promise<PostWithAutho
   const postsWithCounts = await Promise.all(
     posts.map(async (post) => {
       const [likeCount, commentCount] = await Promise.all([
-        getPostLikeCount(post.id),
-        getPostCommentCount(post.id)
+        getPostLikeCount(post.id, supabaseClient),
+        getPostCommentCount(post.id, supabaseClient)
       ])
 
       return {
@@ -396,8 +397,8 @@ export async function getFeaturedPosts(limit: number = 5): Promise<PostWithAutho
 }
 
 // Mark post as featured (admin only)
-export async function markPostAsFeatured(postId: string, isFeatured: boolean): Promise<void> {
-  const supabase = await createClient()
+export async function markPostAsFeatured(postId: string, isFeatured: boolean, supabaseClient?: SupabaseClient): Promise<void> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { error } = await supabase
     .from('posts')
@@ -411,8 +412,8 @@ export async function markPostAsFeatured(postId: string, isFeatured: boolean): P
 }
 
 // Increment post view count
-export async function incrementPostViewCount(postId: string): Promise<void> {
-  const supabase = await createClient()
+export async function incrementPostViewCount(postId: string, supabaseClient?: SupabaseClient): Promise<void> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { error } = await supabase
     .rpc('increment_post_view_count', { post_uuid: postId })
@@ -423,8 +424,8 @@ export async function incrementPostViewCount(postId: string): Promise<void> {
 }
 
 // Track post view
-export async function trackPostView(postId: string, userId?: string, ipAddress?: string): Promise<void> {
-  const supabase = await createClient()
+export async function trackPostView(postId: string, userId?: string, ipAddress?: string, supabaseClient?: SupabaseClient): Promise<void> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { error } = await supabase
     .from('post_views')
@@ -439,7 +440,7 @@ export async function trackPostView(postId: string, userId?: string, ipAddress?:
   }
 
   // Also increment the counter
-  await incrementPostViewCount(postId)
+  await incrementPostViewCount(postId, supabaseClient)
 }
 
 // Get posts with filters
@@ -451,9 +452,10 @@ export async function getPostsFiltered(
     search?: string
     featured?: boolean
     limit?: number
-  }
+  },
+  supabaseClient?: SupabaseClient
 ): Promise<PostWithAuthor[]> {
-  const supabase = await createClient()
+  const supabase = supabaseClient || getBrowserClient()
 
   let query = supabase
     .from('posts')
@@ -495,9 +497,9 @@ export async function getPostsFiltered(
   const postsWithCounts = await Promise.all(
     posts.map(async (post) => {
       const [likeCount, commentCount, userHasLiked] = await Promise.all([
-        getPostLikeCount(post.id),
-        getPostCommentCount(post.id),
-        userId ? hasUserLikedPost(post.id, userId) : false
+        getPostLikeCount(post.id, supabaseClient),
+        getPostCommentCount(post.id, supabaseClient),
+        userId ? hasUserLikedPost(post.id, userId, supabaseClient) : false
       ])
 
       return {

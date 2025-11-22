@@ -1,4 +1,5 @@
-import { createClient } from '@/lib/supabase/server'
+import { getBrowserClient } from '@/lib/supabase'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import type { UserBadge, BadgeType } from '@/lib/types/database.types'
 
 export interface BadgeInfo {
@@ -43,8 +44,8 @@ export const BADGE_INFO: Record<BadgeType, Omit<BadgeInfo, 'type'>> = {
 }
 
 // Award a badge to a user
-export async function awardBadge(userId: string, badgeType: BadgeType): Promise<UserBadge | null> {
-  const supabase = await createClient()
+export async function awardBadge(userId: string, badgeType: BadgeType, supabaseClient?: SupabaseClient): Promise<UserBadge | null> {
+  const supabase = supabaseClient || getBrowserClient()
 
   // Check if user already has this badge
   const { data: existing } = await supabase
@@ -73,8 +74,8 @@ export async function awardBadge(userId: string, badgeType: BadgeType): Promise<
 }
 
 // Get all badges for a user
-export async function getUserBadges(userId: string): Promise<UserBadge[]> {
-  const supabase = await createClient()
+export async function getUserBadges(userId: string, supabaseClient?: SupabaseClient): Promise<UserBadge[]> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data: badges, error } = await supabase
     .from('user_badges')
@@ -91,8 +92,8 @@ export async function getUserBadges(userId: string): Promise<UserBadge[]> {
 }
 
 // Check if user has a specific badge
-export async function hasUserBadge(userId: string, badgeType: BadgeType): Promise<boolean> {
-  const supabase = await createClient()
+export async function hasUserBadge(userId: string, badgeType: BadgeType, supabaseClient?: SupabaseClient): Promise<boolean> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data, error } = await supabase
     .from('user_badges')
@@ -105,8 +106,8 @@ export async function hasUserBadge(userId: string, badgeType: BadgeType): Promis
 }
 
 // Check and award badges based on user activity
-export async function checkAndAwardBadges(userId: string): Promise<UserBadge[]> {
-  const supabase = await createClient()
+export async function checkAndAwardBadges(userId: string, supabaseClient?: SupabaseClient): Promise<UserBadge[]> {
+  const supabase = supabaseClient || getBrowserClient()
   const newBadges: UserBadge[] = []
 
   // Get user data
@@ -127,7 +128,7 @@ export async function checkAndAwardBadges(userId: string): Promise<UserBadge[]> 
 
   const totalDonated = donationStats?.reduce((sum, d) => sum + Number(d.amount), 0) || 0
   if (totalDonated >= 10000) {
-    const badge = await awardBadge(userId, 'donor_hero')
+    const badge = await awardBadge(userId, 'donor_hero', supabaseClient)
     if (badge) newBadges.push(badge)
   }
 
@@ -139,7 +140,7 @@ export async function checkAndAwardBadges(userId: string): Promise<UserBadge[]> 
     .eq('status', 'accepted')
 
   if (volunteerCount && volunteerCount >= 5) {
-    const badge = await awardBadge(userId, 'volunteer_champ')
+    const badge = await awardBadge(userId, 'volunteer_champ', supabaseClient)
     if (badge) newBadges.push(badge)
   }
 
@@ -158,7 +159,7 @@ export async function checkAndAwardBadges(userId: string): Promise<UserBadge[]> 
         .eq('corporate_id', corporateProfile.id)
 
       if (campaignCount && campaignCount >= 3) {
-        const badge = await awardBadge(userId, 'csr_star')
+        const badge = await awardBadge(userId, 'csr_star', supabaseClient)
         if (badge) newBadges.push(badge)
       }
     }
@@ -174,7 +175,7 @@ export async function checkAndAwardBadges(userId: string): Promise<UserBadge[]> 
 
   const uniqueCampaigns = new Set(campaignDonations?.map(d => d.campaign_id))
   if (uniqueCampaigns.size >= 5) {
-    const badge = await awardBadge(userId, 'campaign_supporter')
+    const badge = await awardBadge(userId, 'campaign_supporter', supabaseClient)
     if (badge) newBadges.push(badge)
   }
 
@@ -186,7 +187,7 @@ export async function checkAndAwardBadges(userId: string): Promise<UserBadge[]> 
       .eq('author_id', userId)
 
     if (postCount && postCount >= 10) {
-      const badge = await awardBadge(userId, 'community_builder')
+      const badge = await awardBadge(userId, 'community_builder', supabaseClient)
       if (badge) newBadges.push(badge)
     }
   }
@@ -197,7 +198,7 @@ export async function checkAndAwardBadges(userId: string): Promise<UserBadge[]> 
   const hasSupportedCampaigns = uniqueCampaigns.size > 0
 
   if (hasDonated && hasVolunteered && hasSupportedCampaigns) {
-    const badge = await awardBadge(userId, 'impact_maker')
+    const badge = await awardBadge(userId, 'impact_maker', supabaseClient)
     if (badge) newBadges.push(badge)
   }
 
@@ -205,8 +206,8 @@ export async function checkAndAwardBadges(userId: string): Promise<UserBadge[]> 
 }
 
 // Get badge count for a user
-export async function getUserBadgeCount(userId: string): Promise<number> {
-  const supabase = await createClient()
+export async function getUserBadgeCount(userId: string, supabaseClient?: SupabaseClient): Promise<number> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { count, error } = await supabase
     .from('user_badges')

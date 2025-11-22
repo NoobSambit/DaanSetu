@@ -1,4 +1,5 @@
-import { createClient } from '@/lib/supabase/client'
+import { getBrowserClient } from '@/lib/supabase'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import type { VolunteerOpportunity, VolunteerApplication } from '@/lib/types/database.types'
 
 export interface CreateOpportunityParams {
@@ -40,8 +41,8 @@ export interface OpportunityFilters {
 }
 
 // Create a volunteer opportunity
-export async function createVolunteerOpportunity(params: CreateOpportunityParams) {
-  const supabase = createClient()
+export async function createVolunteerOpportunity(params: CreateOpportunityParams, supabaseClient?: SupabaseClient) {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data: { user }, error: userError } = await supabase.auth.getUser()
 
@@ -84,9 +85,10 @@ export async function createVolunteerOpportunity(params: CreateOpportunityParams
 
 // Get all volunteer opportunities with filters
 export async function getVolunteerOpportunities(
-  filters?: OpportunityFilters
+  filters?: OpportunityFilters,
+  supabaseClient?: SupabaseClient
 ): Promise<OpportunityWithNGO[]> {
-  const supabase = createClient()
+  const supabase = supabaseClient || getBrowserClient()
 
   let query = supabase
     .from('volunteer_opportunities')
@@ -119,8 +121,8 @@ export async function getVolunteerOpportunities(
 }
 
 // Get a single volunteer opportunity
-export async function getVolunteerOpportunity(id: string): Promise<OpportunityWithNGO | null> {
-  const supabase = createClient()
+export async function getVolunteerOpportunity(id: string, supabaseClient?: SupabaseClient): Promise<OpportunityWithNGO | null> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data, error } = await supabase
     .from('volunteer_opportunities')
@@ -139,8 +141,8 @@ export async function getVolunteerOpportunity(id: string): Promise<OpportunityWi
 }
 
 // Get opportunities for a specific NGO
-export async function getNGOOpportunities(ngoId: string): Promise<VolunteerOpportunity[]> {
-  const supabase = createClient()
+export async function getNGOOpportunities(ngoId: string, supabaseClient?: SupabaseClient): Promise<VolunteerOpportunity[]> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data, error } = await supabase
     .from('volunteer_opportunities')
@@ -156,8 +158,8 @@ export async function getNGOOpportunities(ngoId: string): Promise<VolunteerOppor
 }
 
 // Apply to a volunteer opportunity
-export async function applyToOpportunity(opportunityId: string) {
-  const supabase = createClient()
+export async function applyToOpportunity(opportunityId: string, supabaseClient?: SupabaseClient) {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data: { user }, error: userError } = await supabase.auth.getUser()
 
@@ -195,8 +197,8 @@ export async function applyToOpportunity(opportunityId: string) {
 }
 
 // Check if user has applied to an opportunity
-export async function hasApplied(opportunityId: string): Promise<boolean> {
-  const supabase = createClient()
+export async function hasApplied(opportunityId: string, supabaseClient?: SupabaseClient): Promise<boolean> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data: { user }, error: userError } = await supabase.auth.getUser()
 
@@ -216,9 +218,10 @@ export async function hasApplied(opportunityId: string): Promise<boolean> {
 
 // Get applications for a specific opportunity
 export async function getOpportunityApplications(
-  opportunityId: string
+  opportunityId: string,
+  supabaseClient?: SupabaseClient
 ): Promise<ApplicationWithDetails[]> {
-  const supabase = createClient()
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data, error } = await supabase
     .from('volunteer_applications')
@@ -238,8 +241,8 @@ export async function getOpportunityApplications(
 }
 
 // Get user's applications
-export async function getUserApplications(): Promise<Array<VolunteerApplication & { opportunity: OpportunityWithNGO }>> {
-  const supabase = createClient()
+export async function getUserApplications(supabaseClient?: SupabaseClient): Promise<Array<VolunteerApplication & { opportunity: OpportunityWithNGO }>> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data: { user }, error: userError } = await supabase.auth.getUser()
 
@@ -269,9 +272,10 @@ export async function getUserApplications(): Promise<Array<VolunteerApplication 
 // Update application status (NGO only)
 export async function updateApplicationStatus(
   applicationId: string,
-  status: 'accepted' | 'rejected'
+  status: 'accepted' | 'rejected',
+  supabaseClient?: SupabaseClient
 ) {
-  const supabase = createClient()
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data: { user }, error: userError } = await supabase.auth.getUser()
 
@@ -319,8 +323,8 @@ export async function updateApplicationStatus(
 }
 
 // Get all cities from opportunities
-export async function getOpportunityCities(): Promise<string[]> {
-  const supabase = createClient()
+export async function getOpportunityCities(supabaseClient?: SupabaseClient): Promise<string[]> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data, error } = await supabase
     .from('volunteer_opportunities')

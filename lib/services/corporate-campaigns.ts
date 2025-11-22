@@ -1,4 +1,5 @@
-import { createClient } from '@/lib/supabase/client'
+import { getBrowserClient } from '@/lib/supabase'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import type { CorporateCampaign, CorporateCampaignCause, CorporateCampaignStatus } from '@/lib/types/database.types'
 
 export interface CreateCorporateCampaignParams {
@@ -31,8 +32,8 @@ export interface CorporateCampaignWithProfile extends CorporateCampaign {
   }
 }
 
-export async function createCorporateCampaign(params: CreateCorporateCampaignParams) {
-  const supabase = createClient()
+export async function createCorporateCampaign(params: CreateCorporateCampaignParams, supabaseClient?: SupabaseClient) {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data: { user }, error: userError } = await supabase.auth.getUser()
 
@@ -65,9 +66,10 @@ export async function getCorporateCampaigns(
   filters?: {
     cause?: CorporateCampaignCause
     status?: CorporateCampaignStatus
-  }
+  },
+  supabaseClient?: SupabaseClient
 ): Promise<CorporateCampaignWithProfile[]> {
-  const supabase = createClient()
+  const supabase = supabaseClient || getBrowserClient()
 
   let query = supabase
     .from('corporate_campaigns')
@@ -102,8 +104,8 @@ export async function getCorporateCampaigns(
   return data as unknown as CorporateCampaignWithProfile[]
 }
 
-export async function getCorporateCampaign(campaignId: string): Promise<CorporateCampaignWithProfile | null> {
-  const supabase = createClient()
+export async function getCorporateCampaign(campaignId: string, supabaseClient?: SupabaseClient): Promise<CorporateCampaignWithProfile | null> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data, error } = await supabase
     .from('corporate_campaigns')
@@ -130,8 +132,8 @@ export async function getCorporateCampaign(campaignId: string): Promise<Corporat
   return data as unknown as CorporateCampaignWithProfile
 }
 
-export async function getCorporateCampaignsByCorporate(corporateId: string): Promise<CorporateCampaign[]> {
-  const supabase = createClient()
+export async function getCorporateCampaignsByCorporate(corporateId: string, supabaseClient?: SupabaseClient): Promise<CorporateCampaign[]> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data, error } = await supabase
     .from('corporate_campaigns')
@@ -146,8 +148,8 @@ export async function getCorporateCampaignsByCorporate(corporateId: string): Pro
   return data
 }
 
-export async function updateCorporateCampaign(params: UpdateCorporateCampaignParams) {
-  const supabase = createClient()
+export async function updateCorporateCampaign(params: UpdateCorporateCampaignParams, supabaseClient?: SupabaseClient) {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data: { user }, error: userError } = await supabase.auth.getUser()
 
@@ -181,8 +183,8 @@ export async function updateCorporateCampaign(params: UpdateCorporateCampaignPar
   return data
 }
 
-export async function incrementCorporateCampaignAmount(campaignId: string, amount: number) {
-  const supabase = createClient()
+export async function incrementCorporateCampaignAmount(campaignId: string, amount: number, supabaseClient?: SupabaseClient) {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data: campaign, error: fetchError } = await supabase
     .from('corporate_campaigns')

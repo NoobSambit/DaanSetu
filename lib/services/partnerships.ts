@@ -1,4 +1,5 @@
-import { createClient } from '@/lib/supabase/client'
+import { getBrowserClient } from '@/lib/supabase'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import type { PartnershipRequest, PartnershipRequestStatus } from '@/lib/types/database.types'
 
 export interface CreatePartnershipRequestParams {
@@ -21,8 +22,8 @@ export interface PartnershipRequestWithDetails extends PartnershipRequest {
   }
 }
 
-export async function createPartnershipRequest(params: CreatePartnershipRequestParams) {
-  const supabase = createClient()
+export async function createPartnershipRequest(params: CreatePartnershipRequestParams, supabaseClient?: SupabaseClient) {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data: { user }, error: userError } = await supabase.auth.getUser()
 
@@ -47,8 +48,8 @@ export async function createPartnershipRequest(params: CreatePartnershipRequestP
   return data
 }
 
-export async function getPartnershipRequestsForNGO(ngoId: string): Promise<PartnershipRequestWithDetails[]> {
-  const supabase = createClient()
+export async function getPartnershipRequestsForNGO(ngoId: string, supabaseClient?: SupabaseClient): Promise<PartnershipRequestWithDetails[]> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data, error } = await supabase
     .from('partnership_requests')
@@ -76,8 +77,8 @@ export async function getPartnershipRequestsForNGO(ngoId: string): Promise<Partn
   return data as unknown as PartnershipRequestWithDetails[]
 }
 
-export async function getPartnershipRequestsForCampaign(campaignId: string): Promise<PartnershipRequestWithDetails[]> {
-  const supabase = createClient()
+export async function getPartnershipRequestsForCampaign(campaignId: string, supabaseClient?: SupabaseClient): Promise<PartnershipRequestWithDetails[]> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data, error } = await supabase
     .from('partnership_requests')
@@ -107,8 +108,8 @@ export async function getPartnershipRequestsForCampaign(campaignId: string): Pro
   return data as unknown as PartnershipRequestWithDetails[]
 }
 
-export async function updatePartnershipRequestStatus(requestId: string, status: PartnershipRequestStatus) {
-  const supabase = createClient()
+export async function updatePartnershipRequestStatus(requestId: string, status: PartnershipRequestStatus, supabaseClient?: SupabaseClient) {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data: { user }, error: userError } = await supabase.auth.getUser()
 
@@ -130,8 +131,8 @@ export async function updatePartnershipRequestStatus(requestId: string, status: 
   return data
 }
 
-export async function hasAppliedForPartnership(corporateCampaignId: string, ngoId: string): Promise<boolean> {
-  const supabase = createClient()
+export async function hasAppliedForPartnership(corporateCampaignId: string, ngoId: string, supabaseClient?: SupabaseClient): Promise<boolean> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data, error } = await supabase
     .from('partnership_requests')
@@ -150,8 +151,8 @@ export async function hasAppliedForPartnership(corporateCampaignId: string, ngoI
   return !!data
 }
 
-export async function deletePartnershipRequest(requestId: string) {
-  const supabase = createClient()
+export async function deletePartnershipRequest(requestId: string, supabaseClient?: SupabaseClient) {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { error } = await supabase
     .from('partnership_requests')

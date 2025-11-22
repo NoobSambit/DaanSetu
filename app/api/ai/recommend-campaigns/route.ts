@@ -1,8 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { generateCampaignRecommendations } from '@/lib/services/gemini'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { rateLimit, RATE_LIMITS } from '@/lib/middleware/rate-limit'
 
-export async function POST() {
+async function handler() {
   try {
     const supabase = await createClient()
 
@@ -84,3 +85,5 @@ export async function POST() {
     )
   }
 }
+
+export const POST = rateLimit(RATE_LIMITS.AI)(handler)
