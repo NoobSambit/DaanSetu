@@ -43,32 +43,34 @@ async function handler(request: NextRequest) {
       )
     }
 
-    // Check if this is a development order (for testing)
-    const isDevelopment = orderId.startsWith('dev_order_')
+    // Always verify payment signature
+    const razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET
 
-    // Verify signature if not in development mode
-    if (!isDevelopment) {
-      const razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET
+    if (!razorpayKeySecret) {
+      return NextResponse.json(
+        { error: 'Payment verification not configured' },
+        { status: 500 }
+      )
+    }
 
-      if (!razorpayKeySecret) {
-        return NextResponse.json(
-          { error: 'Payment verification not configured' },
-          { status: 500 }
-        )
-      }
+    if (!signature) {
+      return NextResponse.json(
+        { error: 'Payment signature is required' },
+        { status: 400 }
+      )
+    }
 
-      // Verify signature
-      const generatedSignature = crypto
-        .createHmac('sha256', razorpayKeySecret)
-        .update(`${orderId}|${paymentId}`)
-        .digest('hex')
+    // Verify signature
+    const generatedSignature = crypto
+      .createHmac('sha256', razorpayKeySecret)
+      .update(`${orderId}|${paymentId}`)
+      .digest('hex')
 
-      if (generatedSignature !== signature) {
-        return NextResponse.json(
-          { error: 'Invalid payment signature' },
-          { status: 400 }
-        )
-      }
+    if (generatedSignature !== signature) {
+      return NextResponse.json(
+        { error: 'Invalid payment signature' },
+        { status: 400 }
+      )
     }
 
     // Create donation record

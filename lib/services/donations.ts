@@ -99,26 +99,27 @@ export async function createDonation(
     throw error
   }
 
-  // If this donation is for a campaign, increment the campaign amount
+  // If this donation is for a campaign, increment the campaign amount atomically
   if (params.campaignId) {
-    try {
-      await incrementCampaignAmount(params.campaignId, params.amount, supabase)
-    } catch (campaignError) {
+    const { error: campaignError } = await supabase.rpc('increment_campaign_amount', {
+      campaign_id: params.campaignId,
+      amount_to_add: params.amount
+    })
+    if (campaignError) {
       console.error('Failed to update campaign amount:', campaignError)
-      // Don't throw - donation was successful
+      // Log error but don't throw - donation was successful
     }
   }
 
-  // If this donation is for a corporate campaign, increment the amount
+  // If this donation is for a corporate campaign, increment the amount atomically
   if (params.corporateCampaignId) {
-    try {
-      await supabase.rpc('increment_corporate_campaign_amount', {
-        campaign_id: params.corporateCampaignId,
-        amount_to_add: params.amount
-      })
-    } catch (campaignError) {
+    const { error: campaignError } = await supabase.rpc('increment_corporate_campaign_amount', {
+      campaign_id: params.corporateCampaignId,
+      amount_to_add: params.amount
+    })
+    if (campaignError) {
       console.error('Failed to update corporate campaign amount:', campaignError)
-      // Don't throw - donation was successful
+      // Log error but don't throw - donation was successful
     }
   }
 

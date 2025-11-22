@@ -54,14 +54,10 @@ async function handler(request: NextRequest) {
 
     if (!razorpayKeyId || !razorpayKeySecret) {
       console.error('Razorpay credentials not configured')
-      // Return a simulated order ID for development
-      return NextResponse.json({
-        orderId: `dev_order_${Date.now()}`,
-        amount: amount * 100, // Convert to paise
-        currency: 'INR',
-        keyId: 'dev_key',
-        isDevelopment: true,
-      })
+      return NextResponse.json(
+        { error: 'Payment gateway not configured. Please contact support.' },
+        { status: 503 }
+      )
     }
 
     // Initialize Razorpay

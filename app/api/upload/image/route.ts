@@ -67,6 +67,25 @@ async function handler(request: NextRequest) {
       )
     }
 
+    // Validate folder parameter to prevent path traversal
+    if (folder) {
+      // Check for path traversal attempts
+      if (folder.includes('..') || folder.includes('/') || folder.includes('\\')) {
+        return NextResponse.json(
+          { error: 'Invalid folder name' },
+          { status: 400 }
+        )
+      }
+      // Whitelist allowed folders
+      const allowedFolders = ['avatars', 'banners', 'documents', 'uploads']
+      if (!allowedFolders.includes(folder)) {
+        return NextResponse.json(
+          { error: 'Folder not allowed' },
+          { status: 400 }
+        )
+      }
+    }
+
     // Generate unique file name
     const fileExt = file.name.split('.').pop()
     const fileName = `${user.id}_${Date.now()}.${fileExt}`
@@ -139,6 +158,20 @@ export async function DELETE(request: NextRequest) {
         { error: 'Bucket and path are required' },
         { status: 400 }
       )
+    }
+
+    // Verify ownership - path should contain user ID
+    if (!path.startsWith(user.id)) {
+      return NextResponse.json(
+        { error: 'Unauthorized to delete this file' },
+        { status: 403 }
+      )
+    }
+
+    // Validate bucket
+    const validBuckets = ['campaigns', 'ngos', 'posts', 'profiles', 'corporate']
+    if (!validBuckets.includes(bucket)) {
+      return NextResponse.json({ error: 'Invalid bucket' }, { status: 400 })
     }
 
     // Delete from storage
