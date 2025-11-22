@@ -44,7 +44,7 @@ export default function DonateButton({
     <>
       <button
         onClick={handleDonateClick}
-        className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition flex items-center gap-2"
+        className="btn btn-primary px-6 py-3 font-semibold shadow-md hover:shadow-lg"
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path

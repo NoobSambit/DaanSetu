@@ -105,13 +105,13 @@ export default function DonationModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto animate-scale-in">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">Make a Donation</h2>
-            <p className="text-sm text-gray-600 mt-1">to {ngoName}</p>
+        <div className="flex items-start justify-between p-6 border-b border-slate-200">
+          <div className="flex-1">
+            <h2 className="text-2xl font-bold text-slate-900">Make a Donation</h2>
+            <p className="text-sm text-slate-600 mt-1.5">to {ngoName}</p>
             {campaignTitle && (
               <p className="text-sm text-blue-600 mt-1 font-medium">
                 for: {campaignTitle}
@@ -121,10 +121,10 @@ export default function DonationModal({
           <button
             onClick={handleClose}
             disabled={isProcessing}
-            className="text-gray-400 hover:text-gray-600 disabled:opacity-50"
+            className="text-slate-400 hover:text-slate-600 disabled:opacity-50 p-1 rounded-lg hover:bg-slate-100 transition-colors ml-2"
             aria-label="Close"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -134,7 +134,7 @@ export default function DonationModal({
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Amount Selection */}
           <div>
-            <label className="block text-sm font-semibold text-gray-900 mb-3">
+            <label className="block text-sm font-semibold text-slate-900 mb-3">
               Donation Amount
             </label>
             <div className="grid grid-cols-4 gap-2 mb-3">
@@ -144,10 +144,10 @@ export default function DonationModal({
                   type="button"
                   onClick={() => handleAmountSelect(preset)}
                   disabled={isProcessing}
-                  className={`py-2 px-3 rounded-lg border-2 font-semibold transition ${
+                  className={`py-2.5 px-3 rounded-lg border-2 font-semibold transition-all ${
                     amount === preset.toString()
-                      ? 'border-blue-600 bg-blue-50 text-blue-700'
-                      : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                      ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-sm'
+                      : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50'
                   } disabled:opacity-50`}
                 >
                   ₹{preset}
@@ -155,7 +155,7 @@ export default function DonationModal({
               ))}
             </div>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-semibold">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-semibold">
                 ₹
               </span>
               <input
@@ -164,14 +164,14 @@ export default function DonationModal({
                 onChange={(e) => handleCustomAmountChange(e.target.value)}
                 placeholder="Enter custom amount"
                 disabled={isProcessing}
-                className="w-full pl-8 pr-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-600 focus:outline-none disabled:opacity-50 disabled:bg-gray-50"
+                className="input pl-8"
               />
             </div>
           </div>
 
           {/* Cause Selection */}
           <div>
-            <label className="block text-sm font-semibold text-gray-900 mb-3">
+            <label className="block text-sm font-semibold text-slate-900 mb-3">
               Select Cause
             </label>
             <div className="grid grid-cols-2 gap-2">
@@ -181,10 +181,10 @@ export default function DonationModal({
                   type="button"
                   onClick={() => setCause(causeOption.value)}
                   disabled={isProcessing}
-                  className={`py-2 px-3 rounded-lg border-2 font-medium transition text-sm ${
+                  className={`py-2.5 px-3 rounded-lg border-2 font-medium transition-all text-sm ${
                     cause === causeOption.value
-                      ? 'border-blue-600 bg-blue-50 text-blue-700'
-                      : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                      ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-sm'
+                      : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50'
                   } disabled:opacity-50`}
                 >
                   <span className="mr-1">{causeOption.emoji}</span>
@@ -195,46 +195,46 @@ export default function DonationModal({
           </div>
 
           {/* Anonymous Toggle */}
-          <div className="flex items-center">
+          <div className="flex items-center p-3 rounded-lg bg-slate-50 border border-slate-200">
             <input
               type="checkbox"
               id="anonymous"
               checked={isAnonymous}
               onChange={(e) => setIsAnonymous(e.target.checked)}
               disabled={isProcessing}
-              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 disabled:opacity-50"
+              className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 disabled:opacity-50"
             />
-            <label htmlFor="anonymous" className="ml-2 text-sm text-gray-700">
+            <label htmlFor="anonymous" className="ml-3 text-sm text-slate-700 font-medium">
               Make this donation anonymous
             </label>
           </div>
 
           {/* Error Message */}
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-800">{error}</p>
+            <div className="p-3.5 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-800 font-medium">{error}</p>
             </div>
           )}
 
           {/* Submit Button */}
-          <div className="flex gap-3">
+          <div className="flex gap-3 pt-2">
             <button
               type="button"
               onClick={handleClose}
               disabled={isProcessing}
-              className="flex-1 py-3 px-4 border-2 border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50 transition disabled:opacity-50"
+              className="btn btn-secondary flex-1 py-3"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isProcessing || !amount}
-              className="flex-1 py-3 px-4 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              className="btn btn-primary flex-1 py-3 font-semibold shadow-md hover:shadow-lg"
             >
               {isProcessing ? (
                 <>
                   <svg
-                    className="animate-spin -ml-1 mr-2 h-5 w-5 text-white"
+                    className="animate-spin h-5 w-5 text-white"
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"

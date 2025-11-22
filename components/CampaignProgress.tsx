@@ -12,39 +12,39 @@ export default function CampaignProgress({
   daysRemaining,
 }: CampaignProgressProps) {
   return (
-    <div className="border-2 border-gray-200 rounded-lg p-6">
+    <div className="gradient-card border-2 border-slate-200 rounded-xl p-6 shadow-sm">
       {/* Amounts */}
-      <div className="flex justify-between items-baseline mb-2">
+      <div className="flex justify-between items-baseline mb-3">
         <div>
-          <span className="text-3xl font-bold text-gray-900">
+          <span className="text-3xl md:text-4xl font-bold text-slate-900">
             ₹{currentAmount.toLocaleString('en-IN')}
           </span>
-          <span className="text-gray-600 ml-2">raised</span>
+          <span className="text-slate-600 ml-2 text-sm font-medium">raised</span>
         </div>
-        <span className="text-lg text-gray-600">
+        <span className="text-base text-slate-600 font-medium">
           of ₹{goalAmount.toLocaleString('en-IN')}
         </span>
       </div>
 
       {/* Progress Bar */}
-      <div className="w-full bg-gray-200 rounded-full h-3 mb-4">
+      <div className="w-full bg-slate-200 rounded-full h-3 mb-6 overflow-hidden">
         <div
-          className="bg-blue-600 h-3 rounded-full transition-all"
+          className="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-500 ease-out shadow-sm"
           style={{ width: `${progress}%` }}
         ></div>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-4 text-center">
-        <div>
-          <p className="text-2xl font-bold text-blue-600">{progress.toFixed(0)}%</p>
-          <p className="text-sm text-gray-600">Funded</p>
+      <div className="grid grid-cols-2 gap-6 text-center">
+        <div className="p-3 rounded-lg bg-blue-50 border border-blue-100">
+          <p className="text-3xl font-bold text-blue-600">{progress.toFixed(0)}%</p>
+          <p className="text-sm text-slate-600 font-medium mt-1">Funded</p>
         </div>
-        <div>
-          <p className="text-2xl font-bold text-green-600">
+        <div className={`p-3 rounded-lg ${daysRemaining > 0 ? 'bg-green-50 border border-green-100' : 'bg-slate-100 border border-slate-200'}`}>
+          <p className={`text-3xl font-bold ${daysRemaining > 0 ? 'text-green-600' : 'text-slate-600'}`}>
             {daysRemaining > 0 ? daysRemaining : 0}
           </p>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-slate-600 font-medium mt-1">
             {daysRemaining > 0 ? 'Days Left' : 'Campaign Ended'}
           </p>
         </div>
