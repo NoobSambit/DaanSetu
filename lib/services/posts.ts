@@ -308,3 +308,207 @@ export const POST_CATEGORY_LABELS: Record<PostCategory, string> = {
   story: 'Success Story',
   announcement: 'Announcement'
 }
+
+// Get trending posts (most engagement in last 7 days)
+export async function getTrendingPosts(limit: number = 10): Promise<PostWithAuthor[]> {
+  const supabase = await createClient()
+
+  // Get trending post IDs from database function
+  const { data: trendingData, error: trendingError } = await supabase
+    .rpc('get_trending_posts', { limit_count: limit })
+
+  if (trendingError || !trendingData || trendingData.length === 0) {
+    return []
+  }
+
+  const trendingPostIds = trendingData.map((t: any) => t.post_id)
+
+  // Get full post data
+  const { data: posts, error } = await supabase
+    .from('posts')
+    .select(`
+      *,
+      author:users!posts_author_id_fkey(id, name, email, role)
+    `)
+    .in('id', trendingPostIds)
+
+  if (error) {
+    console.error('Error fetching trending posts:', error)
+    return []
+  }
+
+  // Get counts for each post
+  const postsWithCounts = await Promise.all(
+    posts.map(async (post) => {
+      const [likeCount, commentCount] = await Promise.all([
+        getPostLikeCount(post.id),
+        getPostCommentCount(post.id)
+      ])
+
+      return {
+        ...post,
+        author: Array.isArray(post.author) ? post.author[0] : post.author,
+        like_count: likeCount,
+        comment_count: commentCount
+      }
+    })
+  )
+
+  return postsWithCounts
+}
+
+// Get featured posts
+export async function getFeaturedPosts(limit: number = 5): Promise<PostWithAuthor[]> {
+  const supabase = await createClient()
+
+  const { data: posts, error } = await supabase
+    .from('posts')
+    .select(`
+      *,
+      author:users!posts_author_id_fkey(id, name, email, role)
+    `)
+    .eq('is_featured', true)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+
+  if (error) {
+    console.error('Error fetching featured posts:', error)
+    return []
+  }
+
+  const postsWithCounts = await Promise.all(
+    posts.map(async (post) => {
+      const [likeCount, commentCount] = await Promise.all([
+        getPostLikeCount(post.id),
+        getPostCommentCount(post.id)
+      ])
+
+      return {
+        ...post,
+        author: Array.isArray(post.author) ? post.author[0] : post.author,
+        like_count: likeCount,
+        comment_count: commentCount
+      }
+    })
+  )
+
+  return postsWithCounts
+}
+
+// Mark post as featured (admin only)
+export async function markPostAsFeatured(postId: string, isFeatured: boolean): Promise<void> {
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from('posts')
+    .update({ is_featured: isFeatured })
+    .eq('id', postId)
+
+  if (error) {
+    console.error('Error updating featured status:', error)
+    throw new Error('Failed to update featured status')
+  }
+}
+
+// Increment post view count
+export async function incrementPostViewCount(postId: string): Promise<void> {
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .rpc('increment_post_view_count', { post_uuid: postId })
+
+  if (error) {
+    console.error('Error incrementing view count:', error)
+  }
+}
+
+// Track post view
+export async function trackPostView(postId: string, userId?: string, ipAddress?: string): Promise<void> {
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from('post_views')
+    .insert({
+      post_id: postId,
+      user_id: userId || null,
+      ip_address: ipAddress || null
+    })
+
+  if (error) {
+    console.error('Error tracking post view:', error)
+  }
+
+  // Also increment the counter
+  await incrementPostViewCount(postId)
+}
+
+// Get posts with filters
+export async function getPostsFiltered(
+  userId?: string,
+  filters?: {
+    category?: PostCategory
+    authorRole?: PostAuthorRole
+    search?: string
+    featured?: boolean
+    limit?: number
+  }
+): Promise<PostWithAuthor[]> {
+  const supabase = await createClient()
+
+  let query = supabase
+    .from('posts')
+    .select(`
+      *,
+      author:users!posts_author_id_fkey(id, name, email, role)
+    `)
+
+  // Apply filters
+  if (filters?.category) {
+    query = query.eq('category', filters.category)
+  }
+
+  if (filters?.authorRole) {
+    query = query.eq('author_role', filters.authorRole)
+  }
+
+  if (filters?.featured !== undefined) {
+    query = query.eq('is_featured', filters.featured)
+  }
+
+  if (filters?.search) {
+    query = query.or(`title.ilike.%${filters.search}%,content.ilike.%${filters.search}%`)
+  }
+
+  query = query.order('created_at', { ascending: false })
+
+  if (filters?.limit) {
+    query = query.limit(filters.limit)
+  }
+
+  const { data: posts, error } = await query
+
+  if (error) {
+    console.error('Error fetching filtered posts:', error)
+    return []
+  }
+
+  const postsWithCounts = await Promise.all(
+    posts.map(async (post) => {
+      const [likeCount, commentCount, userHasLiked] = await Promise.all([
+        getPostLikeCount(post.id),
+        getPostCommentCount(post.id),
+        userId ? hasUserLikedPost(post.id, userId) : false
+      ])
+
+      return {
+        ...post,
+        author: Array.isArray(post.author) ? post.author[0] : post.author,
+        like_count: likeCount,
+        comment_count: commentCount,
+        user_has_liked: userHasLiked
+      }
+    })
+  )
+
+  return postsWithCounts
+}
