@@ -1,4 +1,5 @@
-import { createClient } from '@/lib/supabase/server'
+import { getBrowserClient } from '@/lib/supabase'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 export type ActivityType =
   | 'donation'
@@ -35,9 +36,10 @@ export async function createActivityLog(
   activityType: ActivityType,
   entityId?: string,
   entityType?: string,
-  metadata?: any
+  metadata?: any,
+  supabaseClient?: SupabaseClient
 ): Promise<ActivityLog> {
-  const supabase = await createClient()
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data: log, error } = await supabase
     .from('activity_logs')
@@ -60,8 +62,8 @@ export async function createActivityLog(
 }
 
 // Get user's activity timeline
-export async function getUserActivityTimeline(userId: string, limit: number = 50): Promise<ActivityLog[]> {
-  const supabase = await createClient()
+export async function getUserActivityTimeline(userId: string, limit: number = 50, supabaseClient?: SupabaseClient): Promise<ActivityLog[]> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data: activities, error } = await supabase
     .from('activity_logs')
@@ -79,8 +81,8 @@ export async function getUserActivityTimeline(userId: string, limit: number = 50
 }
 
 // Get activity logs by type
-export async function getActivityByType(userId: string, activityType: ActivityType): Promise<ActivityLog[]> {
-  const supabase = await createClient()
+export async function getActivityByType(userId: string, activityType: ActivityType, supabaseClient?: SupabaseClient): Promise<ActivityLog[]> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data: activities, error } = await supabase
     .from('activity_logs')
@@ -98,8 +100,8 @@ export async function getActivityByType(userId: string, activityType: ActivityTy
 }
 
 // Get recent platform activity (for admin or public feed)
-export async function getRecentPlatformActivity(limit: number = 100): Promise<ActivityLogWithDetails[]> {
-  const supabase = await createClient()
+export async function getRecentPlatformActivity(limit: number = 100, supabaseClient?: SupabaseClient): Promise<ActivityLogWithDetails[]> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data: activities, error } = await supabase
     .from('activity_logs')
@@ -122,8 +124,8 @@ export async function getRecentPlatformActivity(limit: number = 100): Promise<Ac
 }
 
 // Get activity count by type for a user
-export async function getActivityCountByType(userId: string, activityType: ActivityType): Promise<number> {
-  const supabase = await createClient()
+export async function getActivityCountByType(userId: string, activityType: ActivityType, supabaseClient?: SupabaseClient): Promise<number> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { count, error } = await supabase
     .from('activity_logs')

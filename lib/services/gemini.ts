@@ -1,12 +1,39 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 
 // Initialize Gemini AI client
+// SECURITY: Using server-side only environment variable (not NEXT_PUBLIC_)
 const getGeminiClient = () => {
-  const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY
+  const apiKey = process.env.GEMINI_API_KEY
   if (!apiKey) {
-    throw new Error('NEXT_PUBLIC_GEMINI_API_KEY is not configured')
+    throw new Error(
+      'GEMINI_API_KEY is not configured. ' +
+      'Please add GEMINI_API_KEY to your .env file (server-side only, not NEXT_PUBLIC_)'
+    )
   }
   return new GoogleGenerativeAI(apiKey)
+}
+
+// Cache for AI responses to reduce API costs
+const aiCache = new Map<string, { data: any; timestamp: number }>()
+const CACHE_TTL = 1000 * 60 * 60 // 1 hour
+
+function getCachedResponse<T>(key: string): T | null {
+  const cached = aiCache.get(key)
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.data as T
+  }
+  return null
+}
+
+function setCachedResponse(key: string, data: any): void {
+  aiCache.set(key, { data, timestamp: Date.now() })
+  // Clean up old cache entries if cache gets too large
+  if (aiCache.size > 1000) {
+    const entriesToDelete = Array.from(aiCache.entries())
+      .sort((a, b) => a[1].timestamp - b[1].timestamp)
+      .slice(0, 500)
+    entriesToDelete.forEach(([k]) => aiCache.delete(k))
+  }
 }
 
 /**
@@ -19,6 +46,19 @@ export async function generateNGORecommendations(userContext: {
   ngoList: Array<{ id: string; name: string; category: string; description: string }>
 }) {
   try {
+    // Create cache key from user context
+    const cacheKey = `ngo_rec_${JSON.stringify({
+      causes: userContext.donationCauses.sort(),
+      categories: userContext.browsedCategories.sort(),
+      skills: userContext.volunteerSkills.sort(),
+    })}`
+
+    // Check cache first
+    const cached = getCachedResponse<Array<{ ngo_name: string; reason: string }>>(cacheKey)
+    if (cached) {
+      return cached
+    }
+
     const genAI = getGeminiClient()
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
 
@@ -49,6 +89,8 @@ Only recommend NGOs from the provided list. If user has no interests yet, recomm
     const jsonMatch = response.match(/\[[\s\S]*\]/)
     if (jsonMatch) {
       const recommendations = JSON.parse(jsonMatch[0])
+      // Cache the result
+      setCachedResponse(cacheKey, recommendations)
       return recommendations as Array<{ ngo_name: string; reason: string }>
     }
 
@@ -68,6 +110,18 @@ export async function generateCampaignRecommendations(userContext: {
   campaigns: Array<{ id: string; title: string; category: string; short_description: string }>
 }) {
   try {
+    // Create cache key from user context
+    const cacheKey = `campaign_rec_${JSON.stringify({
+      causes: userContext.donationCauses.sort(),
+      categories: userContext.browsedCategories.sort(),
+    })}`
+
+    // Check cache first
+    const cached = getCachedResponse<Array<{ campaign_title: string; reason: string }>>(cacheKey)
+    if (cached) {
+      return cached
+    }
+
     const genAI = getGeminiClient()
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
 
@@ -97,6 +151,8 @@ Only recommend campaigns from the provided list. If user has no interests, recom
     const jsonMatch = response.match(/\[[\s\S]*\]/)
     if (jsonMatch) {
       const recommendations = JSON.parse(jsonMatch[0])
+      // Cache the result
+      setCachedResponse(cacheKey, recommendations)
       return recommendations as Array<{ campaign_title: string; reason: string }>
     }
 
@@ -109,6 +165,7 @@ Only recommend campaigns from the provided list. If user has no interests, recom
 
 /**
  * Chat with DaanSetu AI assistant
+ * Note: Chat responses are not cached as they are user-specific and contextual
  */
 export async function chatWithDaanSetu(
   userMessage: string,

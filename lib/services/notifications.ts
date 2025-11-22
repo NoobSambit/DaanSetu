@@ -1,4 +1,5 @@
-import { createClient } from '@/lib/supabase/server'
+import { getBrowserClient } from '@/lib/supabase'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Notification, NotificationType } from '@/lib/types/database.types'
 
 export interface CreateNotificationData {
@@ -10,8 +11,8 @@ export interface CreateNotificationData {
 }
 
 // Create a notification
-export async function createNotification(data: CreateNotificationData): Promise<Notification> {
-  const supabase = await createClient()
+export async function createNotification(data: CreateNotificationData, supabaseClient?: SupabaseClient): Promise<Notification> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data: notification, error } = await supabase
     .from('notifications')
@@ -28,8 +29,8 @@ export async function createNotification(data: CreateNotificationData): Promise<
 }
 
 // Get notifications for a user
-export async function getUserNotifications(userId: string, limit = 50): Promise<Notification[]> {
-  const supabase = await createClient()
+export async function getUserNotifications(userId: string, limit = 50, supabaseClient?: SupabaseClient): Promise<Notification[]> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data: notifications, error } = await supabase
     .from('notifications')
@@ -47,8 +48,8 @@ export async function getUserNotifications(userId: string, limit = 50): Promise<
 }
 
 // Get unread notification count
-export async function getUnreadNotificationCount(userId: string): Promise<number> {
-  const supabase = await createClient()
+export async function getUnreadNotificationCount(userId: string, supabaseClient?: SupabaseClient): Promise<number> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { count, error } = await supabase
     .from('notifications')
@@ -65,8 +66,8 @@ export async function getUnreadNotificationCount(userId: string): Promise<number
 }
 
 // Mark notification as read
-export async function markNotificationAsRead(notificationId: string): Promise<void> {
-  const supabase = await createClient()
+export async function markNotificationAsRead(notificationId: string, supabaseClient?: SupabaseClient): Promise<void> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { error } = await supabase
     .from('notifications')
@@ -80,8 +81,8 @@ export async function markNotificationAsRead(notificationId: string): Promise<vo
 }
 
 // Mark all notifications as read for a user
-export async function markAllNotificationsAsRead(userId: string): Promise<void> {
-  const supabase = await createClient()
+export async function markAllNotificationsAsRead(userId: string, supabaseClient?: SupabaseClient): Promise<void> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { error } = await supabase
     .from('notifications')
@@ -96,8 +97,8 @@ export async function markAllNotificationsAsRead(userId: string): Promise<void> 
 }
 
 // Delete a notification
-export async function deleteNotification(notificationId: string): Promise<void> {
-  const supabase = await createClient()
+export async function deleteNotification(notificationId: string, supabaseClient?: SupabaseClient): Promise<void> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { error } = await supabase
     .from('notifications')
@@ -111,8 +112,8 @@ export async function deleteNotification(notificationId: string): Promise<void> 
 }
 
 // Delete all notifications for a user
-export async function deleteAllNotifications(userId: string): Promise<void> {
-  const supabase = await createClient()
+export async function deleteAllNotifications(userId: string, supabaseClient?: SupabaseClient): Promise<void> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { error } = await supabase
     .from('notifications')
@@ -131,7 +132,8 @@ export async function notifyCampaignMilestone(
   userId: string,
   campaignTitle: string,
   milestone: string,
-  campaignId: string
+  campaignId: string,
+  supabaseClient?: SupabaseClient
 ): Promise<Notification> {
   return createNotification({
     user_id: userId,
@@ -139,13 +141,14 @@ export async function notifyCampaignMilestone(
     title: 'Campaign Milestone Reached!',
     message: `${campaignTitle} has reached ${milestone}`,
     link: `/campaigns/${campaignId}`
-  })
+  }, supabaseClient)
 }
 
 export async function notifyVolunteerAccepted(
   userId: string,
   opportunityTitle: string,
-  opportunityId: string
+  opportunityId: string,
+  supabaseClient?: SupabaseClient
 ): Promise<Notification> {
   return createNotification({
     user_id: userId,
@@ -153,12 +156,13 @@ export async function notifyVolunteerAccepted(
     title: 'Volunteer Application Accepted!',
     message: `Your application for "${opportunityTitle}" has been accepted`,
     link: `/volunteer/opportunities`
-  })
+  }, supabaseClient)
 }
 
 export async function notifyBadgeUnlocked(
   userId: string,
-  badgeName: string
+  badgeName: string,
+  supabaseClient?: SupabaseClient
 ): Promise<Notification> {
   return createNotification({
     user_id: userId,
@@ -166,14 +170,15 @@ export async function notifyBadgeUnlocked(
     title: 'New Badge Unlocked!',
     message: `Congratulations! You've earned the "${badgeName}" badge`,
     link: `/dashboard`
-  })
+  }, supabaseClient)
 }
 
 export async function notifyPostLiked(
   userId: string,
   likerName: string,
   postId: string,
-  postTitle: string
+  postTitle: string,
+  supabaseClient?: SupabaseClient
 ): Promise<Notification> {
   return createNotification({
     user_id: userId,
@@ -181,14 +186,15 @@ export async function notifyPostLiked(
     title: 'Someone liked your post',
     message: `${likerName} liked your post "${postTitle}"`,
     link: `/community`
-  })
+  }, supabaseClient)
 }
 
 export async function notifyPostCommented(
   userId: string,
   commenterName: string,
   postId: string,
-  postTitle: string
+  postTitle: string,
+  supabaseClient?: SupabaseClient
 ): Promise<Notification> {
   return createNotification({
     user_id: userId,
@@ -196,14 +202,15 @@ export async function notifyPostCommented(
     title: 'New comment on your post',
     message: `${commenterName} commented on your post "${postTitle}"`,
     link: `/community`
-  })
+  }, supabaseClient)
 }
 
 export async function notifyPartnershipAccepted(
   userId: string,
   campaignTitle: string,
   corporateName: string,
-  campaignId: string
+  campaignId: string,
+  supabaseClient?: SupabaseClient
 ): Promise<Notification> {
   return createNotification({
     user_id: userId,
@@ -211,5 +218,5 @@ export async function notifyPartnershipAccepted(
     title: 'Partnership Request Accepted!',
     message: `${corporateName} accepted your partnership request for "${campaignTitle}"`,
     link: `/csr-campaigns/${campaignId}`
-  })
+  }, supabaseClient)
 }

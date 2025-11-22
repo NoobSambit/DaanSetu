@@ -1,4 +1,5 @@
-import { createClient } from '@/lib/supabase/client'
+import { getBrowserClient } from '@/lib/supabase'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import type { VolunteerProfile } from '@/lib/types/database.types'
 
 export interface CreateVolunteerProfileParams {
@@ -16,8 +17,8 @@ export interface UpdateVolunteerProfileParams {
 }
 
 // Create a volunteer profile
-export async function createVolunteerProfile(params: CreateVolunteerProfileParams) {
-  const supabase = createClient()
+export async function createVolunteerProfile(params: CreateVolunteerProfileParams, supabaseClient?: SupabaseClient) {
+  const supabase = supabaseClient || getBrowserClient()
 
   // Get current user
   const { data: { user }, error: userError } = await supabase.auth.getUser()
@@ -46,8 +47,8 @@ export async function createVolunteerProfile(params: CreateVolunteerProfileParam
 }
 
 // Get volunteer profile by user ID
-export async function getVolunteerProfile(userId?: string): Promise<VolunteerProfile | null> {
-  const supabase = createClient()
+export async function getVolunteerProfile(userId?: string, supabaseClient?: SupabaseClient): Promise<VolunteerProfile | null> {
+  const supabase = supabaseClient || getBrowserClient()
 
   let targetUserId = userId
 
@@ -73,8 +74,8 @@ export async function getVolunteerProfile(userId?: string): Promise<VolunteerPro
 }
 
 // Update volunteer profile
-export async function updateVolunteerProfile(params: UpdateVolunteerProfileParams) {
-  const supabase = createClient()
+export async function updateVolunteerProfile(params: UpdateVolunteerProfileParams, supabaseClient?: SupabaseClient) {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data: { user }, error: userError } = await supabase.auth.getUser()
 
@@ -106,8 +107,8 @@ export async function updateVolunteerProfile(params: UpdateVolunteerProfileParam
 }
 
 // Check if user has a volunteer profile
-export async function hasVolunteerProfile(): Promise<boolean> {
-  const profile = await getVolunteerProfile()
+export async function hasVolunteerProfile(supabaseClient?: SupabaseClient): Promise<boolean> {
+  const profile = await getVolunteerProfile(undefined, supabaseClient)
   return profile !== null
 }
 

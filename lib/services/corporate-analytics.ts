@@ -1,4 +1,5 @@
-import { createClient } from '@/lib/supabase/client'
+import { getBrowserClient } from '@/lib/supabase'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 export interface CorporateAnalytics {
   totalDonations: number
@@ -9,8 +10,8 @@ export interface CorporateAnalytics {
   campaignFundingOverTime: Array<{ name: string; amount: number; goal: number }>
 }
 
-export async function getCorporateAnalytics(corporateId: string): Promise<CorporateAnalytics> {
-  const supabase = createClient()
+export async function getCorporateAnalytics(corporateId: string, supabaseClient?: SupabaseClient): Promise<CorporateAnalytics> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const [
     { data: donations, error: donationsError },

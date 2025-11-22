@@ -1,10 +1,11 @@
-import { createClient } from '@/lib/supabase/client'
+import { getBrowserClient } from '@/lib/supabase'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 /**
  * Get platform-wide statistics
  */
-export async function getPlatformStats() {
-  const supabase = createClient()
+export async function getPlatformStats(supabaseClient?: SupabaseClient) {
+  const supabase = supabaseClient || getBrowserClient()
 
   const [ngosResult, campaignsResult, donationsResult, volunteersResult] = await Promise.all([
     supabase.from('ngos').select('id', { count: 'exact', head: true }),
@@ -24,8 +25,8 @@ export async function getPlatformStats() {
 /**
  * Get donations over time (for charts)
  */
-export async function getDonationsOverTime() {
-  const supabase = createClient()
+export async function getDonationsOverTime(supabaseClient?: SupabaseClient) {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data, error } = await supabase
     .from('donations')
@@ -54,8 +55,8 @@ export async function getDonationsOverTime() {
 /**
  * Get campaigns created over time
  */
-export async function getCampaignsOverTime() {
-  const supabase = createClient()
+export async function getCampaignsOverTime(supabaseClient?: SupabaseClient) {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data, error } = await supabase
     .from('campaigns')
@@ -84,8 +85,8 @@ export async function getCampaignsOverTime() {
 /**
  * Get volunteer growth over time
  */
-export async function getVolunteerGrowth() {
-  const supabase = createClient()
+export async function getVolunteerGrowth(supabaseClient?: SupabaseClient) {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data, error } = await supabase
     .from('volunteer_profiles')
@@ -113,8 +114,8 @@ export async function getVolunteerGrowth() {
 /**
  * Get NGO-specific analytics
  */
-export async function getNGOAnalytics(ngoId: string) {
-  const supabase = createClient()
+export async function getNGOAnalytics(ngoId: string, supabaseClient?: SupabaseClient) {
+  const supabase = supabaseClient || getBrowserClient()
 
   // Get total funds received
   const { data: donations } = await supabase
@@ -174,8 +175,8 @@ export async function getNGOAnalytics(ngoId: string) {
 /**
  * Get user impact analytics
  */
-export async function getUserImpact(userId: string) {
-  const supabase = createClient()
+export async function getUserImpact(userId: string, supabaseClient?: SupabaseClient) {
+  const supabase = supabaseClient || getBrowserClient()
 
   // Get user donations
   const { data: donations } = await supabase
@@ -233,8 +234,8 @@ export async function getUserImpact(userId: string) {
 /**
  * Get admin analytics
  */
-export async function getAdminAnalytics() {
-  const supabase = createClient()
+export async function getAdminAnalytics(supabaseClient?: SupabaseClient) {
+  const supabase = supabaseClient || getBrowserClient()
 
   // Donations by region (NGO city/state)
   const { data: donationsWithNGO } = await supabase
@@ -324,8 +325,8 @@ export async function getAdminAnalytics() {
 /**
  * Export NGO impact report as CSV data
  */
-export async function exportNGOReport(ngoId: string) {
-  const supabase = createClient()
+export async function exportNGOReport(ngoId: string, supabaseClient?: SupabaseClient) {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data: campaigns } = await supabase
     .from('campaigns')

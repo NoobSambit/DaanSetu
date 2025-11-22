@@ -1,8 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { analyzeAndFlagNGO, analyzeAndFlagCampaign } from '@/lib/services/ai-flags'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { rateLimit, RATE_LIMITS } from '@/lib/middleware/rate-limit'
 
-export async function POST(request: Request) {
+async function handler(request: NextRequest) {
   try {
     const { entityType, entityId } = await request.json()
 
@@ -62,3 +63,5 @@ export async function POST(request: Request) {
     )
   }
 }
+
+export const POST = rateLimit(RATE_LIMITS.AI)(handler)

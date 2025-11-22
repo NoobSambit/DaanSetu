@@ -1,4 +1,5 @@
-import { createClient } from '@/lib/supabase/server'
+import { getBrowserClient } from '@/lib/supabase'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 export interface UserProfile {
   id: string
@@ -53,8 +54,8 @@ export interface UserStats {
 }
 
 // Create user profile
-export async function createUserProfile(data: CreateUserProfileData): Promise<UserProfile> {
-  const supabase = await createClient()
+export async function createUserProfile(data: CreateUserProfileData, supabaseClient?: SupabaseClient): Promise<UserProfile> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data: profile, error } = await supabase
     .from('user_profiles')
@@ -71,8 +72,8 @@ export async function createUserProfile(data: CreateUserProfileData): Promise<Us
 }
 
 // Get user profile by user ID
-export async function getUserProfile(userId: string): Promise<UserProfileWithUser | null> {
-  const supabase = await createClient()
+export async function getUserProfile(userId: string, supabaseClient?: SupabaseClient): Promise<UserProfileWithUser | null> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data: profile, error } = await supabase
     .from('user_profiles')
@@ -94,8 +95,8 @@ export async function getUserProfile(userId: string): Promise<UserProfileWithUse
 }
 
 // Update user profile
-export async function updateUserProfile(userId: string, data: UpdateUserProfileData): Promise<UserProfile> {
-  const supabase = await createClient()
+export async function updateUserProfile(userId: string, data: UpdateUserProfileData, supabaseClient?: SupabaseClient): Promise<UserProfile> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data: profile, error } = await supabase
     .from('user_profiles')
@@ -113,8 +114,8 @@ export async function updateUserProfile(userId: string, data: UpdateUserProfileD
 }
 
 // Check if user has profile
-export async function hasUserProfile(userId: string): Promise<boolean> {
-  const supabase = await createClient()
+export async function hasUserProfile(userId: string, supabaseClient?: SupabaseClient): Promise<boolean> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data, error } = await supabase
     .from('user_profiles')
@@ -126,8 +127,8 @@ export async function hasUserProfile(userId: string): Promise<boolean> {
 }
 
 // Get user stats using database function
-export async function getUserStats(userId: string): Promise<UserStats> {
-  const supabase = await createClient()
+export async function getUserStats(userId: string, supabaseClient?: SupabaseClient): Promise<UserStats> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data, error } = await supabase
     .rpc('get_user_stats', { user_uuid: userId })
@@ -151,8 +152,8 @@ export async function getUserStats(userId: string): Promise<UserStats> {
 }
 
 // Delete user profile
-export async function deleteUserProfile(userId: string): Promise<void> {
-  const supabase = await createClient()
+export async function deleteUserProfile(userId: string, supabaseClient?: SupabaseClient): Promise<void> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { error } = await supabase
     .from('user_profiles')

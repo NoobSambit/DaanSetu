@@ -1,8 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { generateNGORecommendations } from '@/lib/services/gemini'
-import { NextResponse } from 'next/server'
+import { NextResponse, NextRequest } from 'next/server'
+import { rateLimit, RATE_LIMITS } from '@/lib/middleware/rate-limit'
 
-export async function POST(request: Request) {
+async function handler(request: NextRequest) {
   try {
     const { userId } = await request.json()
 
@@ -98,3 +99,6 @@ export async function POST(request: Request) {
     )
   }
 }
+
+// Apply rate limiting to AI endpoint
+export const POST = rateLimit(RATE_LIMITS.AI)(handler)

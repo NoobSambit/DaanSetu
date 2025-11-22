@@ -1,4 +1,5 @@
-import { createClient } from '@/lib/supabase/server'
+import { getBrowserClient } from '@/lib/supabase'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 export interface PostBookmark {
   id: string
@@ -22,8 +23,8 @@ export interface BookmarkWithPost extends PostBookmark {
 }
 
 // Bookmark a post
-export async function bookmarkPost(userId: string, postId: string): Promise<PostBookmark> {
-  const supabase = await createClient()
+export async function bookmarkPost(userId: string, postId: string, supabaseClient?: SupabaseClient): Promise<PostBookmark> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data: bookmark, error } = await supabase
     .from('post_bookmarks')
@@ -40,8 +41,8 @@ export async function bookmarkPost(userId: string, postId: string): Promise<Post
 }
 
 // Remove bookmark
-export async function unbookmarkPost(userId: string, postId: string): Promise<void> {
-  const supabase = await createClient()
+export async function unbookmarkPost(userId: string, postId: string, supabaseClient?: SupabaseClient): Promise<void> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { error } = await supabase
     .from('post_bookmarks')
@@ -56,8 +57,8 @@ export async function unbookmarkPost(userId: string, postId: string): Promise<vo
 }
 
 // Check if user has bookmarked a post
-export async function hasBookmarked(userId: string, postId: string): Promise<boolean> {
-  const supabase = await createClient()
+export async function hasBookmarked(userId: string, postId: string, supabaseClient?: SupabaseClient): Promise<boolean> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data, error } = await supabase
     .from('post_bookmarks')
@@ -70,8 +71,8 @@ export async function hasBookmarked(userId: string, postId: string): Promise<boo
 }
 
 // Get user's bookmarked posts
-export async function getUserBookmarks(userId: string): Promise<BookmarkWithPost[]> {
-  const supabase = await createClient()
+export async function getUserBookmarks(userId: string, supabaseClient?: SupabaseClient): Promise<BookmarkWithPost[]> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { data: bookmarks, error } = await supabase
     .from('post_bookmarks')
@@ -94,8 +95,8 @@ export async function getUserBookmarks(userId: string): Promise<BookmarkWithPost
 }
 
 // Get bookmark count for a post
-export async function getBookmarkCount(postId: string): Promise<number> {
-  const supabase = await createClient()
+export async function getBookmarkCount(postId: string, supabaseClient?: SupabaseClient): Promise<number> {
+  const supabase = supabaseClient || getBrowserClient()
 
   const { count, error } = await supabase
     .from('post_bookmarks')
