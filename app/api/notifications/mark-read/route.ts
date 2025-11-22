@@ -15,6 +15,21 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { notificationId } = body
 
+    // Verify notification belongs to user
+    const { data: notification, error: fetchError } = await supabase
+      .from('notifications')
+      .select('user_id')
+      .eq('id', notificationId)
+      .single()
+
+    if (fetchError || !notification) {
+      return NextResponse.json({ error: 'Notification not found' }, { status: 404 })
+    }
+
+    if (notification.user_id !== user.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+    }
+
     await markNotificationAsRead(notificationId)
 
     return NextResponse.json({ success: true })

@@ -88,10 +88,32 @@ Only recommend NGOs from the provided list. If user has no interests yet, recomm
     // Extract JSON from response
     const jsonMatch = response.match(/\[[\s\S]*\]/)
     if (jsonMatch) {
-      const recommendations = JSON.parse(jsonMatch[0])
-      // Cache the result
-      setCachedResponse(cacheKey, recommendations)
-      return recommendations as Array<{ ngo_name: string; reason: string }>
+      try {
+        const recommendations = JSON.parse(jsonMatch[0])
+
+        // Validate response structure
+        if (!Array.isArray(recommendations)) {
+          console.error('AI response is not an array')
+          return []
+        }
+
+        // Sanitize and validate each recommendation
+        const validatedRecs = recommendations
+          .filter((rec: any) => rec && typeof rec === 'object')
+          .filter((rec: any) => typeof rec.ngo_name === 'string' && typeof rec.reason === 'string')
+          .map((rec: any) => ({
+            ngo_name: rec.ngo_name.substring(0, 200), // Limit length
+            reason: rec.reason.substring(0, 500) // Limit length
+          }))
+          .slice(0, 10) // Max 10 recommendations
+
+        // Cache the result
+        setCachedResponse(cacheKey, validatedRecs)
+        return validatedRecs as Array<{ ngo_name: string; reason: string }>
+      } catch (parseError) {
+        console.error('Failed to parse AI response:', parseError)
+        return []
+      }
     }
 
     return []

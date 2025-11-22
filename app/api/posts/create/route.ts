@@ -16,14 +16,9 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { author_id, author_role, title, content, image_url, category } = body
+    const { title, content, image_url, category } = body
 
-    // Verify user is authorized to create posts
-    if (author_id !== user.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    // Verify user role
+    // Verify user role and derive author_role from database
     const { data: userData } = await supabase
       .from('users')
       .select('role')
@@ -34,10 +29,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
     }
 
+    // Use the actual role from database, not from request
+    const authorRole = userData.role as 'ngo' | 'corporate' | 'admin'
+
     // Create the post
     const post = await createPost({
-      author_id,
-      author_role,
+      author_id: user.id,
+      author_role: authorRole,
       title,
       content,
       image_url: image_url || undefined,
