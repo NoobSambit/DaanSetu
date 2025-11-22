@@ -78,32 +78,35 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-12 bg-gray-50">
+    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-12 bg-slate-50">
       <div className="max-w-md w-full">
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          <h2 className="text-3xl font-bold text-center text-gray-900 mb-8">
-            Join DaanSetu
-          </h2>
+        <div className="card-elevated p-8 md:p-10 animate-scale-in">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2">
+              Join <span className="bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">DaanSetu</span>
+            </h2>
+            <p className="text-slate-600">Create your account to get started</p>
+          </div>
 
           {error && (
-            <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm">
+            <div className="bg-red-50 border border-red-200 text-red-800 p-3.5 rounded-lg mb-6 text-sm font-medium">
               {error}
             </div>
           )}
 
-          <form onSubmit={handleSignup} className="space-y-6">
+          <form onSubmit={handleSignup} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-slate-900 mb-3">
                 I am registering as
               </label>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 gap-2">
                 <button
                   type="button"
                   onClick={() => setRole('user')}
-                  className={`py-2 px-3 rounded-lg border-2 text-sm font-medium transition ${
+                  className={`py-2.5 px-3 rounded-lg border-2 text-sm font-semibold transition-all ${
                     role === 'user'
-                      ? 'border-blue-600 bg-blue-50 text-blue-700'
-                      : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                      ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-sm'
+                      : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50'
                   }`}
                 >
                   User
@@ -111,10 +114,10 @@ export default function SignupPage() {
                 <button
                   type="button"
                   onClick={() => setRole('ngo')}
-                  className={`py-2 px-3 rounded-lg border-2 text-sm font-medium transition ${
+                  className={`py-2.5 px-3 rounded-lg border-2 text-sm font-semibold transition-all ${
                     role === 'ngo'
-                      ? 'border-blue-600 bg-blue-50 text-blue-700'
-                      : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                      ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-sm'
+                      : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50'
                   }`}
                 >
                   NGO
@@ -122,10 +125,10 @@ export default function SignupPage() {
                 <button
                   type="button"
                   onClick={() => setRole('corporate')}
-                  className={`py-2 px-3 rounded-lg border-2 text-sm font-medium transition ${
+                  className={`py-2.5 px-3 rounded-lg border-2 text-sm font-semibold transition-all ${
                     role === 'corporate'
-                      ? 'border-blue-600 bg-blue-50 text-blue-700'
-                      : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                      ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-sm'
+                      : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50'
                   }`}
                 >
                   Corporate
@@ -134,7 +137,7 @@ export default function SignupPage() {
             </div>
 
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="name" className="block text-sm font-semibold text-slate-900 mb-2">
                 {role === 'corporate' ? 'Contact Name' : 'Full Name'}
               </label>
               <input
@@ -143,13 +146,13 @@ export default function SignupPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="input"
                 placeholder="John Doe"
               />
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="email" className="block text-sm font-semibold text-slate-900 mb-2">
                 {role === 'corporate' ? 'Official Email' : 'Email Address'}
               </label>
               <input
@@ -158,13 +161,13 @@ export default function SignupPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="input"
                 placeholder="you@example.com"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="password" className="block text-sm font-semibold text-slate-900 mb-2">
                 Password
               </label>
               <input
@@ -173,13 +176,13 @@ export default function SignupPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="input"
                 placeholder="••••••••"
               />
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="confirmPassword" className="block text-sm font-semibold text-slate-900 mb-2">
                 Confirm Password
               </label>
               <input
@@ -188,7 +191,7 @@ export default function SignupPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="input"
                 placeholder="••••••••"
               />
             </div>
@@ -196,14 +199,14 @@ export default function SignupPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn btn-primary w-full py-3 text-base shadow-md hover:shadow-lg"
             >
               {loading ? 'Creating Account...' : 'Sign Up'}
             </button>
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-slate-600">
               Already have an account?{' '}
               <Link href="/auth/login" className="text-blue-600 hover:text-blue-700 font-semibold">
                 Login

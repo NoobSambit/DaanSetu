@@ -75,23 +75,25 @@ export default function Header() {
   const isActive = (path: string) => pathname === path
 
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <header className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm backdrop-blur-sm bg-white/95">
+      <div className="container-custom">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2">
-            <span className="text-2xl font-bold text-blue-600">DaanSetu</span>
+          <Link href="/" className="flex items-center space-x-2 group">
+            <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent group-hover:from-blue-700 group-hover:to-blue-800 transition-all">
+              DaanSetu
+            </span>
           </Link>
 
           {/* Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
+          <nav className="hidden md:flex items-center space-x-1">
             <Link
               href="/ngos"
               className={`${
                 isActive('/ngos')
-                  ? 'text-blue-600 font-semibold'
-                  : 'text-gray-600 hover:text-gray-900'
-              } transition`}
+                  ? 'text-blue-600 font-semibold bg-blue-50'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+              } transition-all px-3 py-2 rounded-lg text-sm font-medium`}
             >
               NGOs
             </Link>
@@ -99,9 +101,9 @@ export default function Header() {
               href="/campaigns"
               className={`${
                 pathname?.startsWith('/campaigns') && !pathname?.startsWith('/campaigns/create')
-                  ? 'text-blue-600 font-semibold'
-                  : 'text-gray-600 hover:text-gray-900'
-              } transition`}
+                  ? 'text-blue-600 font-semibold bg-blue-50'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+              } transition-all px-3 py-2 rounded-lg text-sm font-medium`}
             >
               Campaigns
             </Link>
@@ -109,9 +111,9 @@ export default function Header() {
               href="/volunteer/opportunities"
               className={`${
                 pathname?.startsWith('/volunteer')
-                  ? 'text-blue-600 font-semibold'
-                  : 'text-gray-600 hover:text-gray-900'
-              } transition`}
+                  ? 'text-blue-600 font-semibold bg-blue-50'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+              } transition-all px-3 py-2 rounded-lg text-sm font-medium`}
             >
               Volunteer
             </Link>
@@ -119,9 +121,9 @@ export default function Header() {
               href="/community"
               className={`${
                 pathname?.startsWith('/community')
-                  ? 'text-blue-600 font-semibold'
-                  : 'text-gray-600 hover:text-gray-900'
-              } transition`}
+                  ? 'text-blue-600 font-semibold bg-blue-50'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+              } transition-all px-3 py-2 rounded-lg text-sm font-medium`}
             >
               Community
             </Link>
@@ -129,9 +131,9 @@ export default function Header() {
               href="/leaderboard"
               className={`${
                 isActive('/leaderboard')
-                  ? 'text-blue-600 font-semibold'
-                  : 'text-gray-600 hover:text-gray-900'
-              } transition`}
+                  ? 'text-blue-600 font-semibold bg-blue-50'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+              } transition-all px-3 py-2 rounded-lg text-sm font-medium`}
             >
               Leaderboard
             </Link>
@@ -140,9 +142,9 @@ export default function Header() {
                 href={userRole === 'corporate' ? '/corporate/dashboard' : '/dashboard'}
                 className={`${
                   (userRole === 'corporate' ? pathname?.startsWith('/corporate/dashboard') : isActive('/dashboard'))
-                    ? 'text-blue-600 font-semibold'
-                    : 'text-gray-600 hover:text-gray-900'
-                } transition`}
+                    ? 'text-blue-600 font-semibold bg-blue-50'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                } transition-all px-3 py-2 rounded-lg text-sm font-medium`}
               >
                 Dashboard
               </Link>
@@ -150,15 +152,15 @@ export default function Header() {
           </nav>
 
           {/* Auth Buttons */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3">
             {user ? (
               <>
                 {/* Notification Bell */}
-                <Link href="/notifications" className="relative">
+                <Link href="/notifications" className="relative p-2 rounded-lg hover:bg-slate-100 transition-colors">
                   <svg
-                    className={`w-6 h-6 ${
-                      isActive('/notifications') ? 'text-blue-600' : 'text-gray-600 hover:text-gray-900'
-                    } transition`}
+                    className={`w-5 h-5 ${
+                      isActive('/notifications') ? 'text-blue-600' : 'text-slate-600'
+                    } transition-colors`}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -171,17 +173,17 @@ export default function Header() {
                     />
                   </svg>
                   {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                    <span className="absolute top-1 right-1 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 shadow-sm">
                       {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                   )}
                 </Link>
-                <span className="text-sm text-gray-600 hidden md:block">
+                <span className="text-sm text-slate-600 hidden lg:block max-w-[150px] truncate">
                   {user.email}
                 </span>
                 <button
                   onClick={handleSignOut}
-                  className="text-sm text-gray-600 hover:text-gray-900 transition"
+                  className="text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 px-3 py-2 rounded-lg transition-all font-medium"
                 >
                   Sign Out
                 </button>
@@ -190,13 +192,13 @@ export default function Header() {
               <>
                 <Link
                   href="/auth/login"
-                  className="text-sm text-gray-600 hover:text-gray-900 transition"
+                  className="text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 px-3 py-2 rounded-lg transition-all font-medium"
                 >
                   Login
                 </Link>
                 <Link
                   href="/auth/signup"
-                  className="text-sm bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+                  className="btn btn-primary text-sm"
                 >
                   Sign Up
                 </Link>
@@ -207,45 +209,45 @@ export default function Header() {
       </div>
 
       {/* Mobile Navigation */}
-      <div className="md:hidden border-t border-gray-200">
-        <div className="flex justify-around py-2 overflow-x-auto">
+      <div className="md:hidden border-t border-slate-200 bg-white">
+        <div className="flex justify-around py-1 overflow-x-auto scrollbar-hide">
           <Link
             href="/ngos"
             className={`${
-              isActive('/ngos') ? 'text-blue-600' : 'text-gray-600'
-            } text-xs py-2 px-2 whitespace-nowrap`}
+              isActive('/ngos') ? 'text-blue-600 font-semibold bg-blue-50' : 'text-slate-600'
+            } text-xs py-2 px-3 whitespace-nowrap rounded-lg transition-all`}
           >
             NGOs
           </Link>
           <Link
             href="/campaigns"
             className={`${
-              pathname?.startsWith('/campaigns') ? 'text-blue-600' : 'text-gray-600'
-            } text-xs py-2 px-2 whitespace-nowrap`}
+              pathname?.startsWith('/campaigns') ? 'text-blue-600 font-semibold bg-blue-50' : 'text-slate-600'
+            } text-xs py-2 px-3 whitespace-nowrap rounded-lg transition-all`}
           >
             Campaigns
           </Link>
           <Link
             href="/volunteer/opportunities"
             className={`${
-              pathname?.startsWith('/volunteer') ? 'text-blue-600' : 'text-gray-600'
-            } text-xs py-2 px-2 whitespace-nowrap`}
+              pathname?.startsWith('/volunteer') ? 'text-blue-600 font-semibold bg-blue-50' : 'text-slate-600'
+            } text-xs py-2 px-3 whitespace-nowrap rounded-lg transition-all`}
           >
             Volunteer
           </Link>
           <Link
             href="/community"
             className={`${
-              pathname?.startsWith('/community') ? 'text-blue-600' : 'text-gray-600'
-            } text-xs py-2 px-2 whitespace-nowrap`}
+              pathname?.startsWith('/community') ? 'text-blue-600 font-semibold bg-blue-50' : 'text-slate-600'
+            } text-xs py-2 px-3 whitespace-nowrap rounded-lg transition-all`}
           >
             Community
           </Link>
           <Link
             href="/leaderboard"
             className={`${
-              isActive('/leaderboard') ? 'text-blue-600' : 'text-gray-600'
-            } text-xs py-2 px-2 whitespace-nowrap`}
+              isActive('/leaderboard') ? 'text-blue-600 font-semibold bg-blue-50' : 'text-slate-600'
+            } text-xs py-2 px-3 whitespace-nowrap rounded-lg transition-all`}
           >
             Leaderboard
           </Link>
@@ -253,8 +255,8 @@ export default function Header() {
             <Link
               href={userRole === 'corporate' ? '/corporate/dashboard' : '/dashboard'}
               className={`${
-                (userRole === 'corporate' ? pathname?.startsWith('/corporate/dashboard') : isActive('/dashboard')) ? 'text-blue-600' : 'text-gray-600'
-              } text-xs py-2 px-2 whitespace-nowrap`}
+                (userRole === 'corporate' ? pathname?.startsWith('/corporate/dashboard') : isActive('/dashboard')) ? 'text-blue-600 font-semibold bg-blue-50' : 'text-slate-600'
+              } text-xs py-2 px-3 whitespace-nowrap rounded-lg transition-all`}
             >
               Dashboard
             </Link>

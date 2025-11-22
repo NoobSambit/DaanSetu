@@ -50,8 +50,14 @@ export default function NGOMap({ ngos, center, zoom = 6 }: NGOMapProps) {
   // Don't render map on server side
   if (!isMounted) {
     return (
-      <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-        <div className="text-gray-500">Loading map...</div>
+      <div className="w-full h-full bg-slate-100 flex items-center justify-center rounded-xl">
+        <div className="flex flex-col items-center gap-3">
+          <svg className="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <div className="text-slate-600 font-medium">Loading map...</div>
+        </div>
       </div>
     )
   }
@@ -68,7 +74,7 @@ export default function NGOMap({ ngos, center, zoom = 6 }: NGOMapProps) {
     <MapContainer
       center={defaultCenter}
       zoom={zoom}
-      style={{ height: '100%', width: '100%' }}
+      style={{ height: '100%', width: '100%', borderRadius: '0.75rem' }}
       className="z-0"
     >
       <TileLayer
@@ -83,24 +89,27 @@ export default function NGOMap({ ngos, center, zoom = 6 }: NGOMapProps) {
           icon={createCustomIcon(ngo.category)}
         >
           <Popup>
-            <div className="p-2 min-w-[200px]">
+            <div className="p-3 min-w-[220px]">
               <div className="flex items-start justify-between mb-2">
-                <h3 className="font-semibold text-gray-900">{ngo.name}</h3>
-                <span className="text-lg ml-2">
+                <h3 className="font-bold text-slate-900 text-base">{ngo.name}</h3>
+                <span className="text-xl ml-2">
                   {categoryEmojis[ngo.category]}
                 </span>
               </div>
-              <p className="text-sm text-gray-600 mb-2 line-clamp-2">
+              <p className="text-sm text-slate-600 mb-3 line-clamp-2 leading-relaxed">
                 {ngo.description}
               </p>
-              <div className="text-xs text-gray-500 mb-3">
+              <div className="text-xs text-slate-500 mb-3 font-medium">
                 📍 {ngo.city}, {ngo.state}
               </div>
               <Link
                 href={`/ngos/${ngo.id}`}
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-semibold"
               >
-                View Details →
+                View Details
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
               </Link>
             </div>
           </Popup>
