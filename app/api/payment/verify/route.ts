@@ -3,6 +3,9 @@ import { createServerClient } from '@/lib/supabase/server'
 import crypto from 'crypto'
 import { rateLimit, RATE_LIMITS } from '@/lib/middleware/rate-limit'
 
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 /**
  * Verify Razorpay payment signature and record donation
  * POST /api/payment/verify

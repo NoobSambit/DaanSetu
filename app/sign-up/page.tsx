@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 
-import AuthShell from '@/components/auth/AuthShell'
+import SignUpLayout from '@/components/auth/SignUpLayout'
 import SignUpForm from '@/components/auth/SignUpForm'
 import { getUserRole } from '@/lib/auth/profile'
 import { getPostAuthDestination } from '@/lib/auth/redirects'
@@ -9,7 +9,7 @@ import { createClient } from '@/lib/supabase/server'
 
 export const metadata: Metadata = {
   title: 'Create account | DaanSetu',
-  description: 'Create your free DaanSetu account.',
+  description: 'Join the ecosystem creating measurable impact across India.',
 }
 
 export default async function SignUpPage() {
@@ -24,11 +24,8 @@ export default async function SignUpPage() {
   }
 
   return (
-    <AuthShell
-      title="Create your account"
-      description="Choose how you want to participate. You can start for free."
-    >
+    <SignUpLayout>
       <SignUpForm />
-    </AuthShell>
+    </SignUpLayout>
   )
 }

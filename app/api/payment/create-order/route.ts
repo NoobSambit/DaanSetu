@@ -3,6 +3,9 @@ import { createServerClient } from '@/lib/supabase/server'
 import Razorpay from 'razorpay'
 import { rateLimit, RATE_LIMITS } from '@/lib/middleware/rate-limit'
 
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 /**
  * Create a Razorpay order for donation payment
  * POST /api/payment/create-order
