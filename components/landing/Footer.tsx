@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Heart, Mail, Phone, MapPin, Globe, MessageCircle, Camera, Briefcase, Play } from "lucide-react";
 
 const footerColumns = [
@@ -27,8 +28,8 @@ export default function Footer() {
           {/* Brand */}
           <div className="col-span-2 sm:col-span-3 lg:col-span-2">
             <div className="flex items-center gap-2.5 mb-3">
-              <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
-                <Heart className="w-4 h-4 text-white fill-white" />
+              <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center shrink-0 relative">
+                <Image src="/logo.png" alt="DaanSetu Logo" fill sizes="32px" className="object-cover scale-[1.5]" />
               </div>
               <div>
                 <span className="text-base font-bold block leading-tight">DaanSetu</span>

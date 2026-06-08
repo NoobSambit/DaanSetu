@@ -1,5 +1,6 @@
 import React from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 
 // Logo SVG matching the 3 figures holding hands with a line graph
 const LogoIcon = () => (
@@ -135,7 +136,9 @@ export default function AuthLayout({
           </Link>
 
           <div className="flex items-center gap-3 text-slate-950 mb-8 mt-8">
-            <LogoIcon />
+            <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center shrink-0 relative">
+              <Image src="/logo.png" alt="DaanSetu Logo" fill sizes="40px" className="object-cover scale-[1.5]" />
+            </div>
             <div className="flex flex-col">
               <span className="text-[20px] font-bold text-[#1e3a8a] leading-tight">DaanSetu</span>
               <span className="text-[9px] font-bold tracking-widest text-slate-400 uppercase mt-[1px]">A Bridge for Giving</span>

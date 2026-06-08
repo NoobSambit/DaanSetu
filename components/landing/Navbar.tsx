@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
@@ -41,8 +42,8 @@ export default function Navbar() {
       <div className="container-custom h-full flex items-center justify-between">
         {/* Left: Logo */}
         <Link href="/" className="flex items-center gap-2.5 shrink-0">
-          <div className="w-9 h-9 bg-primary-600 rounded-xl flex items-center justify-center">
-            <Heart className="w-4 h-4 text-white fill-white" />
+          <div className="w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center shrink-0 relative">
+            <Image src="/logo.png" alt="DaanSetu Logo" fill sizes="36px" className="object-cover scale-[1.5]" />
           </div>
           <div>
             <span className="text-lg font-bold text-heading block leading-tight">

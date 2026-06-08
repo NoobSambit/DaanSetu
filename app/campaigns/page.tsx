@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { getAllCampaigns, type CampaignWithNGO } from '@/lib/services/campaigns'
 import type { CampaignCategory } from '@/lib/types/database.types'
 import AICampaignSuggestions from './components/AICampaignSuggestions'
+import { LogoLoader } from '@/components/ui/LogoLoader'
 
 export default function CampaignsPage() {
   const [campaigns, setCampaigns] = useState<CampaignWithNGO[]>([])
@@ -128,9 +129,8 @@ export default function CampaignsPage() {
 
         {/* Campaign Grid */}
         {loading ? (
-          <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            <p className="mt-4 text-gray-600">Loading campaigns...</p>
+          <div className="py-20">
+            <LogoLoader size="lg" />
           </div>
         ) : error ? (
           <div className="text-center py-12">
