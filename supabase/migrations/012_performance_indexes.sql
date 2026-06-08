@@ -111,10 +111,10 @@ CREATE INDEX IF NOT EXISTS idx_volunteer_opps_active
   ON volunteer_opportunities(city, date)
   WHERE status = 'active';
 
--- Index for recent post views (last 30 days)
+-- Index for recent post-view range queries. The time window belongs in the
+-- query because NOW() cannot be used in an immutable index predicate.
 CREATE INDEX IF NOT EXISTS idx_post_views_recent
-  ON post_views(post_id, created_at DESC)
-  WHERE created_at > NOW() - INTERVAL '30 days';
+  ON post_views(post_id, created_at DESC);
 
 -- ============================================================================
 -- 6. FULL TEXT SEARCH INDEXES (if needed in future)

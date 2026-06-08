@@ -22,7 +22,7 @@ export default async function AIFlagsPage() {
   const { data: { user }, error: authError } = await supabase.auth.getUser()
 
   if (authError || !user) {
-    redirect('/auth/login?redirect=/admin/ai-flags')
+    redirect('/sign-in?next=/admin/ai-flags')
   }
 
   // Check if user is admin

@@ -13,7 +13,7 @@ export default async function NGOAnalyticsPage() {
   const { data: { user }, error: authError } = await supabase.auth.getUser()
 
   if (authError || !user) {
-    redirect('/auth/login?redirect=/ngo/dashboard/analytics')
+    redirect('/sign-in?next=/ngo/dashboard/analytics')
   }
 
   // Get user's NGO

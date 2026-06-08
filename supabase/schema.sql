@@ -3,8 +3,9 @@ CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   email TEXT NOT NULL UNIQUE,
-  role TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'ngo', 'admin')),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  role TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'ngo', 'corporate', 'admin')),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Create ngos table
@@ -37,10 +38,8 @@ CREATE POLICY "Users can view all profiles"
   TO authenticated
   USING (true);
 
-CREATE POLICY "Users can update their own profile"
-  ON users FOR UPDATE
-  TO authenticated
-  USING (auth.uid() = id);
+REVOKE ALL ON users FROM anon, authenticated;
+GRANT SELECT ON users TO authenticated;
 
 -- NGOs table policies
 CREATE POLICY "Anyone can view NGOs"

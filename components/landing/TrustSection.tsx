@@ -55,7 +55,7 @@ export default function TrustSection() {
                 
                 <div className="flex-1 flex flex-col pt-1 pb-6">
                   <blockquote className="text-slate-600 text-[14px] leading-[1.6] mb-3">
-                    "Transparent updates and real stories give me confidence that my contribution truly makes a difference."
+                    &ldquo;Transparent updates and real stories give me confidence that my contribution truly makes a difference.&rdquo;
                   </blockquote>
                   <p className="text-[13px] text-slate-500">
                     — <span className="text-[#1e3a8a] font-bold">Neha Sharma</span>, Donor

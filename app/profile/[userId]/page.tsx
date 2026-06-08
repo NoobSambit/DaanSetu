@@ -20,7 +20,7 @@ export default async function UserProfilePage({ params }: Props) {
   const { data: { user: currentUser } } = await supabase.auth.getUser()
 
   if (!currentUser) {
-    redirect('/auth/login')
+    redirect('/sign-in')
   }
 
   // Get user data

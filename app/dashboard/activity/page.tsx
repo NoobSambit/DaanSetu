@@ -11,7 +11,7 @@ export default async function ActivityTimelinePage() {
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    redirect('/auth/login')
+    redirect('/sign-in')
   }
 
   const activities = await getUserActivityTimeline(user.id, 100)

@@ -134,15 +134,16 @@ CREATE INDEX IF NOT EXISTS idx_campaigns_status_deadline
 
 -- Index for posts by user with timestamp
 CREATE INDEX IF NOT EXISTS idx_posts_user_created
-  ON posts(user_id, created_at DESC);
+  ON posts(author_id, created_at DESC);
 
 -- Index for follows relationships
 CREATE INDEX IF NOT EXISTS idx_follows_follower_following
   ON follows(follower_id, following_id);
 
--- Index for leaderboard queries
-CREATE INDEX IF NOT EXISTS idx_user_stats_points
-  ON users(total_donation_amount DESC, created_at);
+-- Index for donor leaderboard aggregation
+CREATE INDEX IF NOT EXISTS idx_donations_user_completed_amount
+  ON donations(user_id, amount DESC)
+  WHERE payment_status = 'completed';
 
 -- ============================================================================
 -- 5. UPDATED_AT TRIGGERS
@@ -192,12 +193,17 @@ RETURNS TABLE(
 ) AS $$
 BEGIN
   RETURN QUERY
-  WITH ranked_users AS (
+  WITH donation_totals AS (
+    SELECT user_id, SUM(amount) AS total_donated
+    FROM donations
+    WHERE payment_status = 'completed'
+    GROUP BY user_id
+  ),
+  ranked_users AS (
     SELECT
-      id,
-      ROW_NUMBER() OVER (ORDER BY total_donation_amount DESC, created_at ASC) as user_rank
-    FROM users
-    WHERE total_donation_amount > 0
+      user_id,
+      ROW_NUMBER() OVER (ORDER BY total_donated DESC, user_id ASC) as user_rank
+    FROM donation_totals
   ),
   stats AS (
     SELECT COUNT(*) as total FROM ranked_users
@@ -208,7 +214,7 @@ BEGIN
     ROUND((ru.user_rank::NUMERIC / NULLIF(s.total, 0)) * 100, 2) as pct
   FROM ranked_users ru
   CROSS JOIN stats s
-  WHERE ru.id = p_user_id;
+  WHERE ru.user_id = p_user_id;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -235,7 +241,7 @@ BEGIN
   RETURN QUERY
   SELECT
     p.id,
-    p.user_id,
+    p.author_id,
     p.content,
     p.image_url,
     p.created_at,

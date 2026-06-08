@@ -33,7 +33,7 @@ export default function CreateCampaignPage() {
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
-      router.push('/auth/login?redirect=/campaigns/create')
+      router.push('/sign-in?next=/campaigns/create')
       return
     }
 

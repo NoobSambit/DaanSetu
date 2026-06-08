@@ -13,7 +13,7 @@ export default async function AdminAnalyticsPage() {
   const { data: { user }, error: authError } = await supabase.auth.getUser()
 
   if (authError || !user) {
-    redirect('/auth/login?redirect=/admin/analytics')
+    redirect('/sign-in?next=/admin/analytics')
   }
 
   // Check if user is admin

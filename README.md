@@ -56,7 +56,7 @@ yarn install
 3. Run the database migrations:
    - Go to the SQL Editor in your Supabase dashboard
    - Copy the contents of `supabase/schema.sql` and execute it
-   - Then run all migrations in `supabase/migrations/` in order (007, 008, 009, 010)
+   - Then run all migrations in `supabase/migrations/` in numeric order through `014_auth_pipeline.sql`
 
 4. Set up Storage buckets:
    - Go to Storage in your Supabase dashboard
@@ -103,7 +103,8 @@ The critical fixes migration includes:
 - Activity logging functions
 - Optimized leaderboard queries
 
-Make sure to run `supabase/migrations/010_critical_fixes.sql` in your Supabase SQL editor.
+Make sure to run every migration through `supabase/migrations/014_auth_pipeline.sql`
+in your Supabase SQL editor.
 
 ### 6. Start the Development Server
 

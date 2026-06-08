@@ -11,7 +11,7 @@ export default async function ImpactStoriesPage() {
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    redirect('/auth/login')
+    redirect('/sign-in')
   }
 
   // Get featured posts

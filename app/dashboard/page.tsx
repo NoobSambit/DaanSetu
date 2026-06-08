@@ -27,7 +27,7 @@ export default async function DashboardPage() {
   const { data: { user }, error: authError } = await supabase.auth.getUser()
 
   if (authError || !user) {
-    redirect('/auth/login?redirect=/dashboard')
+    redirect('/sign-in?next=/dashboard')
   }
 
   // Fetch user's donations with NGO details

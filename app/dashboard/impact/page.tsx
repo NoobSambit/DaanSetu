@@ -12,7 +12,7 @@ export default async function UserImpactPage() {
   const { data: { user }, error: authError } = await supabase.auth.getUser()
 
   if (authError || !user) {
-    redirect('/auth/login?redirect=/dashboard/impact')
+    redirect('/sign-in?next=/dashboard/impact')
   }
 
   // Get user impact data

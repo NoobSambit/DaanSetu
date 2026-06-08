@@ -26,7 +26,7 @@ export default function DonateButton({
 
   const handleDonateClick = () => {
     if (!isAuthenticated) {
-      router.push('/auth/login?redirect=/ngos/' + ngoId)
+      router.push('/sign-in?next=/ngos/' + ngoId)
       return
     }
     setIsModalOpen(true)

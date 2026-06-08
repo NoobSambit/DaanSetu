@@ -179,7 +179,7 @@ import { test, expect } from '@playwright/test'
 
 test('user can make a donation', async ({ page }) => {
   // Login
-  await page.goto('http://localhost:3000/auth/login')
+  await page.goto('http://localhost:3000/sign-in')
   await page.fill('[name="email"]', 'test@example.com')
   await page.fill('[name="password"]', 'password123')
   await page.click('button[type="submit"]')

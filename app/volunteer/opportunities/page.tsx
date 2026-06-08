@@ -88,7 +88,7 @@ export default function VolunteerOpportunitiesPage() {
 
   async function handleApply(opportunityId: string) {
     if (!isAuthenticated) {
-      router.push('/auth/login')
+      router.push('/sign-in')
       return
     }
 

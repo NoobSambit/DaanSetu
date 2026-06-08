@@ -695,7 +695,7 @@ ALTER TABLE email_queue ENABLE ROW LEVEL SECURITY;
 CREATE INDEX idx_ngo_reviews_verified_rating ON ngo_reviews(ngo_id, is_verified_donor, rating DESC);
 CREATE INDEX idx_recurring_active_next_date ON recurring_donations(status, next_donation_date) WHERE status = 'active';
 CREATE INDEX idx_events_upcoming ON events(start_date, status) WHERE status = 'upcoming';
-CREATE INDEX idx_stories_active ON stories(created_at DESC, expires_at) WHERE expires_at > NOW();
+CREATE INDEX idx_stories_active ON stories(expires_at, created_at DESC);
 
 -- ============================================================================
 -- DEFAULT DATA

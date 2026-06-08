@@ -11,7 +11,7 @@ export default async function NotificationsPage() {
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    redirect('/auth/login')
+    redirect('/sign-in')
   }
 
   // Get user notifications

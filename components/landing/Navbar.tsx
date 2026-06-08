@@ -70,13 +70,13 @@ export default function Navbar() {
         {/* Right: Buttons */}
         <div className="hidden lg:flex items-center gap-2.5 shrink-0">
           <Link
-            href="/auth/signin"
+            href="/sign-in"
             className="px-4 py-2 text-[13px] font-medium text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 hover:border-slate-400 transition-all duration-200"
           >
             Sign In
           </Link>
           <Link
-            href="/auth/signup"
+            href="/sign-up"
             className="px-4 py-2 text-[13px] font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-all duration-200 shadow-sm hover:shadow"
           >
             Join DaanSetu
@@ -112,10 +112,10 @@ export default function Navbar() {
               </Link>
             ))}
             <div className="pt-2 border-t border-slate-100 flex flex-col gap-2">
-              <Link href="/auth/signin" className="px-3 py-2 text-sm font-medium text-center text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50">
+              <Link href="/sign-in" className="px-3 py-2 text-sm font-medium text-center text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50">
                 Sign In
               </Link>
-              <Link href="/auth/signup" className="px-3 py-2 text-sm font-medium text-center text-white bg-primary-600 rounded-lg hover:bg-primary-700">
+              <Link href="/sign-up" className="px-3 py-2 text-sm font-medium text-center text-white bg-primary-600 rounded-lg hover:bg-primary-700">
                 Join DaanSetu
               </Link>
             </div>

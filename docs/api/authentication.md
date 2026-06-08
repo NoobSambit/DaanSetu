@@ -1,396 +1,89 @@
-# Authentication API
+# Authentication
 
-DaanSetu uses Supabase Auth for user authentication and authorization.
+DaanSetu uses Supabase Auth and the Supabase free tier. Public authentication
+pages use stable, password-manager-friendly URLs:
 
-## Authentication Flow
+- `/sign-in`
+- `/sign-up`
+- `/forgot-password`
+- `/reset-password`
+- `/check-email`
 
-```
-1. User visits /auth/signup or /auth/login
-   ↓
-2. Form submits to Supabase Auth
-   ↓
-3. Supabase creates/validates user
-   ↓
-4. JWT token stored in httpOnly cookie
-   ↓
-5. User redirected to dashboard
-   ↓
-6. Subsequent requests include auth cookie
-   ↓
-7. API routes validate via supabase.auth.getUser()
-```
+The `/auth` namespace is reserved for protocol and compatibility routes:
 
-## Sign Up
+- `/auth/callback` exchanges Supabase email codes for cookie-backed sessions.
+- `/auth/login`, `/auth/signin`, and `/auth/signup` redirect old links to the
+  canonical pages.
 
-### Endpoint
-`POST /auth/signup` (page, not API route)
+## Architecture
 
-### Request Body
-```typescript
-{
-  name: string       // User's full name
-  email: string      // Valid email address
-  password: string   // Min 6 characters
-  role: 'user' | 'ngo' | 'admin'
-}
-```
+1. Forms submit to server actions in `app/auth/actions.ts`.
+2. Server actions validate and normalize all input.
+3. Supabase Auth creates or verifies the identity.
+4. `public.handle_new_user()` atomically creates the matching `public.users`
+   profile.
+5. Supabase SSR stores the session in secure cookies.
+6. Redirects are restricted to same-origin paths.
+7. Server components and API routes authorize with `auth.getUser()`.
 
-### Example
+## Account Types
 
-```typescript
-// Client-side code
-const { data, error } = await supabase.auth.signUp({
-  email: 'user@example.com',
-  password: 'securePassword123',
-  options: {
-    data: {
-      name: 'John Doe',
-      role: 'user'
-    }
-  }
-})
+Self-service signup supports:
 
-if (error) {
-  console.error('Signup error:', error.message)
-} else {
-  // User created, profile auto-created via trigger
-  router.push('/dashboard')
-}
+- `user`
+- `ngo`
+- `corporate`
+
+The database trigger ignores every other requested value. In particular,
+clients cannot create or promote themselves to `admin`. Direct insert, delete,
+and update privileges on `public.users` are revoked from browser roles.
+
+## Email Confirmation
+
+Signup passes this redirect URL to Supabase:
+
+```text
+{NEXT_PUBLIC_APP_URL}/auth/callback?next={onboarding-path}
 ```
 
-### Success Response
+Add the local and production callback URLs to the Supabase Auth redirect URL
+allowlist. Keep email confirmation enabled in production.
 
-```json
-{
-  "user": {
-    "id": "uuid",
-    "email": "user@example.com",
-    "role": "authenticated"
-  },
-  "session": {
-    "access_token": "jwt-token",
-    "refresh_token": "refresh-token"
-  }
-}
+## Password Recovery
+
+`/forgot-password` always displays the same result whether an address exists or
+not, preventing account enumeration. Recovery links return through
+`/auth/callback` and establish the temporary session required by
+`/reset-password`.
+
+## Database Setup
+
+For a new project, run:
+
+1. `supabase/schema.sql`
+2. Every migration in `supabase/migrations/` in numeric order through
+   `014_auth_pipeline.sql`
+
+Migration `014` installs secure profile provisioning, repairs pre-existing auth
+identities without profiles, and blocks direct role mutation.
+
+## Environment
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
-### Auto-Created Profile
-
-When a user signs up, a database trigger automatically creates their profile:
-
-```sql
--- Trigger: handle_new_user()
-INSERT INTO users (id, email, name, role)
-VALUES (new_user.id, email, name, role);
-```
-
-## Sign In
-
-### Endpoint
-`POST /auth/login` (page, not API route)
-
-### Request Body
-```typescript
-{
-  email: string
-  password: string
-}
-```
-
-### Example
-
-```typescript
-const { data, error } = await supabase.auth.signInWithPassword({
-  email: 'user@example.com',
-  password: 'securePassword123'
-})
-
-if (error) {
-  console.error('Login error:', error.message)
-} else {
-  router.push('/dashboard')
-}
-```
-
-## Sign Out
-
-### Example
-
-```typescript
-const { error } = await supabase.auth.signOut()
-
-if (!error) {
-  router.push('/')
-}
-```
-
-## Get Current User
-
-### Server-Side (API Routes)
-
-```typescript
-import { createServerClient } from '@/lib/supabase/server'
-
-export async function GET(request: NextRequest) {
-  const supabase = createServerClient()
-
-  const { data: { user }, error } = await supabase.auth.getUser()
-
-  if (error || !user) {
-    return NextResponse.json(
-      { error: 'Unauthorized' },
-      { status: 401 }
-    )
-  }
-
-  // User authenticated
-  const userId = user.id
-  const userEmail = user.email
-  // ...
-}
-```
-
-### Server Component
-
-```typescript
-import { createServerClient } from '@/lib/supabase/server'
-
-export default async function Page() {
-  const supabase = createServerClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/auth/login')
-  }
-
-  return <div>Welcome {user.email}</div>
-}
-```
-
-### Client Component
-
-```typescript
-'use client'
-
-import { useState, useEffect } from 'react'
-import { getBrowserClient } from '@/lib/supabase/client'
-
-export function UserProfile() {
-  const [user, setUser] = useState(null)
-  const supabase = getBrowserClient()
-
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user)
-    })
-  }, [])
-
-  if (!user) return <div>Loading...</div>
-
-  return <div>Welcome {user.email}</div>
-}
-```
-
-## User Roles
-
-DaanSetu supports three user roles:
-
-| Role | Permissions | Use Case |
-|------|-------------|----------|
-| `user` | Donate, volunteer, post | Regular donors and volunteers |
-| `ngo` | Create campaigns, manage NGO | NGO organizations |
-| `admin` | Full access | Platform administrators |
-
-### Checking User Role
-
-```typescript
-const { data: profile } = await supabase
-  .from('users')
-  .select('role')
-  .eq('id', user.id)
-  .single()
-
-if (profile.role === 'ngo') {
-  // Allow NGO operations
-} else {
-  return NextResponse.json(
-    { error: 'Forbidden: NGO role required' },
-    { status: 403 }
-  )
-}
-```
-
-## Protected Routes
-
-### Middleware Protection
-
-```typescript
-// middleware.ts
-import { createServerClient } from '@/lib/supabase/middleware'
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
-
-export async function middleware(request: NextRequest) {
-  const { supabase, response } = createServerClient(request)
-
-  const { data: { user } } = await supabase.auth.getUser()
-
-  // Protect dashboard routes
-  if (request.nextUrl.pathname.startsWith('/dashboard') && !user) {
-    return NextResponse.redirect(new URL('/auth/login', request.url))
-  }
-
-  // Protect NGO routes
-  if (request.nextUrl.pathname.startsWith('/ngo/dashboard')) {
-    if (!user) {
-      return NextResponse.redirect(new URL('/auth/login', request.url))
-    }
-
-    // Check NGO role
-    const { data: profile } = await supabase
-      .from('users')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (profile?.role !== 'ngo') {
-      return NextResponse.redirect(new URL('/dashboard', request.url))
-    }
-  }
-
-  return response
-}
-
-export const config = {
-  matcher: ['/dashboard/:path*', '/ngo/dashboard/:path*']
-}
-```
-
-## Session Management
-
-### Session Duration
-
-- **Access token**: 1 hour (default)
-- **Refresh token**: 30 days (default)
-- Auto-refresh handled by Supabase client
-
-### Checking Session
-
-```typescript
-const { data: { session } } = await supabase.auth.getSession()
-
-if (session) {
-  console.log('User is logged in')
-  console.log('Expires at:', session.expires_at)
-} else {
-  console.log('No active session')
-}
-```
-
-### Listening for Auth Changes
-
-```typescript
-'use client'
-
-useEffect(() => {
-  const { data: { subscription } } = supabase.auth.onAuthStateChange(
-    (event, session) => {
-      if (event === 'SIGNED_IN') {
-        console.log('User signed in')
-      } else if (event === 'SIGNED_OUT') {
-        console.log('User signed out')
-        router.push('/')
-      } else if (event === 'TOKEN_REFRESHED') {
-        console.log('Token refreshed')
-      }
-    }
-  )
-
-  return () => subscription.unsubscribe()
-}, [])
-```
-
-## Password Reset
-
-### Request Reset
-
-```typescript
-const { error } = await supabase.auth.resetPasswordForEmail(
-  'user@example.com',
-  {
-    redirectTo: `${window.location.origin}/auth/reset-password`
-  }
-)
-```
-
-### Update Password
-
-```typescript
-const { error } = await supabase.auth.updateUser({
-  password: 'newPassword123'
-})
-```
-
-## OAuth Providers
-
-DaanSetu can be extended to support OAuth:
-
-```typescript
-// Sign in with Google (if configured)
-const { error } = await supabase.auth.signInWithOAuth({
-  provider: 'google',
-  options: {
-    redirectTo: `${window.location.origin}/auth/callback`
-  }
-})
-```
-
-**Note**: OAuth providers must be configured in Supabase dashboard.
-
-## Security Best Practices
-
-1. **Use httpOnly cookies**: Tokens stored securely (handled by Supabase)
-2. **Validate on server**: Always check auth in API routes
-3. **Use RLS**: Database enforces user permissions
-4. **Rate limit**: Auth endpoints protected by rate limiting
-5. **Strong passwords**: Enforce minimum 6 characters
-6. **HTTPS only**: Use HTTPS in production
-
-## Common Errors
-
-### Invalid credentials
-
-```json
-{
-  "error": "Invalid login credentials"
-}
-```
-
-**Solution**: Check email/password are correct
-
-### Email already exists
-
-```json
-{
-  "error": "User already registered"
-}
-```
-
-**Solution**: Use login instead of signup
-
-### Session expired
-
-```json
-{
-  "error": "Unauthorized"
-}
-```
-
-**Solution**: Refresh token (handled automatically) or re-login
-
-## Next Steps
-
-- [AI Endpoints](./ai-endpoints.md) - AI features
-- [Payment API](./payment.md) - Payment processing
-- [Security Overview](../security/overview.md) - Security architecture
+Service-role credentials are never required by the browser or normal
+authentication actions.
+
+## Security Checklist
+
+- Keep email confirmation enabled.
+- Configure the exact production callback URL in Supabase.
+- Never expose `SUPABASE_SERVICE_ROLE_KEY` to client code.
+- Use `auth.getUser()` for server-side authorization.
+- Keep `admin` assignment as a trusted database or administrative operation.
+- Consider Supabase-supported Cloudflare Turnstile for free bot protection
+  before a public launch.

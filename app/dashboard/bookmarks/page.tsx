@@ -11,7 +11,7 @@ export default async function BookmarksPage() {
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    redirect('/auth/login')
+    redirect('/sign-in')
   }
 
   const bookmarks = await getUserBookmarks(user.id)

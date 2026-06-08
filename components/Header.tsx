@@ -5,13 +5,14 @@ import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
+import { signOutAction } from '@/app/auth/actions'
 
 export default function Header() {
   const pathname = usePathname()
   const [user, setUser] = useState<User | null>(null)
   const [userRole, setUserRole] = useState<string | null>(null)
   const [unreadCount, setUnreadCount] = useState(0)
-  const supabase = createClient()
+  const [supabase] = useState(() => createClient())
 
   useEffect(() => {
     const getUser = async () => {
@@ -67,10 +68,6 @@ export default function Header() {
       clearInterval(interval)
     }
   }, [supabase.auth, user?.id])
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut()
-  }
 
   const isActive = (path: string) => pathname === path
 
@@ -181,23 +178,25 @@ export default function Header() {
                 <span className="text-sm text-slate-600 hidden lg:block max-w-[150px] truncate">
                   {user.email}
                 </span>
-                <button
-                  onClick={handleSignOut}
-                  className="text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 px-3 py-2 rounded-lg transition-all font-medium"
-                >
-                  Sign Out
-                </button>
+                <form action={signOutAction}>
+                  <button
+                    type="submit"
+                    className="text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 px-3 py-2 rounded-lg transition-all font-medium"
+                  >
+                    Sign Out
+                  </button>
+                </form>
               </>
             ) : (
               <>
                 <Link
-                  href="/auth/login"
+                  href="/sign-in"
                   className="text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 px-3 py-2 rounded-lg transition-all font-medium"
                 >
                   Login
                 </Link>
                 <Link
-                  href="/auth/signup"
+                  href="/sign-up"
                   className="btn btn-primary text-sm"
                 >
                   Sign Up

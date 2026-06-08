@@ -29,7 +29,7 @@ const { data, error } = await supabase.auth.signInWithPassword({
 
 ### Authentication Flow
 
-1. User logs in via `/auth/login`
+1. User logs in via `/sign-in`
 2. Supabase Auth sets httpOnly cookie with JWT
 3. Subsequent API requests include cookie
 4. Server validates token via `supabase.auth.getUser()`

@@ -37,7 +37,7 @@ export default function CorporateEmployeesPage() {
       const { data: { user } } = await supabase.auth.getUser()
 
       if (!user) {
-        router.push('/auth/login')
+        router.push('/sign-in')
         return
       }
 
