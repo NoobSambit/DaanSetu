@@ -1,8 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
-import { getNGOAnalytics, exportNGOReport } from '@/lib/services/analytics'
+import { getNGOAnalytics } from '@/lib/services/analytics'
 import DownloadReportButton from './components/DownloadReportButton'
+import DonationsChart from './components/DonationsChart'
 
 export const dynamic = 'force-dynamic'
 
@@ -28,7 +28,7 @@ export default async function NGOAnalyticsPage() {
   }
 
   // Get analytics data
-  const analytics = await getNGOAnalytics(ngo.id)
+  const analytics = await getNGOAnalytics(ngo.id, supabase)
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-gray-50">
@@ -91,18 +91,7 @@ export default async function NGOAnalyticsPage() {
         <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Donations Over Time</h2>
           {analytics.donationsTimeSeries.length > 0 ? (
-            <div className="w-full h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={analytics.donationsTimeSeries}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line type="monotone" dataKey="amount" stroke="#10b981" strokeWidth={2} name="Amount (₹)" />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+            <DonationsChart data={analytics.donationsTimeSeries} />
           ) : (
             <p className="text-gray-500 text-center py-12">No donation data available yet</p>
           )}

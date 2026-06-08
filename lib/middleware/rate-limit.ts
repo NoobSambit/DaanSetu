@@ -44,7 +44,7 @@ function getClientId(request: NextRequest, userId?: string): string {
 
   // Get IP from headers (works with proxies)
   const forwarded = request.headers.get('x-forwarded-for')
-  const ip = forwarded ? forwarded.split(',')[0] : request.ip || 'unknown'
+  const ip = forwarded?.split(',')[0]?.trim() || request.headers.get('x-real-ip') || 'unknown'
 
   return `ip:${ip}`
 }

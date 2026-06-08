@@ -3,10 +3,11 @@ import { getUserBadges } from '@/lib/services/badges'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const badges = await getUserBadges(params.userId)
+    const { userId } = await params
+    const badges = await getUserBadges(userId)
     return NextResponse.json(badges)
   } catch (error) {
     console.error('Error fetching badges:', error)

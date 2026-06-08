@@ -469,6 +469,8 @@ export interface Database {
           content: string
           image_url: string | null
           category: 'update' | 'story' | 'announcement'
+          view_count: number
+          is_featured: boolean
           created_at: string
           updated_at: string
         }
@@ -480,6 +482,8 @@ export interface Database {
           content: string
           image_url?: string | null
           category: 'update' | 'story' | 'announcement'
+          view_count?: number
+          is_featured?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -491,6 +495,8 @@ export interface Database {
           content?: string
           image_url?: string | null
           category?: 'update' | 'story' | 'announcement'
+          view_count?: number
+          is_featured?: boolean
           created_at?: string
           updated_at?: string
         }

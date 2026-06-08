@@ -148,7 +148,7 @@ export async function getUserStats(userId: string, supabaseClient?: SupabaseClie
     }
   }
 
-  return data
+  return data as UserStats
 }
 
 // Delete user profile

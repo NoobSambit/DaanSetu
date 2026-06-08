@@ -105,7 +105,7 @@ export default function NotificationList({ initialNotifications }: NotificationL
         </svg>
         <h3 className="text-lg font-semibold text-gray-900 mb-2">No notifications</h3>
         <p className="text-gray-600">
-          You're all caught up! Check back later for updates.
+          You&apos;re all caught up! Check back later for updates.
         </p>
       </div>
     )
@@ -132,8 +132,53 @@ export default function NotificationList({ initialNotifications }: NotificationL
       {/* Notifications */}
       <div className="space-y-2">
         {notifications.map((notification) => {
-          const NotificationWrapper = notification.link ? Link : 'div'
-          const wrapperProps = notification.link ? { href: notification.link } : {}
+          const content = (
+            <div
+              className={`px-6 py-4 ${
+                notification.link ? 'cursor-pointer hover:bg-gray-50' : ''
+              } transition`}
+              onClick={() => {
+                if (!notification.is_read) {
+                  handleMarkAsRead(notification.id)
+                }
+              }}
+            >
+              <div className="flex items-start space-x-4">
+                <div className="flex-shrink-0 text-2xl">
+                  {getNotificationIcon(notification.type)}
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <p className={`font-semibold ${!notification.is_read ? 'text-gray-900' : 'text-gray-700'}`}>
+                        {notification.title}
+                      </p>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {notification.message}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-2">
+                        {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                      </p>
+                    </div>
+
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        handleDelete(notification.id)
+                      }}
+                      className="ml-4 text-gray-400 hover:text-red-500 transition"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )
 
           return (
             <div
@@ -142,56 +187,7 @@ export default function NotificationList({ initialNotifications }: NotificationL
                 !notification.is_read ? 'border-l-4 border-blue-500' : ''
               }`}
             >
-              <NotificationWrapper {...wrapperProps}>
-                <div
-                  className={`px-6 py-4 ${
-                    notification.link ? 'cursor-pointer hover:bg-gray-50' : ''
-                  } transition`}
-                  onClick={() => {
-                    if (!notification.is_read) {
-                      handleMarkAsRead(notification.id)
-                    }
-                  }}
-                >
-                  <div className="flex items-start space-x-4">
-                    {/* Icon */}
-                    <div className="flex-shrink-0 text-2xl">
-                      {getNotificationIcon(notification.type)}
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <p className={`font-semibold ${!notification.is_read ? 'text-gray-900' : 'text-gray-700'}`}>
-                            {notification.title}
-                          </p>
-                          <p className="text-sm text-gray-600 mt-1">
-                            {notification.message}
-                          </p>
-                          <p className="text-xs text-gray-500 mt-2">
-                            {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
-                          </p>
-                        </div>
-
-                        {/* Delete Button */}
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault()
-                            e.stopPropagation()
-                            handleDelete(notification.id)
-                          }}
-                          className="ml-4 text-gray-400 hover:text-red-500 transition"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </NotificationWrapper>
+              {notification.link ? <Link href={notification.link}>{content}</Link> : content}
             </div>
           )
         })}

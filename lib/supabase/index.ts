@@ -6,7 +6,6 @@
  */
 
 import { createClient as createBrowserClient } from './client'
-import { createClient as createServerClient } from './server'
 import { SupabaseClient } from '@supabase/supabase-js'
 
 /**
@@ -44,16 +43,6 @@ export function getBrowserClient(): SupabaseClient {
   return createBrowserClient()
 }
 
-/**
- * Create a server-side Supabase client
- * Use this in server components, API routes, and server actions
- *
- * @returns Promise<SupabaseClient>
- */
-export async function getServerClient(): Promise<SupabaseClient> {
-  return await createServerClient()
-}
-
-// Re-export for convenience
+// Keep this shared entry point browser-safe. Server code should import
+// createClient directly from '@/lib/supabase/server'.
 export { createClient as createBrowserClient } from './client'
-export { createClient as createServerClient } from './server'

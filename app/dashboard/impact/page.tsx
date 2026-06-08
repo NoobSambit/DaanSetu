@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { getUserImpact } from '@/lib/services/analytics'
+import ImpactCharts from './ImpactCharts'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,7 +16,7 @@ export default async function UserImpactPage() {
   }
 
   // Get user impact data
-  const impact = await getUserImpact(user.id)
+  const impact = await getUserImpact(user.id, supabase)
 
   const causeColors: Record<string, string> = {
     education: '#3b82f6',
@@ -94,55 +94,7 @@ export default async function UserImpactPage() {
           </div>
         </div>
 
-        {/* Charts Grid */}
-        <div className="grid md:grid-cols-2 gap-8">
-          {/* Donation History */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Donation History</h2>
-            {impact.donationsTimeSeries.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={impact.donationsTimeSeries}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line type="monotone" dataKey="amount" stroke="#10b981" strokeWidth={2} name="Amount (₹)" />
-                </LineChart>
-              </ResponsiveContainer>
-            ) : (
-              <p className="text-gray-500 text-center py-12">No donation history yet</p>
-            )}
-          </div>
-
-          {/* Causes Supported */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Causes Supported</h2>
-            {pieData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={pieData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={(entry) => `${entry.name}: ₹${entry.value.toLocaleString('en-IN')}`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {pieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <p className="text-gray-500 text-center py-12">No donation data yet</p>
-            )}
-          </div>
-        </div>
+        <ImpactCharts donations={impact.donationsTimeSeries} causes={pieData} />
 
         {/* Cause Breakdown Table */}
         {impact.causeBreakdown.length > 0 && (

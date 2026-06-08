@@ -1,8 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { getAdminAnalytics } from '@/lib/services/analytics'
+import AnalyticsCharts from './AnalyticsCharts'
 
 export const dynamic = 'force-dynamic'
 
@@ -28,7 +28,7 @@ export default async function AdminAnalyticsPage() {
   }
 
   // Get admin analytics
-  const analytics = await getAdminAnalytics()
+  const analytics = await getAdminAnalytics(supabase)
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-gray-50">
@@ -74,46 +74,10 @@ export default async function AdminAnalyticsPage() {
           </div>
         </div>
 
-        {/* Charts Grid */}
-        <div className="grid md:grid-cols-2 gap-8 mb-8">
-          {/* Donations by Region */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Top 10 Cities by Donations</h2>
-            {analytics.donationsByRegion.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={analytics.donationsByRegion} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis type="number" />
-                  <YAxis dataKey="region" type="category" width={100} />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="amount" fill="#3b82f6" name="Amount (₹)" />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <p className="text-gray-500 text-center py-12">No regional data available</p>
-            )}
-          </div>
-
-          {/* Campaign Activity by Category */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Campaigns by Category</h2>
-            {analytics.campaignsByCategory.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={analytics.campaignsByCategory}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="category" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="count" fill="#10b981" name="Campaigns" />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <p className="text-gray-500 text-center py-12">No campaign data available</p>
-            )}
-          </div>
-        </div>
+        <AnalyticsCharts
+          donationsByRegion={analytics.donationsByRegion}
+          campaignsByCategory={analytics.campaignsByCategory}
+        />
 
         {/* Top NGOs by Donations */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-8">

@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { getUserActivityTimeline, ACTIVITY_TYPE_LABELS, ACTIVITY_TYPE_ICONS } from '@/lib/services/activity-logs'
+import { getUserActivityTimeline, ACTIVITY_TYPE_LABELS, ACTIVITY_TYPE_ICONS, type ActivityLog } from '@/lib/services/activity-logs'
 import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
@@ -17,7 +17,7 @@ export default async function ActivityTimelinePage() {
   const activities = await getUserActivityTimeline(user.id, 100)
 
   // Group activities by date
-  const groupedActivities = activities.reduce((groups: any, activity) => {
+  const groupedActivities = activities.reduce<Record<string, ActivityLog[]>>((groups, activity) => {
     const date = new Date(activity.created_at).toLocaleDateString()
     if (!groups[date]) {
       groups[date] = []
@@ -62,7 +62,7 @@ export default async function ActivityTimelinePage() {
           </div>
         ) : (
           <div className="space-y-8">
-            {Object.entries(groupedActivities).map(([date, dayActivities]: [string, any]) => (
+            {Object.entries(groupedActivities).map(([date, dayActivities]) => (
               <div key={date}>
                 <div className="flex items-center gap-4 mb-4">
                   <div className="bg-blue-600 text-white px-4 py-1 rounded-full text-sm font-medium">
@@ -72,7 +72,7 @@ export default async function ActivityTimelinePage() {
                 </div>
 
                 <div className="space-y-4">
-                  {dayActivities.map((activity: any) => (
+                  {dayActivities.map((activity) => (
                     <div
                       key={activity.id}
                       className="bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow"
