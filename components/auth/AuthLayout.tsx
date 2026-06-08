@@ -102,16 +102,29 @@ const CheckIcon = () => (
   </svg>
 )
 
-export default function SignUpLayout({
+export default function AuthLayout({
   children,
+  title,
+  description,
 }: {
   children: React.ReactNode
+  title?: string
+  description?: string
 }) {
   return (
-    <main className="h-screen min-h-[700px] w-full bg-[#F4F7F9] flex overflow-hidden">
-      <div className="mx-auto w-full h-full max-w-[1500px] flex">
+    <main className="h-screen min-h-[700px] w-full bg-[#F8FAFC] flex overflow-hidden relative">
+      {/* Subtle glowing background orbs */}
+      <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] rounded-full bg-blue-400/20 blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[15%] w-[500px] h-[500px] rounded-full bg-indigo-400/20 blur-[100px] pointer-events-none" />
+      
+      {/* Subtle Dot Pattern Overlay */}
+      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9InJnYmEoMCwgMCwgMCwgMC4wNSkiLz48L3N2Zz4=')] pointer-events-none" />
+
+      <div className="mx-auto w-full h-full max-w-[1500px] flex relative z-10">
         {/* Left Column */}
-        <aside className="relative flex-[1.1] bg-white px-8 py-8 lg:px-16 flex flex-col justify-center h-full">
+        <aside className="relative flex-[1.1] bg-white/80 backdrop-blur-xl border-r border-slate-100/50 px-8 py-8 lg:px-16 flex flex-col justify-center h-full overflow-hidden">
+          {/* Subtle decoration inside left column */}
+          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-blue-50/30 to-transparent pointer-events-none" />
           {/* Back to Home Button */}
           <Link href="/" className="absolute top-8 left-8 lg:left-16 flex items-center gap-1.5 text-[13px] font-medium text-slate-400 hover:text-slate-900 transition-colors group">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="transform group-hover:-translate-x-1 transition-transform">
@@ -256,10 +269,12 @@ export default function SignUpLayout({
         <section className="flex-[0.9] flex items-center justify-center p-6 lg:p-12 h-full overflow-y-auto">
           <div className="w-full max-w-[520px]">
             <div className="bg-white rounded-[28px] p-8 lg:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-              <div className="mb-8">
-                <h2 className="text-[26px] font-bold text-[#0f172a] tracking-tight mb-2">Create your account</h2>
-                <p className="text-[14px] text-slate-500">Choose how you want to participate. You can start for free.</p>
-              </div>
+              {title && description && (
+                <div className="mb-8">
+                  <h2 className="text-[26px] font-bold text-[#0f172a] tracking-tight mb-2">{title}</h2>
+                  <p className="text-[14px] text-slate-500">{description}</p>
+                </div>
+              )}
 
               {children}
             </div>

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 
-import AuthShell from '@/components/auth/AuthShell'
+import AuthLayout from '@/components/auth/AuthLayout'
 import SignInForm from '@/components/auth/SignInForm'
 import { getUserRole } from '@/lib/auth/profile'
 import {
@@ -47,7 +47,7 @@ export default async function SignInPage({
   const errorKey = typeof params.error === 'string' ? params.error : ''
 
   return (
-    <AuthShell
+    <AuthLayout
       title="Welcome back"
       description="Sign in to continue managing your impact."
     >
@@ -56,6 +56,6 @@ export default async function SignInPage({
         notice={notices[messageKey]}
         initialError={errors[errorKey]}
       />
-    </AuthShell>
+    </AuthLayout>
   )
 }

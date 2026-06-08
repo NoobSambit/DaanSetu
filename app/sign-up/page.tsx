@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 
-import SignUpLayout from '@/components/auth/SignUpLayout'
+import AuthLayout from '@/components/auth/AuthLayout'
 import SignUpForm from '@/components/auth/SignUpForm'
 import { getUserRole } from '@/lib/auth/profile'
 import { getPostAuthDestination } from '@/lib/auth/redirects'
@@ -24,8 +24,11 @@ export default async function SignUpPage() {
   }
 
   return (
-    <SignUpLayout>
+    <AuthLayout
+      title="Create your account"
+      description="Choose how you want to participate. You can start for free."
+    >
       <SignUpForm />
-    </SignUpLayout>
+    </AuthLayout>
   )
 }
