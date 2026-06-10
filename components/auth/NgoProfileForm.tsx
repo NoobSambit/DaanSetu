@@ -1,6 +1,6 @@
 'use client'
 
-import { useFormState } from 'react-dom'
+import { useActionState } from 'react'
 
 import {
   createNgoProfileAction,
@@ -14,7 +14,7 @@ const fieldClass =
 const labelClass = 'mb-2 block text-sm font-semibold text-slate-800'
 
 export default function NgoProfileForm() {
-  const [state, formAction] = useFormState(
+  const [state, formAction] = useActionState(
     createNgoProfileAction,
     INITIAL_NGO_PROFILE_STATE
   )

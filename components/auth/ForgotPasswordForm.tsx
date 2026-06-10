@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useFormState } from 'react-dom'
+import { useActionState } from 'react'
 
 import { requestPasswordResetAction } from '@/app/auth/actions'
 import { INITIAL_AUTH_STATE } from '@/lib/auth/types'
@@ -9,7 +9,7 @@ import { INITIAL_AUTH_STATE } from '@/lib/auth/types'
 import { SubmitButton } from './FormControls'
 
 export default function ForgotPasswordForm() {
-  const [state, formAction] = useFormState(
+  const [state, formAction] = useActionState(
     requestPasswordResetAction,
     INITIAL_AUTH_STATE
   )

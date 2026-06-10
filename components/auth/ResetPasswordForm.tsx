@@ -1,6 +1,6 @@
 'use client'
 
-import { useFormState } from 'react-dom'
+import { useActionState } from 'react'
 
 import { resetPasswordAction } from '@/app/auth/actions'
 import { INITIAL_AUTH_STATE } from '@/lib/auth/types'
@@ -8,7 +8,7 @@ import { INITIAL_AUTH_STATE } from '@/lib/auth/types'
 import { PasswordInput, SubmitButton } from './FormControls'
 
 export default function ResetPasswordForm() {
-  const [state, formAction] = useFormState(resetPasswordAction, INITIAL_AUTH_STATE)
+  const [state, formAction] = useActionState(resetPasswordAction, INITIAL_AUTH_STATE)
 
   return (
     <form action={formAction} className="space-y-5">

@@ -2,8 +2,7 @@
 
 import { User, Mail, Lock, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
-import { useFormState } from 'react-dom'
-import { useState } from 'react'
+import { useActionState, useState } from 'react'
 
 import { signUpAction } from '@/app/auth/actions'
 import { INITIAL_AUTH_STATE } from '@/lib/auth/types'
@@ -46,7 +45,7 @@ const accountTypes = [
 ] as const
 
 export default function SignUpForm() {
-  const [state, formAction] = useFormState(signUpAction, INITIAL_AUTH_STATE)
+  const [state, formAction] = useActionState(signUpAction, INITIAL_AUTH_STATE)
   const [selectedType, setSelectedType] = useState<string>('user')
   const [password, setPassword] = useState('')
 

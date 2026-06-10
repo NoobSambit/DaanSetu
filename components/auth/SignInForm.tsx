@@ -2,8 +2,7 @@
 
 import { Mail, Lock, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
-import { useFormState } from 'react-dom'
-import { useState } from 'react'
+import { useActionState, useState } from 'react'
 
 import { signInAction } from '@/app/auth/actions'
 import { INITIAL_AUTH_STATE } from '@/lib/auth/types'
@@ -19,7 +18,7 @@ export default function SignInForm({
   notice?: string
   initialError?: string
 }) {
-  const [state, formAction] = useFormState(signInAction, INITIAL_AUTH_STATE)
+  const [state, formAction] = useActionState(signInAction, INITIAL_AUTH_STATE)
   const [password, setPassword] = useState('')
 
   return (
