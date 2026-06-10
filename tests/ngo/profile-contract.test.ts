@@ -77,11 +77,30 @@ test('calculates section completion independently from publication', () => {
     publicEmail: null,
     publicPhone: null,
     socialLinks: {},
+  }, {
+    verificationStatus: 'pending',
+    onboardingStep: 6,
   })
 
   assert.equal(completion.completedSections, 5)
   assert.equal(completion.totalSections, 6)
   assert.equal(completion.percentage, 83)
+})
+
+test('does not mark default-only onboarding sections as complete', () => {
+  const completion = calculateNgoProfileCompletion({})
+
+  assert.equal(completion.completedSections, 0)
+  assert.equal(completion.percentage, 0)
+  assert.equal(completion.sectionComplete.verification, false)
+  assert.equal(completion.sectionComplete.discoverability, false)
+})
+
+test('marks verification complete only after submission or approval', () => {
+  assert.equal(calculateNgoProfileCompletion({}, { verificationStatus: 'draft' }).sectionComplete.verification, false)
+  assert.equal(calculateNgoProfileCompletion({}, { verificationStatus: 'rejected' }).sectionComplete.verification, false)
+  assert.equal(calculateNgoProfileCompletion({}, { verificationStatus: 'pending' }).sectionComplete.verification, true)
+  assert.equal(calculateNgoProfileCompletion({}, { verificationStatus: 'verified' }).sectionComplete.verification, true)
 })
 
 test('keeps published but hidden profiles available only by direct link', () => {

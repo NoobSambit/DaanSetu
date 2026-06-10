@@ -11,18 +11,8 @@ import {
   PROFILE_SECTIONS,
   type NgoProfileSection,
 } from '@/lib/ngo/profile'
+import type { NgoProfileState } from '@/lib/ngo/profile-form-state'
 import { createClient } from '@/lib/supabase/server'
-
-export interface NgoProfileState {
-  status: 'idle' | 'success' | 'error'
-  message?: string
-  fieldErrors?: Record<string, string>
-  nextStep?: number
-  completionPercentage?: number
-  verificationId?: string
-}
-
-export const INITIAL_NGO_PROFILE_STATE: NgoProfileState = { status: 'idle' }
 
 function readString(formData: FormData, key: string): string {
   const value = formData.get(key)
@@ -339,6 +329,40 @@ export async function saveNgoProfileAction(
       },
     }
 
+    if (intent === 'next') {
+      const validation = canPublishNgoProfile(normalized)
+      if (!validation.success) {
+        const fieldErrors = errorsForSection(validation.fieldErrors, section)
+        if (Object.keys(fieldErrors).length > 0) {
+          return {
+            status: 'error',
+            message: 'Complete the required fields before continuing.',
+            fieldErrors,
+          }
+        }
+      }
+    }
+
+    const obsoleteAssetPaths: string[] = []
+    if (section === 'basic') {
+      const previousLogoPath = typeof ngo.logo_path === 'string' ? ngo.logo_path : ''
+      const previousCoverPath = typeof ngo.cover_image_path === 'string' ? ngo.cover_image_path : ''
+      if (
+        previousLogoPath &&
+        previousLogoPath !== normalized.logoPath &&
+        previousLogoPath.startsWith(`${user.id}/logo/`)
+      ) {
+        obsoleteAssetPaths.push(previousLogoPath)
+      }
+      if (
+        previousCoverPath &&
+        previousCoverPath !== normalized.coverImagePath &&
+        previousCoverPath.startsWith(`${user.id}/cover/`)
+      ) {
+        obsoleteAssetPaths.push(previousCoverPath)
+      }
+    }
+
     const { error } = await supabase
       .from('ngos')
       .update({
@@ -349,28 +373,29 @@ export async function saveNgoProfileAction(
       .eq('id', ngo.id)
 
     if (error) return { status: 'error', message: 'This section could not be saved.' }
+    if (obsoleteAssetPaths.length > 0) {
+      await supabase.storage.from('ngos').remove(obsoleteAssetPaths)
+    }
   }
 
   const { data: savedNgo } = await supabase.from('ngos').select('*').eq('id', ngo.id).single()
   if (!savedNgo) return { status: 'error', message: 'The saved profile could not be reloaded.' }
 
   const profileInput = toProfileInput(savedNgo)
-  const completion = calculateNgoProfileCompletion(profileInput)
+  const { data: latestVerification } = await supabase
+    .from('ngo_verifications')
+    .select('verification_status')
+    .eq('ngo_id', ngo.id)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  const nextOnboardingStep = intent === 'next' ? Math.min(6, step + 1) : savedNgo.onboarding_step
+  const completion = calculateNgoProfileCompletion(profileInput, {
+    verificationStatus: latestVerification?.verification_status,
+    onboardingStep: nextOnboardingStep,
+  })
 
   if (intent === 'next') {
-    const validation = canPublishNgoProfile(profileInput)
-    if (!validation.success) {
-      const fieldErrors = errorsForSection(validation.fieldErrors, section)
-      if (Object.keys(fieldErrors).length > 0) {
-        return {
-          status: 'error',
-          message: 'Complete the required fields before continuing.',
-          fieldErrors,
-          completionPercentage: completion.percentage,
-        }
-      }
-    }
-
     await supabase
       .from('ngos')
       .update({ onboarding_step: Math.min(6, step + 1), updated_at: new Date().toISOString() })

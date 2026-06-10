@@ -51,7 +51,6 @@ export default async function NgoProfilePage() {
 
   const { data: ngo } = await supabase.from('ngos').select('*').eq('user_id', user.id).maybeSingle()
   const profile = toProfileInput(ngo)
-  const completion = calculateNgoProfileCompletion(profile)
 
   let verification = null
   let documents: Array<{
@@ -79,9 +78,13 @@ export default async function NgoProfilePage() {
       documents = documentResult.data ?? []
     }
   }
+  const completion = calculateNgoProfileCompletion(profile, {
+    verificationStatus: verification?.verification_status,
+    onboardingStep: ngo?.onboarding_step,
+  })
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-8 sm:px-6">
+    <main className="min-h-screen bg-slate-50 px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
       <NgoProfileForm
         initialProfile={profile}
         initialStep={ngo?.onboarding_step ?? 1}

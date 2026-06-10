@@ -226,6 +226,51 @@ CREATE POLICY "Owners delete draft verification documents"
 
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES (
+  'ngos', 'ngos', TRUE, 5242880,
+  ARRAY['image/jpeg', 'image/png', 'image/webp']
+)
+ON CONFLICT (id) DO UPDATE SET
+  public = EXCLUDED.public,
+  file_size_limit = EXCLUDED.file_size_limit,
+  allowed_mime_types = EXCLUDED.allowed_mime_types;
+
+DROP POLICY IF EXISTS "Public read NGO profile assets" ON storage.objects;
+DROP POLICY IF EXISTS "NGO owners upload profile assets" ON storage.objects;
+DROP POLICY IF EXISTS "NGO owners update profile assets" ON storage.objects;
+DROP POLICY IF EXISTS "NGO owners delete profile assets" ON storage.objects;
+
+CREATE POLICY "Public read NGO profile assets"
+  ON storage.objects FOR SELECT TO public
+  USING (bucket_id = 'ngos');
+CREATE POLICY "NGO owners upload profile assets"
+  ON storage.objects FOR INSERT TO authenticated
+  WITH CHECK (
+    bucket_id = 'ngos'
+    AND (storage.foldername(name))[1] = auth.uid()::TEXT
+    AND (storage.foldername(name))[2] IN ('logo', 'cover')
+  );
+CREATE POLICY "NGO owners update profile assets"
+  ON storage.objects FOR UPDATE TO authenticated
+  USING (
+    bucket_id = 'ngos'
+    AND (storage.foldername(name))[1] = auth.uid()::TEXT
+    AND (storage.foldername(name))[2] IN ('logo', 'cover')
+  )
+  WITH CHECK (
+    bucket_id = 'ngos'
+    AND (storage.foldername(name))[1] = auth.uid()::TEXT
+    AND (storage.foldername(name))[2] IN ('logo', 'cover')
+  );
+CREATE POLICY "NGO owners delete profile assets"
+  ON storage.objects FOR DELETE TO authenticated
+  USING (
+    bucket_id = 'ngos'
+    AND (storage.foldername(name))[1] = auth.uid()::TEXT
+    AND (storage.foldername(name))[2] IN ('logo', 'cover')
+  );
+
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
   'ngo-verification', 'ngo-verification', FALSE, 10485760,
   ARRAY['application/pdf', 'image/jpeg', 'image/png']
 )

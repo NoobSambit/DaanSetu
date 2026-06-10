@@ -277,7 +277,13 @@ function hasText(value: unknown, minimum = 1): boolean {
   return typeof value === 'string' && value.trim().length >= minimum
 }
 
-export function calculateNgoProfileCompletion(input: unknown) {
+export function calculateNgoProfileCompletion(
+  input: unknown,
+  options: {
+    verificationStatus?: string | null
+    onboardingStep?: number | null
+  } = {}
+) {
   const profile = normalizeNgoProfileInput(input)
   const sectionComplete = {
     basic:
@@ -297,11 +303,12 @@ export function calculateNgoProfileCompletion(input: unknown) {
       profile.impactAreas.length > 0 &&
       profile.beneficiaryGroups.length > 0 &&
       hasText(profile.programSummary, 20),
-    verification: true,
+    verification: options.verificationStatus === 'pending' || options.verificationStatus === 'verified',
     social:
       Boolean(profile.websiteUrl || profile.publicEmail || profile.publicPhone) ||
       Object.keys(profile.socialLinks).length > 0,
     discoverability:
+      Boolean(options.onboardingStep && options.onboardingStep >= 6) &&
       typeof profile.isDiscoverable === 'boolean' &&
       typeof profile.acceptsDonations === 'boolean' &&
       typeof profile.acceptsVolunteers === 'boolean',

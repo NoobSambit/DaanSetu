@@ -23,3 +23,11 @@ test('verification documents use a private bucket and admin-only review access',
   assert.match(migration, /Admins read verification files/)
   assert.match(migration, /size_bytes > 0 AND size_bytes <= 10485760/)
 })
+
+test('profile assets use a public NGO bucket with owner-scoped writes', () => {
+  assert.match(migration, /'ngos', 'ngos', TRUE/)
+  assert.match(migration, /Public read NGO profile assets/)
+  assert.match(migration, /NGO owners upload profile assets/)
+  assert.match(migration, /\(storage\.foldername\(name\)\)\[1\] = auth\.uid\(\)::TEXT/)
+  assert.match(migration, /\(storage\.foldername\(name\)\)\[2\] IN \('logo', 'cover'\)/)
+})

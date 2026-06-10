@@ -12,6 +12,29 @@ const allowedTypes = new Map([
   ['image/webp', 'webp'],
 ])
 
+function storageErrorResponse(
+  action: 'upload' | 'delete',
+  error: { message?: string; error?: string; statusCode?: string | number }
+) {
+  const details = [error.message, error.error, String(error.statusCode ?? '')].filter(Boolean).join(' ')
+  const normalizedDetails = details.toLowerCase()
+  const operation = action === 'upload' ? 'upload' : 'deletion'
+  let message = `Image ${operation} failed. Please try again.`
+
+  if (normalizedDetails.includes('bucket') && normalizedDetails.includes('not found')) {
+    message = 'Image storage is not configured. Run the NGO profile storage migration.'
+  } else if (
+    normalizedDetails.includes('row-level security') ||
+    normalizedDetails.includes('unauthorized') ||
+    normalizedDetails.includes('forbidden')
+  ) {
+    message = 'Image storage permissions are not configured for this account.'
+  }
+
+  console.error(`NGO profile asset ${operation} failed`, error)
+  return NextResponse.json({ error: message }, { status: 500 })
+}
+
 async function handler(request: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -39,7 +62,7 @@ async function handler(request: NextRequest) {
     contentType: file.type,
     upsert: false,
   })
-  if (error) return NextResponse.json({ error: 'Image upload failed.' }, { status: 500 })
+  if (error) return storageErrorResponse('upload', error)
 
   const { data } = supabase.storage.from('ngos').getPublicUrl(path)
   return NextResponse.json({ path, url: data.publicUrl })
@@ -57,8 +80,6 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
   const { error } = await supabase.storage.from('ngos').remove([path])
-  return error
-    ? NextResponse.json({ error: 'Image deletion failed.' }, { status: 500 })
-    : NextResponse.json({ success: true })
+  if (error) return storageErrorResponse('delete', error)
+  return NextResponse.json({ success: true })
 }
-
