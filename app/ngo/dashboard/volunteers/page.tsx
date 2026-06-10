@@ -51,11 +51,12 @@ export default function NGOVolunteerDashboard() {
       .from('ngos')
       .select('id')
       .eq('user_id', user.id)
+      .eq('profile_status', 'published')
       .limit(1)
 
     if (!ngos || ngos.length === 0) {
-      alert('You need to have an NGO to access this page')
-      router.push('/dashboard')
+      alert('Publish your NGO profile before managing volunteer opportunities')
+      router.push('/ngo/profile')
       return
     }
 

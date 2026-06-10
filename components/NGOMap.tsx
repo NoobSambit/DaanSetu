@@ -21,6 +21,9 @@ const createCustomIcon = (category: NGOCategory) => {
     health: '#ef4444',
     women: '#a855f7',
     animals: '#f97316',
+    children: '#06b6d4', environment: '#16a34a', livelihoods: '#ca8a04', disability: '#6366f1',
+    'disaster-relief': '#dc2626', elderly: '#78716c', 'human-rights': '#9333ea',
+    'rural-development': '#65a30d', 'arts-culture': '#db2777', other: '#64748b',
   }
 
   const color = colors[category]
@@ -68,6 +71,9 @@ export default function NGOMap({ ngos, center, zoom = 6 }: NGOMapProps) {
     health: '🏥',
     women: '👩',
     animals: '🐾',
+    children: 'CH', environment: 'EN', livelihoods: 'LI', disability: 'DI',
+    'disaster-relief': 'DR', elderly: 'EL', 'human-rights': 'HR',
+    'rural-development': 'RD', 'arts-culture': 'AC', other: 'NG',
   }
 
   return (
@@ -82,7 +88,7 @@ export default function NGOMap({ ngos, center, zoom = 6 }: NGOMapProps) {
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
 
-      {ngos.map((ngo) => (
+      {ngos.filter((ngo) => Number.isFinite(ngo.latitude) && Number.isFinite(ngo.longitude)).map((ngo) => (
         <Marker
           key={ngo.id}
           position={[ngo.latitude, ngo.longitude]}

@@ -31,6 +31,7 @@ export default function CSRCampaignsPage() {
           .from('ngos')
           .select('id')
           .eq('user_id', user.id)
+          .eq('profile_status', 'published')
           .single()
 
         if (ngoData) {

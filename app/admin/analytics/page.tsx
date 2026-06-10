@@ -40,7 +40,7 @@ export default async function AdminAnalyticsPage() {
         </div>
 
         {/* AI Flags Summary */}
-        <div className="grid md:grid-cols-2 gap-6 mb-8">
+        <div className="grid md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -55,6 +55,14 @@ export default async function AdminAnalyticsPage() {
             </div>
             <Link href="/admin/ai-flags" className="text-sm text-blue-600 hover:text-blue-700 mt-3 inline-block">
               View all flags →
+            </Link>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <p className="text-sm font-medium text-gray-600">NGO trust reviews</p>
+            <p className="mt-2 text-lg font-bold text-slate-900">Verification queue</p>
+            <Link href="/admin/ngo-verifications" className="mt-3 inline-block text-sm font-semibold text-blue-600 hover:text-blue-700">
+              Review submissions →
             </Link>
           </div>
 

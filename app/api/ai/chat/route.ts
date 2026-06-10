@@ -17,6 +17,8 @@ async function handler(request: NextRequest) {
     const { data: ngos } = await supabase
       .from('ngos')
       .select('name, category, city, description')
+      .eq('profile_status', 'published')
+      .eq('is_discoverable', true)
       .limit(30)
 
     // Fetch campaigns for context

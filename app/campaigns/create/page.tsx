@@ -42,6 +42,7 @@ export default function CreateCampaignPage() {
       .from('ngos')
       .select('*')
       .eq('user_id', user.id)
+      .eq('profile_status', 'published')
 
     if (ngosError) {
       setError('Failed to load your NGOs')
@@ -50,7 +51,7 @@ export default function CreateCampaignPage() {
     }
 
     if (!ngos || ngos.length === 0) {
-      setError('You must have an NGO to create a campaign')
+      setError('Publish your NGO profile before creating a campaign')
       setLoading(false)
       return
     }

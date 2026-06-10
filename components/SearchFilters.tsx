@@ -10,6 +10,16 @@ const categories = [
   { value: 'health', label: '🏥 Health' },
   { value: 'women', label: '👩 Women' },
   { value: 'animals', label: '🐾 Animals' },
+  { value: 'children', label: 'Children' },
+  { value: 'environment', label: 'Environment' },
+  { value: 'livelihoods', label: 'Livelihoods' },
+  { value: 'disability', label: 'Disability inclusion' },
+  { value: 'disaster-relief', label: 'Disaster relief' },
+  { value: 'elderly', label: 'Elder care' },
+  { value: 'human-rights', label: 'Human rights' },
+  { value: 'rural-development', label: 'Rural development' },
+  { value: 'arts-culture', label: 'Arts and culture' },
+  { value: 'other', label: 'Other' },
 ]
 
 export default function SearchFilters() {

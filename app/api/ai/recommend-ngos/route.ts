@@ -42,6 +42,8 @@ async function handler(request: NextRequest) {
     const { data: ngos } = await supabase
       .from('ngos')
       .select('id, name, category, description')
+      .eq('profile_status', 'published')
+      .eq('is_discoverable', true)
       .limit(50)
 
     if (!ngos || ngos.length === 0) {

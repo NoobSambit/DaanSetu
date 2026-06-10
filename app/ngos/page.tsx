@@ -16,6 +16,8 @@ export default async function NGOsPage({
   let query = supabase
     .from('ngos')
     .select('*')
+    .eq('profile_status', 'published')
+    .eq('is_discoverable', true)
     .order('created_at', { ascending: false })
 
   // Apply filters

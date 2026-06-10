@@ -56,10 +56,11 @@ export async function createVolunteerOpportunity(params: CreateOpportunityParams
     .select('*')
     .eq('id', params.ngoId)
     .eq('user_id', user.id)
+    .eq('profile_status', 'published')
     .single()
 
   if (ngoError || !ngo) {
-    throw new Error('You do not have permission to create opportunities for this NGO')
+    throw new Error('Publish your NGO profile before creating volunteer opportunities')
   }
 
   const { data, error } = await supabase

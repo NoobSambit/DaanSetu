@@ -89,7 +89,7 @@ async function handler(request: NextRequest) {
     // Generate unique file name
     const fileExt = file.name.split('.').pop()
     const fileName = `${user.id}_${Date.now()}.${fileExt}`
-    const filePath = folder ? `${folder}/${fileName}` : fileName
+    const filePath = `${user.id}/${folder || 'uploads'}/${fileName}`
 
     // Convert File to ArrayBuffer then to Uint8Array
     const arrayBuffer = await file.arrayBuffer()

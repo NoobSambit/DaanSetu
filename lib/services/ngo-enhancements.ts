@@ -454,6 +454,8 @@ export async function getTopRatedNGOs(
   const { data, error } = await supabase
     .from('ngos')
     .select('*')
+    .eq('profile_status', 'published')
+    .eq('is_discoverable', true)
     .gte('total_reviews', 5) // At least 5 reviews
     .order('average_rating', { ascending: false })
     .order('total_reviews', { ascending: false })

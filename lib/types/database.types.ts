@@ -12,40 +12,164 @@ export interface Database {
       ngos: {
         Row: {
           id: string
-          name: string
-          description: string
-          city: string
-          state: string
-          category: 'education' | 'food' | 'health' | 'women' | 'animals'
-          latitude: number
-          longitude: number
+          name: string | null
+          description: string | null
+          city: string | null
+          state: string | null
+          category: 'education' | 'food' | 'health' | 'women' | 'animals' | 'children' | 'environment' | 'livelihoods' | 'disability' | 'disaster-relief' | 'elderly' | 'human-rights' | 'rural-development' | 'arts-culture' | 'other' | null
+          latitude: number | null
+          longitude: number | null
           created_at: string
           user_id: string
+          legal_name: string | null
+          display_name: string | null
+          tagline: string | null
+          mission: string | null
+          founding_year: number | null
+          organization_type: string | null
+          logo_path: string | null
+          cover_image_path: string | null
+          address_line_1: string | null
+          address_line_2: string | null
+          postal_code: string | null
+          country_code: string
+          impact_areas: string[]
+          beneficiary_groups: string[]
+          program_summary: string | null
+          website_url: string | null
+          public_email: string | null
+          public_phone: string | null
+          social_links: Record<string, string>
+          profile_status: 'draft' | 'published'
+          onboarding_step: number
+          published_at: string | null
+          is_discoverable: boolean
+          accepts_donations: boolean
+          accepts_volunteers: boolean
+          is_verified: boolean
+          average_rating: number
+          total_reviews: number
+          updated_at: string
         }
         Insert: {
           id?: string
-          name: string
-          description: string
-          city: string
-          state: string
-          category: 'education' | 'food' | 'health' | 'women' | 'animals'
-          latitude: number
-          longitude: number
+          name?: string | null
+          description?: string | null
+          city?: string | null
+          state?: string | null
+          category?: 'education' | 'food' | 'health' | 'women' | 'animals' | 'children' | 'environment' | 'livelihoods' | 'disability' | 'disaster-relief' | 'elderly' | 'human-rights' | 'rural-development' | 'arts-culture' | 'other' | null
+          latitude?: number | null
+          longitude?: number | null
           created_at?: string
           user_id: string
+          legal_name?: string | null
+          display_name?: string | null
+          tagline?: string | null
+          mission?: string | null
+          founding_year?: number | null
+          organization_type?: string | null
+          logo_path?: string | null
+          cover_image_path?: string | null
+          address_line_1?: string | null
+          address_line_2?: string | null
+          postal_code?: string | null
+          country_code?: string
+          impact_areas?: string[]
+          beneficiary_groups?: string[]
+          program_summary?: string | null
+          website_url?: string | null
+          public_email?: string | null
+          public_phone?: string | null
+          social_links?: Record<string, string>
+          profile_status?: 'draft' | 'published'
+          onboarding_step?: number
+          published_at?: string | null
+          is_discoverable?: boolean
+          accepts_donations?: boolean
+          accepts_volunteers?: boolean
+          updated_at?: string
         }
         Update: {
           id?: string
-          name?: string
-          description?: string
-          city?: string
-          state?: string
-          category?: 'education' | 'food' | 'health' | 'women' | 'animals'
-          latitude?: number
-          longitude?: number
+          name?: string | null
+          description?: string | null
+          city?: string | null
+          state?: string | null
+          category?: 'education' | 'food' | 'health' | 'women' | 'animals' | 'children' | 'environment' | 'livelihoods' | 'disability' | 'disaster-relief' | 'elderly' | 'human-rights' | 'rural-development' | 'arts-culture' | 'other' | null
+          latitude?: number | null
+          longitude?: number | null
           created_at?: string
           user_id?: string
+          legal_name?: string | null
+          display_name?: string | null
+          tagline?: string | null
+          mission?: string | null
+          founding_year?: number | null
+          organization_type?: string | null
+          logo_path?: string | null
+          cover_image_path?: string | null
+          address_line_1?: string | null
+          address_line_2?: string | null
+          postal_code?: string | null
+          country_code?: string
+          impact_areas?: string[]
+          beneficiary_groups?: string[]
+          program_summary?: string | null
+          website_url?: string | null
+          public_email?: string | null
+          public_phone?: string | null
+          social_links?: Record<string, string>
+          profile_status?: 'draft' | 'published'
+          onboarding_step?: number
+          published_at?: string | null
+          is_discoverable?: boolean
+          accepts_donations?: boolean
+          accepts_volunteers?: boolean
+          updated_at?: string
         }
+      }
+      ngo_verifications: {
+        Row: {
+          id: string
+          ngo_id: string
+          verification_status: 'draft' | 'pending' | 'verified' | 'rejected'
+          verified_by: string | null
+          verification_date: string | null
+          verification_notes: string | null
+          documents_verified: boolean
+          registration_number: string | null
+          legal_name: string | null
+          registration_type: string | null
+          registration_date: string | null
+          registered_address: string | null
+          pan_number: string | null
+          ngo_darpan_id: string | null
+          has_12a: boolean
+          has_80g: boolean
+          has_fcra: boolean
+          submitted_at: string | null
+          reviewed_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: Record<string, unknown>
+        Update: Record<string, unknown>
+      }
+      ngo_verification_documents: {
+        Row: {
+          id: string
+          verification_id: string
+          ngo_id: string
+          document_type: 'registration' | 'pan' | '12a' | '80g' | 'fcra' | 'supporting'
+          storage_path: string
+          original_name: string
+          mime_type: 'application/pdf' | 'image/jpeg' | 'image/png'
+          size_bytes: number
+          uploaded_by: string
+          created_at: string
+        }
+        Insert: Record<string, unknown>
+        Update: Record<string, unknown>
       }
       users: {
         Row: {
@@ -615,10 +739,19 @@ export interface Database {
   }
 }
 
-export type NGO = Database['public']['Tables']['ngos']['Row']
+type NgoRow = Database['public']['Tables']['ngos']['Row']
+export type NGOCategory = NonNullable<NgoRow['category']>
+export type NGO = Omit<NgoRow, 'name' | 'description' | 'city' | 'state' | 'category' | 'latitude' | 'longitude'> & {
+  name: string
+  description: string
+  city: string
+  state: string
+  category: NGOCategory
+  latitude: number
+  longitude: number
+}
 export type User = Database['public']['Tables']['users']['Row']
 export type UserRole = Database['public']['Tables']['users']['Row']['role']
-export type NGOCategory = Database['public']['Tables']['ngos']['Row']['category']
 export type Donation = Database['public']['Tables']['donations']['Row']
 export type DonationCause = Database['public']['Tables']['donations']['Row']['cause']
 export type Campaign = Database['public']['Tables']['campaigns']['Row']

@@ -9,6 +9,10 @@ export default async function MapPage() {
   const { data: ngos, error } = await supabase
     .from('ngos')
     .select('*')
+    .eq('profile_status', 'published')
+    .eq('is_discoverable', true)
+    .not('latitude', 'is', null)
+    .not('longitude', 'is', null)
     .order('created_at', { ascending: false })
 
   if (error) {
