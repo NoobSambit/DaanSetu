@@ -425,11 +425,18 @@ export async function saveNgoProfileAction(
       }
     }
 
+    // Never regress onboarding_step — only advance it.
+    // When intent is "next", advance to step+1; otherwise preserve the high-water mark.
+    const currentOnboardingStep = typeof ngo.onboarding_step === 'number' ? ngo.onboarding_step : 0
+    const effectiveStep = intent === 'next'
+      ? Math.max(currentOnboardingStep, Math.min(6, step + 1))
+      : Math.max(currentOnboardingStep, step)
+
     const { error } = await supabase
       .from('ngos')
       .update({
         ...patches[section],
-        onboarding_step: step,
+        onboarding_step: effectiveStep,
         updated_at: new Date().toISOString(),
       })
       .eq('id', ngo.id)
@@ -451,16 +458,22 @@ export async function saveNgoProfileAction(
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle()
-  const nextOnboardingStep = intent === 'next' ? Math.min(6, step + 1) : savedNgo.onboarding_step
+  const currentOnboardingStepForCompletion = typeof savedNgo.onboarding_step === 'number' ? savedNgo.onboarding_step : 0
+  const nextOnboardingStep = intent === 'next'
+    ? Math.max(currentOnboardingStepForCompletion, Math.min(6, step + 1))
+    : currentOnboardingStepForCompletion
   const completion = calculateNgoProfileCompletion(profileInput, {
     verificationStatus: latestVerification?.verification_status,
     onboardingStep: nextOnboardingStep,
   })
 
-  if (intent === 'next') {
+  // For non-section saves (verification), also advance the step without regression
+  if (intent === 'next' && section === 'verification') {
+    const verificationCurrentStep = typeof ngo.onboarding_step === 'number' ? ngo.onboarding_step : 0
+    const verificationNextStep = Math.max(verificationCurrentStep, Math.min(6, step + 1))
     await supabase
       .from('ngos')
-      .update({ onboarding_step: Math.min(6, step + 1), updated_at: new Date().toISOString() })
+      .update({ onboarding_step: verificationNextStep, updated_at: new Date().toISOString() })
       .eq('id', ngo.id)
   }
 

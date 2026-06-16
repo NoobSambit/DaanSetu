@@ -31,7 +31,7 @@ export function getPostAuthDestination(role: UserRole | null | undefined): strin
     case 'corporate':
       return '/corporate/profile'
     case 'ngo':
-      return '/ngo/profile'
+      return '/ngo/dashboard'
     default:
       return '/dashboard'
   }

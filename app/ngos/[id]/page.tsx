@@ -38,6 +38,7 @@ import {
   Target,
   Users,
 } from 'lucide-react'
+import { signOutAction } from '@/app/auth/actions'
 
 import DonateButton from '@/components/DonateButton'
 
@@ -121,16 +122,20 @@ function formatDate(value: string) {
 function PublicProfileHeader({
   userEmail,
   unreadCount,
+  isOwner,
+  ngoId,
 }: {
   userEmail: string | null
   unreadCount: number
+  isOwner: boolean
+  ngoId: string
 }) {
   const initial = userEmail?.slice(0, 1).toUpperCase()
 
   return (
     <header className="sticky top-0 z-50 h-[50px] border-b border-slate-200/80 bg-white/95 backdrop-blur">
       <div className="flex h-full items-center gap-5 px-[2%]">
-        <Link href="/" className="flex shrink-0 items-center gap-2" aria-label="DaanSetu home">
+        <Link href={isOwner ? '/ngo/dashboard' : '/'} className="flex shrink-0 items-center gap-2" aria-label="DaanSetu home">
           <span className="relative flex h-8 w-8 items-center justify-center overflow-hidden rounded-lg">
             <img src="/logo.png" alt="" className="h-10 w-10 object-cover" />
           </span>
@@ -139,30 +144,34 @@ function PublicProfileHeader({
           </span>
         </Link>
 
-        <form action="/ngos" className="ml-[10%] hidden w-[255px] lg:block">
-          <label className="relative block">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-            <input
-              type="search"
-              name="search"
-              placeholder="Search for NGOs, causes, programs..."
-              className="h-8 w-full rounded-md border border-slate-200 bg-slate-50 pl-9 pr-3 text-base text-slate-700 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100"
-            />
-          </label>
-        </form>
+        {isOwner ? (
+          /* ── NGO Owner Navigation ── */
+          <>
+            <nav className="ml-auto hidden items-center gap-1 lg:flex" aria-label="NGO management navigation">
+              <Link
+                href="/ngo/dashboard"
+                className="flex items-center gap-2 rounded-lg px-3.5 py-1.5 text-[13px] font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+              >
+                <Home className="h-3.5 w-3.5" />
+                Dashboard
+              </Link>
+              <Link
+                href="/ngo/profile"
+                className="flex items-center gap-2 rounded-lg px-3.5 py-1.5 text-[13px] font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+              >
+                <Building2 className="h-3.5 w-3.5" />
+                Edit Profile
+              </Link>
+              <Link
+                href={`/ngos/${ngoId}`}
+                className="flex items-center gap-2 rounded-lg px-3.5 py-1.5 text-[13px] font-semibold text-blue-600 bg-blue-50"
+              >
+                <Globe2 className="h-3.5 w-3.5" />
+                Public Profile
+              </Link>
+            </nav>
 
-        <nav className="ml-auto hidden items-center gap-7 text-base font-semibold text-[#0d1d46] lg:flex" aria-label="Primary navigation">
-          <Link href="/" className="hover:text-blue-600">Explore</Link>
-          <Link href="/ngos" className="text-blue-600">NGOs</Link>
-          <Link href="/campaigns" className="hover:text-blue-600">Programs</Link>
-          <Link href="/volunteer/opportunities" className="hover:text-blue-600">Opportunities</Link>
-          <Link href="/csr-campaigns" className="hover:text-blue-600">CSR Hub</Link>
-          <Link href="/impact-stories" className="hover:text-blue-600">Impact Stories</Link>
-        </nav>
-
-        <div className="ml-auto flex items-center gap-3 lg:ml-5">
-          {userEmail ? (
-            <>
+            <div className="ml-auto flex items-center gap-2.5 lg:ml-4">
               <Link href="/notifications" className="relative rounded-md p-1.5 text-slate-600 hover:bg-slate-100" aria-label="Notifications">
                 <Bell className="h-4 w-4" />
                 {unreadCount > 0 && (
@@ -171,16 +180,64 @@ function PublicProfileHeader({
                   </span>
                 )}
               </Link>
-              <Link href="/dashboard" className="flex h-8 w-8 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 text-lg font-bold text-emerald-800" aria-label="Open dashboard">
-                {initial}
-              </Link>
-            </>
-          ) : (
-            <Link href="/sign-in" className="rounded-md border border-blue-200 px-3 py-1.5 text-base font-semibold text-blue-700 hover:bg-blue-50">
-              Sign in
-            </Link>
-          )}
-        </div>
+              <span className="hidden text-[13px] font-medium text-slate-500 lg:block max-w-[160px] truncate">{userEmail}</span>
+              <form action={signOutAction}>
+                <button
+                  type="submit"
+                  className="flex h-8 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3.5 text-[13px] font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 hover:text-slate-900"
+                >
+                  Sign Out
+                </button>
+              </form>
+            </div>
+          </>
+        ) : (
+          /* ── Public / Visitor Navigation ── */
+          <>
+            <form action="/ngos" className="ml-[10%] hidden w-[255px] lg:block">
+              <label className="relative block">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="search"
+                  name="search"
+                  placeholder="Search for NGOs, causes, programs..."
+                  className="h-8 w-full rounded-md border border-slate-200 bg-slate-50 pl-9 pr-3 text-base text-slate-700 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                />
+              </label>
+            </form>
+
+            <nav className="ml-auto hidden items-center gap-7 text-base font-semibold text-[#0d1d46] lg:flex" aria-label="Primary navigation">
+              <Link href="/" className="hover:text-blue-600">Explore</Link>
+              <Link href="/ngos" className="text-blue-600">NGOs</Link>
+              <Link href="/campaigns" className="hover:text-blue-600">Programs</Link>
+              <Link href="/volunteer/opportunities" className="hover:text-blue-600">Opportunities</Link>
+              <Link href="/csr-campaigns" className="hover:text-blue-600">CSR Hub</Link>
+              <Link href="/impact-stories" className="hover:text-blue-600">Impact Stories</Link>
+            </nav>
+
+            <div className="ml-auto flex items-center gap-3 lg:ml-5">
+              {userEmail ? (
+                <>
+                  <Link href="/notifications" className="relative rounded-md p-1.5 text-slate-600 hover:bg-slate-100" aria-label="Notifications">
+                    <Bell className="h-4 w-4" />
+                    {unreadCount > 0 && (
+                      <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-sm font-bold text-white">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
+                    )}
+                  </Link>
+                  <Link href="/dashboard" className="flex h-8 w-8 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 text-lg font-bold text-emerald-800" aria-label="Open dashboard">
+                    {initial}
+                  </Link>
+                </>
+              ) : (
+                <Link href="/sign-in" className="rounded-md border border-blue-200 px-3 py-1.5 text-base font-semibold text-blue-700 hover:bg-blue-50">
+                  Sign in
+                </Link>
+              )}
+            </div>
+          </>
+        )}
       </div>
     </header>
   )
@@ -379,9 +436,12 @@ export default async function NGOProfilePage({ params }: { params: Promise<{ id:
     violet: 'bg-violet-50 text-violet-600',
   }
 
+  // Determine if the logged-in user owns this NGO
+  const isOwner = Boolean(user && ngo.user_id === user.id)
+
   return (
     <>
-      <PublicProfileHeader userEmail={user?.email ?? null} unreadCount={unreadCount} />
+      <PublicProfileHeader userEmail={user?.email ?? null} unreadCount={unreadCount} isOwner={isOwner} ngoId={ngo.id} />
 
       <main className="min-h-screen bg-[#f8fafc] text-[#0f1b3d]">
         <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[76.2%_23.8%]">

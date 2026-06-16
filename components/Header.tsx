@@ -140,9 +140,9 @@ export default function Header() {
             </Link>
             {user && (
               <Link
-                href={userRole === 'corporate' ? '/corporate/dashboard' : '/dashboard'}
+                href={userRole === 'ngo' ? '/ngo/dashboard' : userRole === 'corporate' ? '/corporate/dashboard' : '/dashboard'}
                 className={`${
-                  (userRole === 'corporate' ? pathname?.startsWith('/corporate/dashboard') : isActive('/dashboard'))
+                  (userRole === 'ngo' ? pathname?.startsWith('/ngo/dashboard') : userRole === 'corporate' ? pathname?.startsWith('/corporate/dashboard') : isActive('/dashboard'))
                     ? 'text-blue-600 font-semibold bg-blue-50'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                 } transition-all px-3 py-2 rounded-lg text-sm font-medium`}
@@ -256,9 +256,9 @@ export default function Header() {
           </Link>
           {user && (
             <Link
-              href={userRole === 'corporate' ? '/corporate/dashboard' : '/dashboard'}
+              href={userRole === 'ngo' ? '/ngo/dashboard' : userRole === 'corporate' ? '/corporate/dashboard' : '/dashboard'}
               className={`${
-                (userRole === 'corporate' ? pathname?.startsWith('/corporate/dashboard') : isActive('/dashboard')) ? 'text-blue-600 font-semibold bg-blue-50' : 'text-slate-600'
+                (userRole === 'ngo' ? pathname?.startsWith('/ngo/dashboard') : userRole === 'corporate' ? pathname?.startsWith('/corporate/dashboard') : isActive('/dashboard')) ? 'text-blue-600 font-semibold bg-blue-50' : 'text-slate-600'
               } text-xs py-2 px-3 whitespace-nowrap rounded-lg transition-all`}
             >
               Dashboard

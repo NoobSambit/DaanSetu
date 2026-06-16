@@ -537,13 +537,19 @@ export default function NgoProfileForm({
   const verificationStatus = verification?.verification_status ?? 'not-submitted'
   const social = initialProfile.socialLinks ?? {}
 
+  // Track the high-water mark of the onboarding step so navigating back
+  // and saving an earlier section never regresses the completion state.
+  const effectiveOnboardingStep = Math.max(
+    initialStep,
+    state.nextStep ?? 0
+  )
+
   const { sectionComplete } = calculateNgoProfileCompletion(initialProfile, {
     verificationStatus,
-    onboardingStep: initialStep,
+    onboardingStep: effectiveOnboardingStep,
   })
   const completedSections = new Set(
     PROFILE_SECTIONS.map((key, i) => {
-      if (state.nextStep && i + 1 < state.nextStep) return i + 1
       return sectionComplete[key] ? i + 1 : null
     }).filter(Boolean)
   )
