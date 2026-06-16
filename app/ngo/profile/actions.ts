@@ -34,6 +34,13 @@ function readStringArray(formData: FormData, key: string): string[] {
     .filter(Boolean)
 }
 
+function readDelimitedStringArray(formData: FormData, key: string): string[] {
+  return readString(formData, key)
+    .split(/[\n,]+/)
+    .map((value) => value.trim())
+    .filter(Boolean)
+}
+
 function checked(formData: FormData, key: string): boolean {
   return formData.get(key) === 'on'
 }
@@ -61,6 +68,14 @@ function toProfileInput(row: Record<string, unknown>) {
     impactAreas: row.impact_areas,
     beneficiaryGroups: row.beneficiary_groups,
     programSummary: row.program_summary,
+    vision: row.vision,
+    theoryOfChange: row.theory_of_change,
+    coreValues: row.core_values,
+    operatingStates: row.operating_states,
+    teamSize: row.team_size,
+    beneficiariesReached: row.beneficiaries_reached,
+    communitiesServed: row.communities_served,
+    volunteersEngaged: row.volunteers_engaged,
     websiteUrl: row.website_url,
     publicEmail: row.public_email,
     publicPhone: row.public_phone,
@@ -82,7 +97,20 @@ const sectionFields: Record<NgoProfileSection, string[]> = {
     'organizationType',
   ],
   location: ['addressLine1', 'city', 'state', 'postalCode', 'countryCode', 'latitude', 'longitude'],
-  impact: ['primaryCause', 'impactAreas', 'beneficiaryGroups', 'programSummary'],
+  impact: [
+    'primaryCause',
+    'impactAreas',
+    'beneficiaryGroups',
+    'programSummary',
+    'vision',
+    'theoryOfChange',
+    'coreValues',
+    'operatingStates',
+    'teamSize',
+    'beneficiariesReached',
+    'communitiesServed',
+    'volunteersEngaged',
+  ],
   verification: [],
   social: ['websiteUrl', 'publicEmail', 'publicPhone'],
   discoverability: [],
@@ -269,6 +297,14 @@ export async function saveNgoProfileAction(
         impactAreas: readStringArray(formData, 'impactAreas'),
         beneficiaryGroups: readStringArray(formData, 'beneficiaryGroups'),
         programSummary: readString(formData, 'programSummary'),
+        vision: readString(formData, 'vision'),
+        theoryOfChange: readString(formData, 'theoryOfChange'),
+        coreValues: readDelimitedStringArray(formData, 'coreValues'),
+        operatingStates: readDelimitedStringArray(formData, 'operatingStates'),
+        teamSize: readNumber(formData, 'teamSize'),
+        beneficiariesReached: readNumber(formData, 'beneficiariesReached'),
+        communitiesServed: readNumber(formData, 'communitiesServed'),
+        volunteersEngaged: readNumber(formData, 'volunteersEngaged'),
         websiteUrl: readString(formData, 'websiteUrl'),
         publicEmail: readString(formData, 'publicEmail'),
         publicPhone: readString(formData, 'publicPhone'),
@@ -284,6 +320,24 @@ export async function saveNgoProfileAction(
       })
     } catch {
       return { status: 'error', message: 'Review the URLs and field values in this section.' }
+    }
+
+    const nonNegativeNumberErrors = Object.fromEntries(
+      ([
+        ['teamSize', normalized.teamSize, 'Team size cannot be negative.'],
+        ['beneficiariesReached', normalized.beneficiariesReached, 'Beneficiaries reached cannot be negative.'],
+        ['communitiesServed', normalized.communitiesServed, 'Communities served cannot be negative.'],
+        ['volunteersEngaged', normalized.volunteersEngaged, 'Volunteers engaged cannot be negative.'],
+      ] as const)
+        .filter(([, value]) => value !== null && value < 0)
+        .map(([field, , message]) => [field, message])
+    )
+    if (Object.keys(nonNegativeNumberErrors).length > 0) {
+      return {
+        status: 'error',
+        message: 'Review the impact metric values before saving.',
+        fieldErrors: nonNegativeNumberErrors,
+      }
     }
 
     const patches: Record<NgoProfileSection, Record<string, unknown>> = {
@@ -314,6 +368,14 @@ export async function saveNgoProfileAction(
         impact_areas: normalized.impactAreas,
         beneficiary_groups: normalized.beneficiaryGroups,
         program_summary: normalized.programSummary,
+        vision: normalized.vision,
+        theory_of_change: normalized.theoryOfChange,
+        core_values: normalized.coreValues,
+        operating_states: normalized.operatingStates,
+        team_size: normalized.teamSize,
+        beneficiaries_reached: normalized.beneficiariesReached,
+        communities_served: normalized.communitiesServed,
+        volunteers_engaged: normalized.volunteersEngaged,
       },
       verification: {},
       social: {

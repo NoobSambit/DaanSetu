@@ -74,6 +74,36 @@ function FieldError({ name, errors }: { name: string; errors?: Record<string, st
   return <p className="mt-1.5 text-sm font-medium text-red-600">{errors[name]}</p>
 }
 
+function PendingButtonContent({
+  idle,
+  pending,
+  uploadPending,
+}: {
+  idle: React.ReactNode
+  pending: boolean
+  uploadPending: boolean
+}) {
+  if (uploadPending) {
+    return (
+      <>
+        <Loader2 className="h-4 w-4 animate-spin" />
+        Waiting for upload...
+      </>
+    )
+  }
+
+  if (pending) {
+    return (
+      <>
+        <Loader2 className="h-4 w-4 animate-spin" />
+        Saving...
+      </>
+    )
+  }
+
+  return <>{idle}</>
+}
+
 function CheckGrid({
   name,
   values,
@@ -108,6 +138,10 @@ function publicAssetUrl(path: string | null) {
   if (!path) return null
   const base = process.env.NEXT_PUBLIC_SUPABASE_URL
   return base ? `${base}/storage/v1/object/public/ngos/${path.split('/').map(encodeURIComponent).join('/')}` : null
+}
+
+function listToTextareaValue(values: unknown): string {
+  return Array.isArray(values) ? values.filter(Boolean).join('\n') : ''
 }
 
 function deleteProfileAsset(path: string) {
@@ -852,6 +886,38 @@ export default function NgoProfileForm({
                           <fieldset><legend className={labelClass}>Impact areas *</legend><CheckGrid name="impactAreas" values={IMPACT_AREAS} selected={initialProfile.impactAreas ?? []} /><FieldError name="impactAreas" errors={state.fieldErrors} /></fieldset>
                           <fieldset><legend className={labelClass}>Beneficiary groups *</legend><CheckGrid name="beneficiaryGroups" values={BENEFICIARY_GROUPS} selected={initialProfile.beneficiaryGroups ?? []} /><FieldError name="beneficiaryGroups" errors={state.fieldErrors} /></fieldset>
                           <div><label htmlFor="programSummary" className={labelClass}>Programs and initiatives *</label><textarea id="programSummary" name="programSummary" defaultValue={initialProfile.programSummary ?? ''} rows={4} className={fieldClass} maxLength={1500} /><FieldError name="programSummary" errors={state.fieldErrors} /></div>
+                          <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
+                            <p className="text-sm font-bold text-slate-900">Public profile story</p>
+                            <p className="mt-1 text-xs font-medium leading-relaxed text-slate-600">
+                              These optional fields power the richer public NGO page. Campaigns, gallery photos, and latest updates will be managed from the NGO dashboard later.
+                            </p>
+                          </div>
+                          <div><label htmlFor="vision" className={labelClass}>Vision</label><textarea id="vision" name="vision" defaultValue={initialProfile.vision ?? ''} rows={3} className={fieldClass} maxLength={1000} placeholder="What long-term change is your organization working toward?" /><FieldError name="vision" errors={state.fieldErrors} /></div>
+                          <div><label htmlFor="theoryOfChange" className={labelClass}>Theory of change</label><textarea id="theoryOfChange" name="theoryOfChange" defaultValue={initialProfile.theoryOfChange ?? ''} rows={3} className={fieldClass} maxLength={1200} placeholder="Briefly explain how your work creates measurable change." /><FieldError name="theoryOfChange" errors={state.fieldErrors} /></div>
+                          <div className="grid gap-4 sm:grid-cols-2">
+                            <div>
+                              <label htmlFor="coreValues" className={labelClass}>Core values</label>
+                              <textarea id="coreValues" name="coreValues" defaultValue={listToTextareaValue(initialProfile.coreValues)} rows={4} className={fieldClass} maxLength={700} placeholder="One value per line, e.g.&#10;Integrity&#10;Inclusion&#10;Transparency" />
+                              <p className="mt-1.5 text-xs font-medium text-slate-500">Use one value per line or comma-separated values.</p>
+                              <FieldError name="coreValues" errors={state.fieldErrors} />
+                            </div>
+                            <div>
+                              <label htmlFor="operatingStates" className={labelClass}>Operating states / regions</label>
+                              <textarea id="operatingStates" name="operatingStates" defaultValue={listToTextareaValue(initialProfile.operatingStates)} rows={4} className={fieldClass} maxLength={700} placeholder="One region per line, e.g.&#10;Rajasthan&#10;Uttar Pradesh&#10;Madhya Pradesh" />
+                              <p className="mt-1.5 text-xs font-medium text-slate-500">Used for the “Where we work” section until detailed service areas are managed in the dashboard.</p>
+                              <FieldError name="operatingStates" errors={state.fieldErrors} />
+                            </div>
+                          </div>
+                          <div>
+                            <p className={labelClass}>Public impact totals</p>
+                            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                              <div><label htmlFor="teamSize" className="mb-1.5 block text-xs font-bold text-slate-600">Team size</label><input id="teamSize" name="teamSize" type="number" min="0" step="1" defaultValue={initialProfile.teamSize ?? ''} className={fieldClass} inputMode="numeric" /><FieldError name="teamSize" errors={state.fieldErrors} /></div>
+                              <div><label htmlFor="beneficiariesReached" className="mb-1.5 block text-xs font-bold text-slate-600">Beneficiaries reached</label><input id="beneficiariesReached" name="beneficiariesReached" type="number" min="0" step="1" defaultValue={initialProfile.beneficiariesReached ?? ''} className={fieldClass} inputMode="numeric" /><FieldError name="beneficiariesReached" errors={state.fieldErrors} /></div>
+                              <div><label htmlFor="communitiesServed" className="mb-1.5 block text-xs font-bold text-slate-600">Communities served</label><input id="communitiesServed" name="communitiesServed" type="number" min="0" step="1" defaultValue={initialProfile.communitiesServed ?? ''} className={fieldClass} inputMode="numeric" /><FieldError name="communitiesServed" errors={state.fieldErrors} /></div>
+                              <div><label htmlFor="volunteersEngaged" className="mb-1.5 block text-xs font-bold text-slate-600">Volunteers engaged</label><input id="volunteersEngaged" name="volunteersEngaged" type="number" min="0" step="1" defaultValue={initialProfile.volunteersEngaged ?? ''} className={fieldClass} inputMode="numeric" /><FieldError name="volunteersEngaged" errors={state.fieldErrors} /></div>
+                            </div>
+                            <p className="mt-2 text-xs font-medium text-slate-500">Enter verified lifetime or current totals only. Leave blank if you do not want a metric shown publicly.</p>
+                          </div>
                         </>
                       )}
 
@@ -883,17 +949,17 @@ export default function NgoProfileForm({
 
                     <div className="mt-8 flex flex-wrap items-center justify-end gap-3 border-t border-slate-200 pt-5">
                       {step === 4 && verificationStatus !== 'pending' && verificationStatus !== 'verified' && (
-                        <button type="submit" name="intent" value="submit-verification" disabled={submitDisabled} className="flex min-h-[44px] items-center justify-center rounded-xl border border-blue-600 px-6 text-sm font-bold text-blue-700 hover:bg-blue-50 disabled:opacity-50">
-                          Submit verification
+                        <button type="submit" name="intent" value="submit-verification" disabled={submitDisabled} className="flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-blue-600 px-6 text-sm font-bold text-blue-700 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-75">
+                          <PendingButtonContent idle="Submit verification" pending={pending} uploadPending={assetUploadPending} />
                         </button>
                       )}
                       {step < 6 ? (
-                        <button type="submit" name="intent" value="next" disabled={submitDisabled} className="flex min-h-[44px] items-center justify-center rounded-xl bg-slate-900 px-6 text-sm font-bold text-white shadow-sm hover:bg-slate-800 disabled:opacity-50">
-                          {assetUploadPending ? 'Waiting for upload...' : 'Save and continue'}
+                        <button type="submit" name="intent" value="next" disabled={submitDisabled} className="flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-slate-900 px-6 text-sm font-bold text-white shadow-sm hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-800 disabled:opacity-90">
+                          <PendingButtonContent idle="Save and continue" pending={pending} uploadPending={assetUploadPending} />
                         </button>
                       ) : (
-                        <button type="submit" name="intent" value="next" disabled={submitDisabled} className="flex min-h-[44px] items-center justify-center rounded-xl bg-slate-900 px-6 text-sm font-bold text-white shadow-sm hover:bg-slate-800 disabled:opacity-50">
-                          {assetUploadPending ? 'Waiting for upload...' : 'Save section'}
+                        <button type="submit" name="intent" value="next" disabled={submitDisabled} className="flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-slate-900 px-6 text-sm font-bold text-white shadow-sm hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-800 disabled:opacity-90">
+                          <PendingButtonContent idle="Save section" pending={pending} uploadPending={assetUploadPending} />
                         </button>
                       )}
                     </div>
@@ -904,11 +970,19 @@ export default function NgoProfileForm({
           })}
 
           <div className="mt-8 flex flex-wrap items-center justify-between gap-4 pt-4">
-            <button type="submit" name="intent" value="save" disabled={submitDisabled} className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-8 font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-50 disabled:opacity-50 sm:w-auto">
-              <Bookmark className="h-5 w-5" /> {assetUploadPending ? 'Upload in progress' : 'Save Draft'}
+            <button type="submit" name="intent" value="save" disabled={submitDisabled} className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-8 font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-75 sm:w-auto">
+              <PendingButtonContent
+                idle={<><Bookmark className="h-5 w-5" /> Save Draft</>}
+                pending={pending}
+                uploadPending={assetUploadPending}
+              />
             </button>
-            <button type="submit" name="intent" value="publish" disabled={submitDisabled} className="flex min-h-[52px] w-full flex-1 items-center justify-center gap-2 rounded-xl bg-blue-600 px-8 font-bold text-white shadow-sm transition-all hover:bg-blue-700 disabled:opacity-50 sm:w-auto">
-              {profileStatus === 'published' ? 'Update Organization Profile' : 'Create Organization Profile'} <ArrowRight className="h-5 w-5" />
+            <button type="submit" name="intent" value="publish" disabled={submitDisabled} className="flex min-h-[52px] w-full flex-1 items-center justify-center gap-2 rounded-xl bg-blue-600 px-8 font-bold text-white shadow-sm transition-all hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-600 disabled:opacity-90 sm:w-auto">
+              <PendingButtonContent
+                idle={<>{profileStatus === 'published' ? 'Update Organization Profile' : 'Create Organization Profile'} <ArrowRight className="h-5 w-5" /></>}
+                pending={pending}
+                uploadPending={assetUploadPending}
+              />
             </button>
           </div>
           <p className="mt-4 flex items-center justify-center gap-2 text-xs font-medium text-slate-500">

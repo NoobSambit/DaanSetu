@@ -91,6 +91,8 @@ const optionalText = z
     return trimmed ? trimmed : null
   })
 
+const optionalInteger = z.coerce.number().int().nullable().optional().catch(null).transform((value) => value ?? null)
+
 function canonicalUrl(value: unknown): string | null {
   const parsed = optionalText.parse(value)
   if (!parsed) return null
@@ -137,6 +139,14 @@ const profileInputSchema = z.object({
   impactAreas: z.array(z.string()).optional().default([]).transform(uniqueStrings),
   beneficiaryGroups: z.array(z.string()).optional().default([]).transform(uniqueStrings),
   programSummary: optionalText,
+  vision: optionalText,
+  theoryOfChange: optionalText,
+  coreValues: z.array(z.string()).optional().default([]).transform(uniqueStrings),
+  operatingStates: z.array(z.string()).optional().default([]).transform(uniqueStrings),
+  teamSize: optionalInteger,
+  beneficiariesReached: optionalInteger,
+  communitiesServed: optionalInteger,
+  volunteersEngaged: optionalInteger,
   websiteUrl: z.unknown().transform(canonicalUrl),
   publicEmail: optionalText,
   publicPhone: optionalText,
@@ -212,6 +222,21 @@ const publicationSchema = profileInputSchema.superRefine((profile, context) => {
       path: ['beneficiaryGroups'],
       message: 'Select at least one beneficiary group.',
     })
+  }
+  for (const [field, label] of [
+    ['teamSize', 'Team size'],
+    ['beneficiariesReached', 'Beneficiaries reached'],
+    ['communitiesServed', 'Communities served'],
+    ['volunteersEngaged', 'Volunteers engaged'],
+  ] as const) {
+    const value = profile[field]
+    if (value !== null && value < 0) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [field],
+        message: `${label} cannot be negative.`,
+      })
+    }
   }
   if (profile.countryCode !== 'IN' && profile.countryCode?.length !== 2) {
     context.addIssue({

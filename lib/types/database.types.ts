@@ -40,6 +40,14 @@ export interface Database {
           public_email: string | null
           public_phone: string | null
           social_links: Record<string, string>
+          vision: string | null
+          theory_of_change: string | null
+          core_values: string[]
+          operating_states: string[]
+          team_size: number | null
+          beneficiaries_reached: number | null
+          communities_served: number | null
+          volunteers_engaged: number | null
           profile_status: 'draft' | 'published'
           onboarding_step: number
           published_at: string | null
@@ -81,6 +89,14 @@ export interface Database {
           public_email?: string | null
           public_phone?: string | null
           social_links?: Record<string, string>
+          vision?: string | null
+          theory_of_change?: string | null
+          core_values?: string[]
+          operating_states?: string[]
+          team_size?: number | null
+          beneficiaries_reached?: number | null
+          communities_served?: number | null
+          volunteers_engaged?: number | null
           profile_status?: 'draft' | 'published'
           onboarding_step?: number
           published_at?: string | null
@@ -119,6 +135,14 @@ export interface Database {
           public_email?: string | null
           public_phone?: string | null
           social_links?: Record<string, string>
+          vision?: string | null
+          theory_of_change?: string | null
+          core_values?: string[]
+          operating_states?: string[]
+          team_size?: number | null
+          beneficiaries_reached?: number | null
+          communities_served?: number | null
+          volunteers_engaged?: number | null
           profile_status?: 'draft' | 'published'
           onboarding_step?: number
           published_at?: string | null
@@ -265,6 +289,173 @@ export interface Database {
           text?: string
           image_url?: string | null
           created_at?: string
+        }
+      }
+      ngo_programs: {
+        Row: {
+          id: string
+          ngo_id: string
+          title: string
+          summary: string | null
+          description: string | null
+          category: 'education' | 'food' | 'health' | 'women' | 'animals' | 'children' | 'environment' | 'livelihoods' | 'disability' | 'disaster-relief' | 'elderly' | 'human-rights' | 'rural-development' | 'arts-culture' | 'other' | null
+          image_path: string | null
+          beneficiaries_reached: number | null
+          volunteers_needed: number | null
+          status: 'draft' | 'active' | 'archived'
+          starts_on: string | null
+          ends_on: string | null
+          sort_order: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          ngo_id: string
+          title: string
+          summary?: string | null
+          description?: string | null
+          category?: 'education' | 'food' | 'health' | 'women' | 'animals' | 'children' | 'environment' | 'livelihoods' | 'disability' | 'disaster-relief' | 'elderly' | 'human-rights' | 'rural-development' | 'arts-culture' | 'other' | null
+          image_path?: string | null
+          beneficiaries_reached?: number | null
+          volunteers_needed?: number | null
+          status?: 'draft' | 'active' | 'archived'
+          starts_on?: string | null
+          ends_on?: string | null
+          sort_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          ngo_id?: string
+          title?: string
+          summary?: string | null
+          description?: string | null
+          category?: 'education' | 'food' | 'health' | 'women' | 'animals' | 'children' | 'environment' | 'livelihoods' | 'disability' | 'disaster-relief' | 'elderly' | 'human-rights' | 'rural-development' | 'arts-culture' | 'other' | null
+          image_path?: string | null
+          beneficiaries_reached?: number | null
+          volunteers_needed?: number | null
+          status?: 'draft' | 'active' | 'archived'
+          starts_on?: string | null
+          ends_on?: string | null
+          sort_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      ngo_updates: {
+        Row: {
+          id: string
+          ngo_id: string
+          title: string
+          body: string
+          image_path: string | null
+          status: 'draft' | 'published' | 'archived'
+          published_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          ngo_id: string
+          title: string
+          body: string
+          image_path?: string | null
+          status?: 'draft' | 'published' | 'archived'
+          published_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          ngo_id?: string
+          title?: string
+          body?: string
+          image_path?: string | null
+          status?: 'draft' | 'published' | 'archived'
+          published_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      ngo_gallery_images: {
+        Row: {
+          id: string
+          ngo_id: string
+          image_path: string
+          alt_text: string | null
+          caption: string | null
+          sort_order: number
+          is_featured: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          ngo_id: string
+          image_path: string
+          alt_text?: string | null
+          caption?: string | null
+          sort_order?: number
+          is_featured?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          ngo_id?: string
+          image_path?: string
+          alt_text?: string | null
+          caption?: string | null
+          sort_order?: number
+          is_featured?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      ngo_service_areas: {
+        Row: {
+          id: string
+          ngo_id: string
+          state: string
+          district: string | null
+          city: string | null
+          latitude: number | null
+          longitude: number | null
+          programs_count: number | null
+          beneficiaries_reached: number | null
+          sort_order: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          ngo_id: string
+          state: string
+          district?: string | null
+          city?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          programs_count?: number | null
+          beneficiaries_reached?: number | null
+          sort_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          ngo_id?: string
+          state?: string
+          district?: string | null
+          city?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          programs_count?: number | null
+          beneficiaries_reached?: number | null
+          sort_order?: number
+          created_at?: string
+          updated_at?: string
         }
       }
       donations: {
@@ -758,6 +949,12 @@ export type Campaign = Database['public']['Tables']['campaigns']['Row']
 export type CampaignCategory = Database['public']['Tables']['campaigns']['Row']['category']
 export type CampaignStatus = Database['public']['Tables']['campaigns']['Row']['status']
 export type CampaignUpdate = Database['public']['Tables']['campaign_updates']['Row']
+export type NGOProgram = Database['public']['Tables']['ngo_programs']['Row']
+export type NGOProgramStatus = Database['public']['Tables']['ngo_programs']['Row']['status']
+export type NGOUpdate = Database['public']['Tables']['ngo_updates']['Row']
+export type NGOUpdateStatus = Database['public']['Tables']['ngo_updates']['Row']['status']
+export type NGOGalleryImage = Database['public']['Tables']['ngo_gallery_images']['Row']
+export type NGOServiceArea = Database['public']['Tables']['ngo_service_areas']['Row']
 export type VolunteerProfile = Database['public']['Tables']['volunteer_profiles']['Row']
 export type VolunteerOpportunity = Database['public']['Tables']['volunteer_opportunities']['Row']
 export type VolunteerApplication = Database['public']['Tables']['volunteer_applications']['Row']

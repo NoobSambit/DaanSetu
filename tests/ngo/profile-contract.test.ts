@@ -30,6 +30,14 @@ const completeProfile = {
   impactAreas: ['girls-education', 'digital-literacy'],
   beneficiaryGroups: ['children', 'women-and-girls'],
   programSummary: 'Scholarships, mentoring, and community learning centres.',
+  vision: 'A just and equitable society where every child can reach their full potential.',
+  theoryOfChange: 'Community-led education support improves attendance, learning outcomes, and confidence.',
+  coreValues: ['Integrity', 'Inclusion', 'Transparency'],
+  operatingStates: ['Rajasthan', 'Uttar Pradesh'],
+  teamSize: 45,
+  beneficiariesReached: 68500,
+  communitiesServed: 320,
+  volunteersEngaged: 1250,
   websiteUrl: 'https://pragati.example.org',
   publicEmail: 'hello@pragati.example.org',
   publicPhone: '+91 98765 43210',
@@ -46,12 +54,16 @@ test('normalizes optional profile values and canonical URLs', () => {
     websiteUrl: 'pragati.example.org',
     publicPhone: '  +91 98765 43210  ',
     impactAreas: ['girls-education', 'girls-education', 'digital-literacy'],
+    coreValues: ['Integrity', 'Integrity', 'Inclusion'],
+    operatingStates: ['Rajasthan', ' Rajasthan ', 'Uttar Pradesh'],
   })
 
   assert.equal(result.addressLine2, null)
   assert.equal(result.websiteUrl, 'https://pragati.example.org/')
   assert.equal(result.publicPhone, '+91 98765 43210')
   assert.deepEqual(result.impactAreas, ['girls-education', 'digital-literacy'])
+  assert.deepEqual(result.coreValues, ['Integrity', 'Inclusion'])
+  assert.deepEqual(result.operatingStates, ['Rajasthan', 'Uttar Pradesh'])
 })
 
 test('requires all core sections before publishing', () => {
@@ -67,6 +79,20 @@ test('requires all core sections before publishing', () => {
   if (!incomplete.success) {
     assert.equal(incomplete.fieldErrors.mission, 'Describe your organization mission.')
     assert.equal(incomplete.fieldErrors.impactAreas, 'Select at least one impact area.')
+  }
+})
+
+test('rejects negative public impact metrics before publishing', () => {
+  const invalid = canPublishNgoProfile({
+    ...completeProfile,
+    beneficiariesReached: -1,
+    volunteersEngaged: -5,
+  })
+
+  assert.equal(invalid.success, false)
+  if (!invalid.success) {
+    assert.equal(invalid.fieldErrors.beneficiariesReached, 'Beneficiaries reached cannot be negative.')
+    assert.equal(invalid.fieldErrors.volunteersEngaged, 'Volunteers engaged cannot be negative.')
   }
 })
 

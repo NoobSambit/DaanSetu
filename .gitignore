@@ -36,3 +36,5 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+fix_banner.js
+scale_text.js
