@@ -13,9 +13,9 @@ test('Drizzle is the active schema boundary for core platform records', () => {
 })
 
 test('gateway identifiers and one-review-per-user constraints are unique', () => {
-  assert.match(migration, /gateway_order_id[^;]+UNIQUE/s)
-  assert.match(migration, /gateway_payment_id[^;]+UNIQUE/s)
-  assert.match(migration, /gateway_event_id[^;]+UNIQUE/s)
+  assert.match(migration, /gateway_order_id[^;]+UNIQUE/)
+  assert.match(migration, /gateway_payment_id[^;]+UNIQUE/)
+  assert.match(migration, /gateway_event_id[^;]+UNIQUE/)
   assert.match(migration, /UNIQUE \(user_id, ngo_id\)/)
 })
 

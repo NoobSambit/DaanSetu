@@ -329,17 +329,11 @@ export function calculateNgoProfileCompletion(
       profile.impactAreas.length > 0 &&
       profile.beneficiaryGroups.length > 0 &&
       hasText(profile.programSummary, 20),
-    // Verification is complete once the user has saved section 4 (even as draft).
-    // The admin review status (pending/verified) is independent of profile completion.
     verification:
+      options.verificationStatus === 'submitted' ||
       options.verificationStatus === 'pending' ||
-      options.verificationStatus === 'verified' ||
-      options.verificationStatus === 'draft' ||
-      step >= 5,
-    // Social presence is optional — mark complete once the user has reached/saved
-    // section 5, regardless of whether any links were provided.
+      options.verificationStatus === 'verified',
     social:
-      step >= 6 ||
       Boolean(profile.websiteUrl || profile.publicEmail || profile.publicPhone) ||
       Object.keys(profile.socialLinks).length > 0,
     // Discoverability is complete once the user has saved section 6.

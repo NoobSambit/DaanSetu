@@ -842,7 +842,7 @@ export default async function NGOProfilePage({ params }: { params: Promise<{ id:
                 <div className="flex flex-wrap gap-3">
                   {socialLinks.map((link) => {
                     const lName = link.name.toLowerCase()
-                    let Icon = ExternalLink
+                    let Icon: React.ComponentType<React.SVGProps<SVGSVGElement>> = ExternalLink
                     let colorClass = 'text-slate-600 border-slate-200 hover:bg-slate-50'
                     if (lName.includes('linkedin')) {
                       Icon = LinkedinIcon
