@@ -9,8 +9,11 @@ import ImpactDashboard from "@/components/landing/ImpactDashboard";
 import StorySection from "@/components/landing/StorySection";
 import CommunityCTA from "@/components/landing/CommunityCTA";
 import Footer from "@/components/landing/Footer";
+import { getPublicImpact } from "@/lib/repositories/impact";
 
-export default function Home() {
+export const dynamic = 'force-dynamic'
+export default async function Home() {
+  const impact = await getPublicImpact()
   return (
     <>
       <Navbar />
@@ -18,10 +21,10 @@ export default function Home() {
         <HeroSection />
         <FeatureCards />
         <HowItWorks />
-        <CausesSection />
+        <CausesSection campaigns={impact.featuredCampaigns} locations={impact.locations} />
         <TrustSection />
         <ImpactWays />
-        <ImpactDashboard />
+        <ImpactDashboard data={impact} />
         <StorySection />
       </main>
 

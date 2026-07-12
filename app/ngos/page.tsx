@@ -1,77 +1,12 @@
-import { createClient } from '@/lib/supabase/server'
-import NGOList from '@/components/NGOList'
-import SearchFilters from '@/components/SearchFilters'
+import Link from 'next/link'
+import { BadgeCheck, MapPin, Star } from 'lucide-react'
+import { searchNgos } from '@/lib/repositories/discovery'
 
 export const dynamic = 'force-dynamic'
-
-export default async function NGOsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ category?: string; city?: string; search?: string }>
-}) {
-  const params = await searchParams
-  const supabase = await createClient()
-
-  // Build query
-  let query = supabase
-    .from('ngos')
-    .select('*')
-    .eq('profile_status', 'published')
-    .eq('is_discoverable', true)
-    .order('created_at', { ascending: false })
-
-  // Apply filters
-  if (params.category) {
-    query = query.eq('category', params.category)
-  }
-
-  if (params.city) {
-    query = query.ilike('city', `%${params.city}%`)
-  }
-
-  if (params.search) {
-    query = query.or(`name.ilike.%${params.search}%,description.ilike.%${params.search}%`)
-  }
-
-  const { data: ngos, error } = await query
-
-  if (error) {
-    console.error('Error fetching NGOs:', error)
-  }
-
-  return (
-    <div className="min-h-[calc(100vh-4rem)] bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Discover NGOs</h1>
-          <p className="text-gray-600">
-            Find and connect with organizations making a difference
-          </p>
-        </div>
-
-        <SearchFilters />
-
-        <div className="mt-8">
-          {ngos && ngos.length > 0 ? (
-            <>
-              <p className="text-sm text-gray-600 mb-4">
-                Found {ngos.length} {ngos.length === 1 ? 'NGO' : 'NGOs'}
-              </p>
-              <NGOList ngos={ngos} />
-            </>
-          ) : (
-            <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-              <div className="text-6xl mb-4">🔍</div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                No NGOs Found
-              </h3>
-              <p className="text-gray-600">
-                Try adjusting your search filters or check back later
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  )
+export default async function NGOsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
+  const p = await searchParams
+  const ngos = await searchNgos({ search: p.search, category: p.category, city: p.city, state: p.state, verified: p.verified === 'true', eligible80g: p.eligible80g === 'true', page: Number(p.page) || 1 })
+  return <main className="min-h-screen bg-slate-50"><div className="mx-auto max-w-7xl px-4 py-10"><h1 className="text-4xl font-bold text-slate-950">Discover NGOs</h1><p className="mt-2 text-slate-600">Search transparent organization records by cause and location.</p>
+  <form className="mt-8 grid gap-3 rounded-2xl border bg-white p-5 md:grid-cols-4"><input name="search" defaultValue={p.search} placeholder="Name or mission" className="rounded-xl border px-4 py-3"/><input name="city" defaultValue={p.city} placeholder="City" className="rounded-xl border px-4 py-3"/><input name="category" defaultValue={p.category} placeholder="Cause" className="rounded-xl border px-4 py-3"/><button className="rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white">Search</button><label className="flex items-center gap-2 text-sm"><input type="checkbox" name="verified" value="true" defaultChecked={p.verified === 'true'}/> Verified only</label><label className="flex items-center gap-2 text-sm"><input type="checkbox" name="eligible80g" value="true" defaultChecked={p.eligible80g === 'true'}/> 80G eligible</label></form>
+  <p className="mt-6 text-sm text-slate-600">{ngos.length} result{ngos.length === 1 ? '' : 's'} on this page</p>{ngos.length === 0 ? <div className="mt-5 rounded-2xl border bg-white p-12 text-center">No organizations match these filters.</div> : <div className="mt-5 grid gap-6 md:grid-cols-2 lg:grid-cols-3">{ngos.map(n => <Link key={n.id} href={`/ngos/${n.id}`} className="rounded-2xl border bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"><div className="flex items-start justify-between"><div className="flex h-14 w-14 items-center justify-center rounded-xl bg-blue-50 text-xl font-bold text-blue-700">{n.name.slice(0,1)}</div><div className="flex gap-2">{n.verified && <BadgeCheck className="text-emerald-600" aria-label="Verified"/>}{n.eligible80g && <span className="rounded-full bg-amber-50 px-2 py-1 text-xs font-bold text-amber-800">80G</span>}</div></div><h2 className="mt-4 text-xl font-bold">{n.name}</h2><p className="mt-2 line-clamp-2 min-h-10 text-sm text-slate-600">{n.description || 'Organization profile'}</p><p className="mt-4 flex items-center gap-1 text-sm text-slate-500"><MapPin className="h-4 w-4"/>{[n.city,n.state].filter(Boolean).join(', ') || 'India'}</p><p className="mt-2 flex items-center gap-1 text-sm"><Star className="h-4 w-4 fill-amber-400 text-amber-400"/>{n.rating.toFixed(1)} <span className="text-slate-500">({n.reviewCount} verified reviews)</span></p></Link>)}</div>}</div></main>
 }

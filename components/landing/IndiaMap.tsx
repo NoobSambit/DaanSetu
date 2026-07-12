@@ -14,18 +14,7 @@ const createCustomIcon = (color: string) => {
   });
 };
 
-const markers = [
-  { id: 1, position: [28.6139, 77.209] as [number, number], color: "#3b82f6", label: "Delhi" },
-  { id: 2, position: [19.076, 72.8777] as [number, number], color: "#ef4444", label: "Mumbai" },
-  { id: 3, position: [12.9716, 77.5946] as [number, number], color: "#22c55e", label: "Bangalore" },
-  { id: 4, position: [22.5726, 88.3639] as [number, number], color: "#f59e0b", label: "Kolkata" },
-  { id: 5, position: [17.385, 78.4867] as [number, number], color: "#a855f7", label: "Hyderabad" },
-  { id: 6, position: [23.0225, 72.5714] as [number, number], color: "#f97316", label: "Ahmedabad" },
-  { id: 7, position: [13.0827, 80.2707] as [number, number], color: "#06b6d4", label: "Chennai" },
-  { id: 8, position: [26.9124, 75.7873] as [number, number], color: "#ec4899", label: "Jaipur" },
-];
-
-export default function IndiaMap() {
+export default function IndiaMap({ markers }: { markers: Array<{ id: string; latitude: number; longitude: number; name: string }> }) {
   // Bounding box for India to prevent panning outside
   const indiaBounds = L.latLngBounds(
     [6.5, 68.0], // South-West
@@ -71,12 +60,12 @@ export default function IndiaMap() {
         />
         {markers.map((marker) => (
           <Marker 
-            key={marker.id} 
-            position={marker.position} 
-            icon={createCustomIcon(marker.color)}
+            key={marker.id}
+            position={[marker.latitude, marker.longitude]}
+            icon={createCustomIcon("#2563eb")}
           >
             <Popup>
-              <div className="text-xs font-semibold">{marker.label}</div>
+              <div className="text-xs font-semibold">{marker.name}</div>
             </Popup>
           </Marker>
         ))}

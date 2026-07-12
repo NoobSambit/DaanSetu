@@ -1,100 +1,28 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@/lib/supabase/server'
+import { NextResponse } from 'next/server'
 import Razorpay from 'razorpay'
-import { rateLimit, RATE_LIMITS } from '@/lib/middleware/rate-limit'
+import { z } from 'zod'
+import { eq } from 'drizzle-orm'
+import { db } from '@/lib/db'
+import { campaigns, paymentOrders, payoutAccounts } from '@/lib/db/schema'
+import { getCurrentSession } from '@/lib/auth/session'
+import { canAcceptDonation } from '@/lib/domain/payments'
 
-export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
+const input = z.object({ campaignId: z.string().uuid(), amountPaise: z.number().int().min(1000).max(100_000_000) })
 
-/**
- * Create a Razorpay order for donation payment
- * POST /api/payment/create-order
- */
-async function handler(request: NextRequest) {
-  try {
-    const supabase = await createServerClient()
-
-    // Check authentication
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    // Parse request body
-    const body = await request.json()
-    const { amount, ngoId, campaignId, corporateCampaignId } = body
-
-    // Validate amount
-    if (!amount || amount <= 0) {
-      return NextResponse.json(
-        { error: 'Invalid donation amount' },
-        { status: 400 }
-      )
-    }
-
-    if (amount > 100000000) {
-      return NextResponse.json(
-        { error: 'Amount cannot exceed ₹1,00,00,000' },
-        { status: 400 }
-      )
-    }
-
-    // Validate that at least ngoId is provided
-    if (!ngoId) {
-      return NextResponse.json(
-        { error: 'NGO ID is required' },
-        { status: 400 }
-      )
-    }
-
-    // Check if Razorpay is configured
-    const razorpayKeyId = process.env.RAZORPAY_KEY_ID
-    const razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET
-
-    if (!razorpayKeyId || !razorpayKeySecret) {
-      console.error('Razorpay credentials not configured')
-      return NextResponse.json(
-        { error: 'Payment gateway not configured. Please contact support.' },
-        { status: 503 }
-      )
-    }
-
-    // Initialize Razorpay
-    const razorpay = new Razorpay({
-      key_id: razorpayKeyId,
-      key_secret: razorpayKeySecret,
-    })
-
-    // Create Razorpay order
-    const order = await razorpay.orders.create({
-      amount: amount * 100, // Razorpay expects amount in paise
-      currency: 'INR',
-      receipt: `receipt_${user.id}_${Date.now()}`,
-      notes: {
-        userId: user.id,
-        ngoId,
-        campaignId: campaignId || '',
-        corporateCampaignId: corporateCampaignId || '',
-      },
-    })
-
-    return NextResponse.json({
-      orderId: order.id,
-      amount: order.amount,
-      currency: order.currency,
-      keyId: razorpayKeyId,
-    })
-  } catch (error) {
-    console.error('Error creating payment order:', error)
-    return NextResponse.json(
-      { error: 'Failed to create payment order' },
-      { status: 500 }
-    )
-  }
+export async function POST(request: Request) {
+  const session = await getCurrentSession()
+  if (!session) return NextResponse.json({ error: 'Sign in to donate.' }, { status: 401 })
+  if (process.env.PAYMENTS_ENABLED !== 'true') return NextResponse.json({ error: 'Online donations are currently unavailable.' }, { status: 503 })
+  const parsed = input.safeParse(await request.json().catch(() => null))
+  if (!parsed.success) return NextResponse.json({ error: 'Enter a valid donation amount and campaign.' }, { status: 400 })
+  const [campaign] = await db.select({ status: campaigns.status, payoutStatus: payoutAccounts.status }).from(campaigns).leftJoin(payoutAccounts, eq(campaigns.payoutAccountId, payoutAccounts.id)).where(eq(campaigns.id, parsed.data.campaignId)).limit(1)
+  if (!campaign || !canAcceptDonation({ campaignStatus: campaign.status, payoutStatus: campaign.payoutStatus ?? '', paymentsEnabled: true })) return NextResponse.json({ error: 'This campaign cannot accept donations until its payout account is active.' }, { status: 409 })
+  const keyId = process.env.RAZORPAY_KEY_ID
+  const keySecret = process.env.RAZORPAY_KEY_SECRET
+  if (!keyId || !keySecret) return NextResponse.json({ error: 'Payment provider is not configured.' }, { status: 503 })
+  const gateway = new Razorpay({ key_id: keyId, key_secret: keySecret })
+  const order = await gateway.orders.create({ amount: parsed.data.amountPaise, currency: 'INR', receipt: `ds_${crypto.randomUUID()}`, notes: { userId: session.user.id, campaignId: parsed.data.campaignId } })
+  await db.insert(paymentOrders).values({ userId: session.user.id, campaignId: parsed.data.campaignId, amountPaise: parsed.data.amountPaise, gatewayOrderId: order.id, expiresAt: new Date(Date.now() + 30 * 60_000) })
+  return NextResponse.json({ orderId: order.id, amount: order.amount, currency: order.currency, keyId })
 }
-
-export const POST = rateLimit(RATE_LIMITS.PAYMENT)(handler)

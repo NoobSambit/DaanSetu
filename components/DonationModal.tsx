@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { createDonation } from '@/lib/services/donations'
+import { createDonation, createSubscription } from '@/lib/services/donations'
 import type { DonationCause } from '@/lib/types/database.types'
 
 interface DonationModalProps {
@@ -37,6 +37,7 @@ export default function DonationModal({
   const [customAmount, setCustomAmount] = useState<string>('')
   const [cause, setCause] = useState<DonationCause>('general')
   const [isAnonymous, setIsAnonymous] = useState(false)
+  const [cadence, setCadence] = useState<'once' | 'monthly' | 'quarterly' | 'yearly'>('once')
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -71,13 +72,15 @@ export default function DonationModal({
     setIsProcessing(true)
 
     try {
-      await createDonation({
+      const donation = {
         ngoId,
         amount: donationAmount,
         cause,
         isAnonymous,
         campaignId,
-      })
+      }
+      if (cadence === 'once') await createDonation(donation)
+      else await createSubscription({ ...donation, cadence })
 
       // Success!
       onSuccess()
@@ -94,6 +97,7 @@ export default function DonationModal({
     setCustomAmount('')
     setCause('general')
     setIsAnonymous(false)
+    setCadence('once')
     setError(null)
   }
 
@@ -195,6 +199,7 @@ export default function DonationModal({
           </div>
 
           {/* Anonymous Toggle */}
+          <div><label className="block text-sm font-semibold text-slate-900 mb-2">Giving frequency</label><select value={cadence} onChange={(event)=>setCadence(event.target.value as typeof cadence)} className="input"><option value="once">One time</option><option value="monthly">Monthly</option><option value="quarterly">Quarterly</option><option value="yearly">Yearly</option></select></div>
           <div className="flex items-center p-3 rounded-lg bg-slate-50 border border-slate-200">
             <input
               type="checkbox"
