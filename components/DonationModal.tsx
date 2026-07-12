@@ -9,6 +9,7 @@ interface DonationModalProps {
   ngoName: string
   campaignId?: string
   campaignTitle?: string
+  initiativeId?: string
   isOpen: boolean
   onClose: () => void
   onSuccess: () => void
@@ -29,6 +30,7 @@ export default function DonationModal({
   ngoName,
   campaignId,
   campaignTitle,
+  initiativeId,
   isOpen,
   onClose,
   onSuccess,
@@ -78,6 +80,7 @@ export default function DonationModal({
         cause,
         isAnonymous,
         campaignId,
+        initiativeId,
       }
       if (cadence === 'once') await createDonation(donation)
       else await createSubscription({ ...donation, cadence })

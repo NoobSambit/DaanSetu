@@ -12,6 +12,7 @@ interface DonateButtonProps {
   isAuthenticated: boolean
   campaignId?: string
   campaignTitle?: string
+  initiativeId?: string
   className?: string
   icon?: React.ReactNode
   text?: string
@@ -23,6 +24,7 @@ export default function DonateButton({
   isAuthenticated,
   campaignId,
   campaignTitle,
+  initiativeId,
   className,
   icon,
   text
@@ -64,6 +66,7 @@ export default function DonateButton({
           ngoName={ngoName}
           campaignId={campaignId}
           campaignTitle={campaignTitle}
+          initiativeId={initiativeId}
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           onSuccess={handleDonationSuccess}

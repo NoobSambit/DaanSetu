@@ -1,6 +1,6 @@
 'use client'
 
-export interface CreateDonationParams { ngoId: string; amount: number; cause: string; isAnonymous: boolean; campaignId?: string; corporateCampaignId?: string }
+export interface CreateDonationParams { ngoId: string; amount: number; cause: string; isAnonymous: boolean; campaignId?: string; initiativeId?:string }
 type RazorpayResponse = { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }
 
 declare global { interface Window { Razorpay?: new (options: Record<string, unknown>) => { open(): void } } }
@@ -14,7 +14,7 @@ export async function createDonation(params: CreateDonationParams) {
   if (!params.campaignId) throw new Error('Choose an active campaign before donating.')
   const amountPaise = Math.round(params.amount * 100)
   if (!Number.isSafeInteger(amountPaise) || amountPaise < 1000) throw new Error('Minimum donation amount is ₹10.')
-  const response = await fetch('/api/payment/create-order', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ campaignId: params.campaignId, amountPaise }) })
+  const response = await fetch('/api/payment/create-order', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ campaignId: params.campaignId, amountPaise,initiativeId:params.initiativeId }) })
   const order = await response.json()
   if (!response.ok) throw new Error(order.error ?? 'Unable to create payment order.')
   await loadCheckout()
