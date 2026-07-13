@@ -26,8 +26,8 @@ export default async function CommunityPage() {
     .eq("id", user.id)
     .single();
 
-  const userRole = userData?.role || "user";
-  const canCreatePost = ["ngo", "corporate", "admin"].includes(userRole);
+  const userRole = userData?.role || "supporter";
+  const canCreatePost = Boolean(user.email_confirmed_at);
 
   // Get all posts
   const posts = await getPosts(user.id);
