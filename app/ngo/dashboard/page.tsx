@@ -622,14 +622,15 @@ export default async function NgoDashboardPage() {
           </section>
         </div>
 
-        {/* Coming Soon Banner */}
+        {/* Operations summary */}
         <section className="mt-6 rounded-xl border border-blue-100 bg-gradient-to-r from-blue-50 via-white to-blue-50 p-6 text-center">
           <div className="mx-auto max-w-md">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600">
               <BarChart3 className="h-6 w-6" />
             </div>
             <h3 className="mt-3 text-lg font-bold text-slate-900">
-              More features coming soon
+              Manage your campaigns, volunteers, reports, and organization
+              profile
             </h3>
             <p className="mt-2 text-sm leading-relaxed text-slate-500">
               Campaign management, volunteer coordination, impact reports, donor
