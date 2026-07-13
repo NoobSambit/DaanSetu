@@ -17,27 +17,40 @@ test("donation processing has no simulated success path", () => {
   assert.doesNotMatch(donations, /simulat|placeholder|Math\.random/i);
 });
 
-test("Razorpay order, verification, webhook, and reconciliation boundaries exist", () => {
+test("PayPal order, capture, webhook, and reconciliation boundaries exist", () => {
   const createOrder = source("app/api/payment/create-order/route.ts");
-  const verify = source("app/api/payment/verify/route.ts");
+  const capture = source("app/api/payment/capture/route.ts");
   const webhook = source("app/api/payment/webhook/route.ts");
+  const provider = source("lib/payments/paypal.ts");
 
-  assert.match(createOrder, /razorpay\.orders\.create|orders\.create/);
+  assert.match(createOrder, /createPayPalOrder/);
   assert.match(createOrder, /amountPaise|amount_paise/);
-  assert.match(verify, /timingSafeEqual|createHmac/);
-  assert.match(verify, /payments\.fetch/);
-  assert.match(webhook, /request\.text\(\)/);
-  assert.match(webhook, /x-razorpay-signature/i);
+  assert.match(capture, /capturePayPalOrder/);
+  assert.match(provider, /v2\/checkout\/orders/);
+  assert.match(webhook, /verifyPayPalWebhook/);
+  assert.match(webhook, /paypal-transmission-id/i);
   assert.match(webhook, /gateway_event_id|payment_events/);
 });
 
-test("recurring giving exposes create and lifecycle controls", () => {
+test("PayPal recurring giving exposes create and lifecycle controls", () => {
   const subscriptions = source("app/api/payment/subscriptions/route.ts");
-  const verify = source("app/api/payment/subscriptions/verify/route.ts");
 
   assert.match(subscriptions, /monthly|quarterly|yearly/);
   assert.match(subscriptions, /pause|resume|cancel/);
-  assert.match(verify, /createHmac|timingSafeEqual/);
+  assert.match(subscriptions, /PayPal|paypal/i);
+});
+
+test("demo payments are isolated, gated, and excluded from real totals", () => {
+  const demoRoute = source("app/api/demo/payments/route.ts");
+  const migration = source(
+    "supabase/migrations/019_paypal_payment_processing.sql",
+  );
+
+  assert.match(demoRoute, /ENABLE_DEMO_PAYMENTS/);
+  assert.match(demoRoute, /NODE_ENV/);
+  assert.match(demoRoute, /isDemo|is_demo/);
+  assert.match(migration, /is_demo/);
+  assert.match(migration, /WHERE[\s\S]+is_demo\s*=\s*FALSE/i);
 });
 
 test("payouts, refunds, receipts, and statutory routes exist", () => {
