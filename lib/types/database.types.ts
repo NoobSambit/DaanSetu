@@ -249,7 +249,7 @@ export interface Database {
           id: string;
           name: string;
           email: string;
-          role: "user" | "ngo" | "admin" | "corporate";
+          role: "supporter" | "ngo" | "admin" | "corporate";
           created_at: string;
           updated_at: string;
         };
@@ -257,7 +257,7 @@ export interface Database {
           id: string;
           name: string;
           email: string;
-          role?: "user" | "ngo" | "admin" | "corporate";
+          role?: "supporter" | "ngo" | "admin" | "corporate";
           created_at?: string;
           updated_at?: string;
         };
@@ -265,7 +265,7 @@ export interface Database {
           id?: string;
           name?: string;
           email?: string;
-          role?: "user" | "ngo" | "admin" | "corporate";
+          role?: "supporter" | "ngo" | "admin" | "corporate";
           created_at?: string;
           updated_at?: string;
         };
@@ -907,7 +907,7 @@ export interface Database {
         Row: {
           id: string;
           author_id: string;
-          author_role: "ngo" | "corporate" | "admin";
+          author_role: "supporter" | "ngo" | "corporate" | "admin";
           title: string;
           content: string;
           image_url: string | null;
@@ -920,7 +920,7 @@ export interface Database {
         Insert: {
           id?: string;
           author_id: string;
-          author_role: "ngo" | "corporate" | "admin";
+          author_role: "supporter" | "ngo" | "corporate" | "admin";
           title: string;
           content: string;
           image_url?: string | null;
@@ -933,7 +933,7 @@ export interface Database {
         Update: {
           id?: string;
           author_id?: string;
-          author_role?: "ngo" | "corporate" | "admin";
+          author_role?: "supporter" | "ngo" | "corporate" | "admin";
           title?: string;
           content?: string;
           image_url?: string | null;

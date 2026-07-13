@@ -1,4 +1,4 @@
-export const ACCOUNT_TYPES = ["user", "ngo", "corporate"] as const;
+export const ACCOUNT_TYPES = ["supporter", "ngo", "corporate"] as const;
 
 export type AccountType = (typeof ACCOUNT_TYPES)[number];
 export type UserRole = AccountType | "admin";

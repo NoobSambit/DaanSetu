@@ -134,7 +134,7 @@ const CorporateIcon = ({ active }: { active: boolean }) => (
 
 const accountTypes = [
   {
-    value: "user",
+    value: "supporter",
     label: "Supporter",
     Icon: SupporterIcon,
     description: "I want to support causes and initiatives.",
@@ -155,7 +155,7 @@ const accountTypes = [
 
 export default function SignUpForm() {
   const [state, formAction] = useActionState(signUpAction, INITIAL_AUTH_STATE);
-  const [selectedType, setSelectedType] = useState<string>("user");
+  const [selectedType, setSelectedType] = useState<string>("supporter");
   const [password, setPassword] = useState("");
 
   const getStrength = (pass: string) => {

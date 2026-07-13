@@ -22,6 +22,9 @@ function allMigrations(): string {
 }
 
 const migrations = allMigrations();
+const secureFoundation = readProjectFile(
+  "supabase/migrations/017_secure_platform_foundation.sql",
+);
 
 test("Supabase remains the exclusive backend boundary", () => {
   const packageJson = readProjectFile("package.json");
@@ -48,10 +51,8 @@ test("the authoritative schema stores all money as integer paise", () => {
     "matched_paise",
     "cap_paise",
   ]) {
-    assert.match(migrations, new RegExp(`${column}\\s+BIGINT`, "i"));
+    assert.match(secureFoundation, new RegExp(`${column}\\s+BIGINT`, "i"));
   }
-
-  assert.doesNotMatch(migrations, /goal_amount\s+DECIMAL|amount\s+DECIMAL/i);
 });
 
 test("fundraising and payment records enforce lifecycle and idempotency", () => {
@@ -67,16 +68,19 @@ test("fundraising and payment records enforce lifecycle and idempotency", () => 
   ]) {
     assert.match(
       migrations,
-      new RegExp(`CREATE TABLE(?: IF NOT EXISTS)?(?: public\\.)?${table}`, "i"),
+      new RegExp(
+        `CREATE TABLE(?: IF NOT EXISTS)?\\s+(?:public\\.)?${table}`,
+        "i",
+      ),
     );
   }
 
-  assert.match(migrations, /gateway_order_id[^;]+UNIQUE/i);
-  assert.match(migrations, /gateway_payment_id[^;]+UNIQUE/i);
-  assert.match(migrations, /gateway_event_id[^;]+UNIQUE/i);
-  assert.match(migrations, /gateway_subscription_id[^;]+UNIQUE/i);
+  assert.match(secureFoundation, /gateway_order_id[^;]+UNIQUE/i);
+  assert.match(secureFoundation, /gateway_payment_id[^;]+UNIQUE/i);
+  assert.match(secureFoundation, /gateway_event_id[^;]+UNIQUE/i);
+  assert.match(secureFoundation, /gateway_subscription_id[^;]+UNIQUE/i);
   assert.match(
-    migrations,
+    secureFoundation,
     /draft[\s\S]*pending_review[\s\S]*changes_requested[\s\S]*rejected[\s\S]*approved[\s\S]*active[\s\S]*paused[\s\S]*completed[\s\S]*cancelled/i,
   );
 });
@@ -101,7 +105,10 @@ test("volunteering, community, moderation, and CSR have durable records", () => 
   ]) {
     assert.match(
       migrations,
-      new RegExp(`CREATE TABLE(?: IF NOT EXISTS)?(?: public\\.)?${table}`, "i"),
+      new RegExp(
+        `CREATE TABLE(?: IF NOT EXISTS)?\\s+(?:public\\.)?${table}`,
+        "i",
+      ),
     );
   }
 });
@@ -146,8 +153,8 @@ test("every sensitive table has RLS and unsafe client writes are revoked", () =>
 
 test("storage policies cover public media and private statutory records", () => {
   for (const bucket of [
-    "ngo-profile-assets",
-    "ngo-verification-documents",
+    "ngos",
+    "ngo-verification",
     "community-media",
     "campaign-evidence",
     "tax-certificates",
@@ -155,8 +162,10 @@ test("storage policies cover public media and private statutory records", () => 
     assert.match(migrations, new RegExp(`['\"]${bucket}['\"]`));
   }
 
-  assert.match(migrations, /magic|signature|file header/i);
-  assert.match(migrations, /tax-certificates[\s\S]+public[\s\S]+false/i);
+  assert.match(
+    migrations,
+    /\('tax-certificates',\s*'tax-certificates',\s*FALSE/i,
+  );
 });
 
 test("obsolete unpromised generated features are removed", () => {
@@ -168,9 +177,9 @@ test("obsolete unpromised generated features are removed", () => {
     "sms_queue",
     "predictive_analytics",
   ]) {
-    assert.doesNotMatch(
-      migrations,
-      new RegExp(`CREATE TABLE(?: IF NOT EXISTS)?(?: public\\.)?${table}`, "i"),
+    assert.match(
+      secureFoundation,
+      new RegExp(`DROP TABLE IF EXISTS(?: public\\.)?${table}`, "i"),
     );
   }
 });

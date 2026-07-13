@@ -61,7 +61,7 @@ test("rejects mismatched passwords and malformed profile data", () => {
     email: "not-an-email",
     password: "Strong Password1!",
     confirmPassword: "Different Password1!",
-    accountType: "user",
+    accountType: "supporter",
   });
 
   assert.equal(result.success, false);
@@ -86,6 +86,6 @@ test("allows internal return paths and blocks open redirects", () => {
 test("uses account-aware onboarding destinations when no return path exists", () => {
   assert.equal(getPostAuthDestination("corporate"), "/corporate/profile");
   assert.equal(getPostAuthDestination("ngo"), "/ngo/profile");
-  assert.equal(getPostAuthDestination("user"), "/dashboard");
+  assert.equal(getPostAuthDestination("supporter"), "/dashboard");
   assert.equal(getPostAuthDestination("admin"), "/admin/analytics");
 });

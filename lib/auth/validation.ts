@@ -4,7 +4,7 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PASSWORD_COMPLEXITY_PATTERN =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).+$/;
 const SELF_SERVICE_ACCOUNT_TYPES: readonly AccountType[] = [
-  "user",
+  "supporter",
   "ngo",
   "corporate",
 ];

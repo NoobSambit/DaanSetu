@@ -8,6 +8,8 @@
 
 # testing
 /coverage
+/.runtime/
+/supabase/.temp/
 
 # next.js
 /.next/
