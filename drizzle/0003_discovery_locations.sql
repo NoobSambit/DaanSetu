@@ -1,2 +1,0 @@
-ALTER TABLE ngo_profiles ADD COLUMN latitude DOUBLE PRECISION;
-ALTER TABLE ngo_profiles ADD COLUMN longitude DOUBLE PRECISION;

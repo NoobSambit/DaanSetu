@@ -1,32 +1,38 @@
-import { getBrowserClient } from '@/lib/supabase'
-import type { SupabaseClient } from '@supabase/supabase-js'
-import type { CorporateEmployee } from '@/lib/types/database.types'
+import { getBrowserClient } from "@/lib/supabase";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { CorporateEmployee } from "@/lib/types/database.types";
 
 export interface CreateEmployeeParams {
-  corporateId: string
-  name: string
-  email: string
-  designation?: string
+  corporateId: string;
+  name: string;
+  email: string;
+  designation?: string;
 }
 
 export interface UpdateEmployeeParams {
-  employeeId: string
-  name?: string
-  email?: string
-  designation?: string
+  employeeId: string;
+  name?: string;
+  email?: string;
+  designation?: string;
 }
 
-export async function createEmployee(params: CreateEmployeeParams, supabaseClient?: SupabaseClient) {
-  const supabase = supabaseClient || getBrowserClient()
+export async function createEmployee(
+  params: CreateEmployeeParams,
+  supabaseClient?: SupabaseClient,
+) {
+  const supabase = supabaseClient || getBrowserClient();
 
-  const { data: { user }, error: userError } = await supabase.auth.getUser()
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
 
   if (userError || !user) {
-    throw new Error('You must be logged in to create an employee record')
+    throw new Error("You must be logged in to create an employee record");
   }
 
   const { data, error } = await supabase
-    .from('corporate_employees')
+    .from("corporate_employees")
     .insert({
       corporate_id: params.corporateId,
       name: params.name,
@@ -34,109 +40,131 @@ export async function createEmployee(params: CreateEmployeeParams, supabaseClien
       designation: params.designation || null,
     })
     .select()
-    .single()
+    .single();
 
   if (error) {
-    throw error
+    throw error;
   }
 
-  return data
+  return data;
 }
 
-export async function getEmployeesByCorporate(corporateId: string, supabaseClient?: SupabaseClient): Promise<CorporateEmployee[]> {
-  const supabase = supabaseClient || getBrowserClient()
+export async function getEmployeesByCorporate(
+  corporateId: string,
+  supabaseClient?: SupabaseClient,
+): Promise<CorporateEmployee[]> {
+  const supabase = supabaseClient || getBrowserClient();
 
   const { data, error } = await supabase
-    .from('corporate_employees')
-    .select('*')
-    .eq('corporate_id', corporateId)
-    .order('joined_at', { ascending: false })
+    .from("corporate_employees")
+    .select("*")
+    .eq("corporate_id", corporateId)
+    .order("joined_at", { ascending: false });
 
   if (error) {
-    throw error
+    throw error;
   }
 
-  return data
+  return data;
 }
 
-export async function getEmployeeById(employeeId: string, supabaseClient?: SupabaseClient): Promise<CorporateEmployee | null> {
-  const supabase = supabaseClient || getBrowserClient()
+export async function getEmployeeById(
+  employeeId: string,
+  supabaseClient?: SupabaseClient,
+): Promise<CorporateEmployee | null> {
+  const supabase = supabaseClient || getBrowserClient();
 
   const { data, error } = await supabase
-    .from('corporate_employees')
-    .select('*')
-    .eq('id', employeeId)
-    .single()
+    .from("corporate_employees")
+    .select("*")
+    .eq("id", employeeId)
+    .single();
 
   if (error) {
-    if (error.code === 'PGRST116') {
-      return null
+    if (error.code === "PGRST116") {
+      return null;
     }
-    throw error
+    throw error;
   }
 
-  return data
+  return data;
 }
 
-export async function updateEmployee(params: UpdateEmployeeParams, supabaseClient?: SupabaseClient) {
-  const supabase = supabaseClient || getBrowserClient()
+export async function updateEmployee(
+  params: UpdateEmployeeParams,
+  supabaseClient?: SupabaseClient,
+) {
+  const supabase = supabaseClient || getBrowserClient();
 
-  const { data: { user }, error: userError } = await supabase.auth.getUser()
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
 
   if (userError || !user) {
-    throw new Error('You must be logged in to update an employee record')
+    throw new Error("You must be logged in to update an employee record");
   }
 
-  const updateData: Record<string, any> = {}
+  const updateData: Record<string, any> = {};
 
-  if (params.name) updateData.name = params.name
-  if (params.email) updateData.email = params.email
-  if (params.designation !== undefined) updateData.designation = params.designation
+  if (params.name) updateData.name = params.name;
+  if (params.email) updateData.email = params.email;
+  if (params.designation !== undefined)
+    updateData.designation = params.designation;
 
   const { data, error } = await supabase
-    .from('corporate_employees')
+    .from("corporate_employees")
     .update(updateData)
-    .eq('id', params.employeeId)
+    .eq("id", params.employeeId)
     .select()
-    .single()
+    .single();
 
   if (error) {
-    throw error
+    throw error;
   }
 
-  return data
+  return data;
 }
 
-export async function deleteEmployee(employeeId: string, supabaseClient?: SupabaseClient) {
-  const supabase = supabaseClient || getBrowserClient()
+export async function deleteEmployee(
+  employeeId: string,
+  supabaseClient?: SupabaseClient,
+) {
+  const supabase = supabaseClient || getBrowserClient();
 
-  const { data: { user }, error: userError } = await supabase.auth.getUser()
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
 
   if (userError || !user) {
-    throw new Error('You must be logged in to delete an employee record')
+    throw new Error("You must be logged in to delete an employee record");
   }
 
   const { error } = await supabase
-    .from('corporate_employees')
+    .from("corporate_employees")
     .delete()
-    .eq('id', employeeId)
+    .eq("id", employeeId);
 
   if (error) {
-    throw error
+    throw error;
   }
 }
 
-export async function getEmployeeCount(corporateId: string, supabaseClient?: SupabaseClient): Promise<number> {
-  const supabase = supabaseClient || getBrowserClient()
+export async function getEmployeeCount(
+  corporateId: string,
+  supabaseClient?: SupabaseClient,
+): Promise<number> {
+  const supabase = supabaseClient || getBrowserClient();
 
   const { data, error } = await supabase
-    .from('corporate_employees')
-    .select('id', { count: 'exact', head: true })
-    .eq('corporate_id', corporateId)
+    .from("corporate_employees")
+    .select("id", { count: "exact", head: true })
+    .eq("corporate_id", corporateId);
 
   if (error) {
-    throw error
+    throw error;
   }
 
-  return data ? (data as any).count || 0 : 0
+  return data ? (data as any).count || 0 : 0;
 }

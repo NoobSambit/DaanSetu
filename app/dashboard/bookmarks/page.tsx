@@ -1,20 +1,22 @@
-import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
-import { getUserBookmarks } from '@/lib/services/bookmarks'
-import Link from 'next/link'
+import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
+import { getUserBookmarks } from "@/lib/services/bookmarks";
+import Link from "next/link";
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic";
 
 export default async function BookmarksPage() {
-  const supabase = await createClient()
+  const supabase = await createClient();
 
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/sign-in')
+    redirect("/sign-in");
   }
 
-  const bookmarks = await getUserBookmarks(user.id)
+  const bookmarks = await getUserBookmarks(user.id);
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -31,7 +33,9 @@ export default async function BookmarksPage() {
         {bookmarks.length === 0 ? (
           <div className="bg-white rounded-lg shadow-sm p-12 text-center">
             <div className="text-6xl mb-4">🔖</div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">No Saved Posts</h3>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              No Saved Posts
+            </h3>
             <p className="text-gray-600 mb-6">
               Start bookmarking posts to save them for later!
             </p>
@@ -45,7 +49,10 @@ export default async function BookmarksPage() {
         ) : (
           <div className="space-y-4">
             {bookmarks.map((bookmark) => (
-              <div key={bookmark.id} className="bg-white rounded-lg shadow-sm p-6">
+              <div
+                key={bookmark.id}
+                className="bg-white rounded-lg shadow-sm p-6"
+              >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
                     <Link href={`/community/posts/${bookmark.post.id}`}>
@@ -63,7 +70,8 @@ export default async function BookmarksPage() {
                         {bookmark.post.category}
                       </span>
                       <span>
-                        Saved on {new Date(bookmark.created_at).toLocaleDateString()}
+                        Saved on{" "}
+                        {new Date(bookmark.created_at).toLocaleDateString()}
                       </span>
                     </div>
                   </div>
@@ -84,5 +92,5 @@ export default async function BookmarksPage() {
         )}
       </div>
     </div>
-  )
+  );
 }

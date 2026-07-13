@@ -3,77 +3,78 @@
  * Handles recurring donations, tax receipts, and gift cards
  */
 
-import type { SupabaseClient } from '@supabase/supabase-js'
-import { getBrowserClient } from '@/lib/supabase'
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { getBrowserClient } from "@/lib/supabase";
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
-export type DonationFrequency = 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly'
-export type RecurringStatus = 'active' | 'paused' | 'cancelled'
-export type GiftCardStatus = 'active' | 'redeemed' | 'expired'
+export type DonationFrequency =
+  "daily" | "weekly" | "monthly" | "quarterly" | "yearly";
+export type RecurringStatus = "active" | "paused" | "cancelled";
+export type GiftCardStatus = "active" | "redeemed" | "expired";
 
 export interface RecurringDonation {
-  id: string
-  user_id: string
-  ngo_id: string
-  campaign_id?: string
-  amount: number
-  frequency: DonationFrequency
-  cause: string
-  is_anonymous: boolean
-  status: RecurringStatus
-  next_donation_date: string
-  last_donation_date?: string
-  total_donations_made: number
-  created_at: string
-  updated_at: string
+  id: string;
+  user_id: string;
+  ngo_id: string;
+  campaign_id?: string;
+  amount: number;
+  frequency: DonationFrequency;
+  cause: string;
+  is_anonymous: boolean;
+  status: RecurringStatus;
+  next_donation_date: string;
+  last_donation_date?: string;
+  total_donations_made: number;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface TaxReceipt {
-  id: string
-  donation_id: string
-  user_id: string
-  ngo_id: string
-  receipt_number: string
-  financial_year: string
-  amount: number
-  tax_exemption_80g: boolean
-  pdf_url?: string
-  generated_at: string
+  id: string;
+  donation_id: string;
+  user_id: string;
+  ngo_id: string;
+  receipt_number: string;
+  financial_year: string;
+  amount: number;
+  tax_exemption_80g: boolean;
+  pdf_url?: string;
+  generated_at: string;
 }
 
 export interface DonationGiftCard {
-  id: string
-  code: string
-  amount: number
-  purchased_by?: string
-  recipient_email?: string
-  recipient_name?: string
-  message?: string
-  redeemed_by?: string
-  redeemed_at?: string
-  expires_at: string
-  status: GiftCardStatus
-  created_at: string
+  id: string;
+  code: string;
+  amount: number;
+  purchased_by?: string;
+  recipient_email?: string;
+  recipient_name?: string;
+  message?: string;
+  redeemed_by?: string;
+  redeemed_at?: string;
+  expires_at: string;
+  status: GiftCardStatus;
+  created_at: string;
 }
 
 export interface CreateRecurringDonationParams {
-  ngoId: string
-  campaignId?: string
-  amount: number
-  frequency: DonationFrequency
-  cause: string
-  isAnonymous?: boolean
+  ngoId: string;
+  campaignId?: string;
+  amount: number;
+  frequency: DonationFrequency;
+  cause: string;
+  isAnonymous?: boolean;
 }
 
 export interface CreateGiftCardParams {
-  amount: number
-  recipientEmail?: string
-  recipientName?: string
-  message?: string
-  expiryDays?: number
+  amount: number;
+  recipientEmail?: string;
+  recipientName?: string;
+  message?: string;
+  expiryDays?: number;
 }
 
 // ============================================================================
@@ -85,27 +86,29 @@ export interface CreateGiftCardParams {
  */
 export async function createRecurringDonation(
   params: CreateRecurringDonationParams,
-  supabaseClient?: SupabaseClient
+  supabaseClient?: SupabaseClient,
 ): Promise<RecurringDonation> {
-  const supabase = supabaseClient || getBrowserClient()
+  const supabase = supabaseClient || getBrowserClient();
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('You must be logged in')
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("You must be logged in");
 
   // Validate amount
   if (params.amount <= 0) {
-    throw new Error('Amount must be greater than 0')
+    throw new Error("Amount must be greater than 0");
   }
 
   if (params.amount < 10) {
-    throw new Error('Minimum recurring donation amount is ₹10')
+    throw new Error("Minimum recurring donation amount is ₹10");
   }
 
   // Calculate next donation date based on frequency
-  const nextDate = calculateNextDonationDate(params.frequency)
+  const nextDate = calculateNextDonationDate(params.frequency);
 
   const { data, error } = await supabase
-    .from('recurring_donations')
+    .from("recurring_donations")
     .insert({
       user_id: user.id,
       ngo_id: params.ngoId,
@@ -114,39 +117,43 @@ export async function createRecurringDonation(
       frequency: params.frequency,
       cause: params.cause,
       is_anonymous: params.isAnonymous || false,
-      status: 'active',
+      status: "active",
       next_donation_date: nextDate,
-      total_donations_made: 0
+      total_donations_made: 0,
     })
     .select()
-    .single()
+    .single();
 
-  if (error) throw error
-  return data
+  if (error) throw error;
+  return data;
 }
 
 /**
  * Get user's recurring donations
  */
 export async function getUserRecurringDonations(
-  supabaseClient?: SupabaseClient
+  supabaseClient?: SupabaseClient,
 ): Promise<RecurringDonation[]> {
-  const supabase = supabaseClient || getBrowserClient()
+  const supabase = supabaseClient || getBrowserClient();
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Unauthorized')
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
 
   const { data, error } = await supabase
-    .from('recurring_donations')
-    .select(`
+    .from("recurring_donations")
+    .select(
+      `
       *,
       ngo:ngos(id, name, category)
-    `)
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
+    `,
+    )
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false });
 
-  if (error) throw error
-  return data || []
+  if (error) throw error;
+  return data || [];
 }
 
 /**
@@ -154,23 +161,25 @@ export async function getUserRecurringDonations(
  */
 export async function pauseRecurringDonation(
   recurringId: string,
-  supabaseClient?: SupabaseClient
+  supabaseClient?: SupabaseClient,
 ) {
-  const supabase = supabaseClient || getBrowserClient()
+  const supabase = supabaseClient || getBrowserClient();
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Unauthorized')
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
 
   const { data, error } = await supabase
-    .from('recurring_donations')
-    .update({ status: 'paused' })
-    .eq('id', recurringId)
-    .eq('user_id', user.id)
+    .from("recurring_donations")
+    .update({ status: "paused" })
+    .eq("id", recurringId)
+    .eq("user_id", user.id)
     .select()
-    .single()
+    .single();
 
-  if (error) throw error
-  return data
+  if (error) throw error;
+  return data;
 }
 
 /**
@@ -178,37 +187,39 @@ export async function pauseRecurringDonation(
  */
 export async function resumeRecurringDonation(
   recurringId: string,
-  supabaseClient?: SupabaseClient
+  supabaseClient?: SupabaseClient,
 ) {
-  const supabase = supabaseClient || getBrowserClient()
+  const supabase = supabaseClient || getBrowserClient();
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Unauthorized')
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
 
   // Recalculate next donation date
   const { data: recurring } = await supabase
-    .from('recurring_donations')
-    .select('frequency')
-    .eq('id', recurringId)
-    .single()
+    .from("recurring_donations")
+    .select("frequency")
+    .eq("id", recurringId)
+    .single();
 
-  if (!recurring) throw new Error('Recurring donation not found')
+  if (!recurring) throw new Error("Recurring donation not found");
 
-  const nextDate = calculateNextDonationDate(recurring.frequency)
+  const nextDate = calculateNextDonationDate(recurring.frequency);
 
   const { data, error } = await supabase
-    .from('recurring_donations')
+    .from("recurring_donations")
     .update({
-      status: 'active',
-      next_donation_date: nextDate
+      status: "active",
+      next_donation_date: nextDate,
     })
-    .eq('id', recurringId)
-    .eq('user_id', user.id)
+    .eq("id", recurringId)
+    .eq("user_id", user.id)
     .select()
-    .single()
+    .single();
 
-  if (error) throw error
-  return data
+  if (error) throw error;
+  return data;
 }
 
 /**
@@ -216,23 +227,25 @@ export async function resumeRecurringDonation(
  */
 export async function cancelRecurringDonation(
   recurringId: string,
-  supabaseClient?: SupabaseClient
+  supabaseClient?: SupabaseClient,
 ) {
-  const supabase = supabaseClient || getBrowserClient()
+  const supabase = supabaseClient || getBrowserClient();
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Unauthorized')
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
 
   const { data, error } = await supabase
-    .from('recurring_donations')
-    .update({ status: 'cancelled' })
-    .eq('id', recurringId)
-    .eq('user_id', user.id)
+    .from("recurring_donations")
+    .update({ status: "cancelled" })
+    .eq("id", recurringId)
+    .eq("user_id", user.id)
     .select()
-    .single()
+    .single();
 
-  if (error) throw error
-  return data
+  if (error) throw error;
+  return data;
 }
 
 /**
@@ -241,47 +254,49 @@ export async function cancelRecurringDonation(
 export async function updateRecurringDonationAmount(
   recurringId: string,
   newAmount: number,
-  supabaseClient?: SupabaseClient
+  supabaseClient?: SupabaseClient,
 ) {
-  const supabase = supabaseClient || getBrowserClient()
+  const supabase = supabaseClient || getBrowserClient();
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Unauthorized')
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
 
   if (newAmount < 10) {
-    throw new Error('Minimum amount is ₹10')
+    throw new Error("Minimum amount is ₹10");
   }
 
   const { data, error } = await supabase
-    .from('recurring_donations')
+    .from("recurring_donations")
     .update({ amount: newAmount })
-    .eq('id', recurringId)
-    .eq('user_id', user.id)
+    .eq("id", recurringId)
+    .eq("user_id", user.id)
     .select()
-    .single()
+    .single();
 
-  if (error) throw error
-  return data
+  if (error) throw error;
+  return data;
 }
 
 /**
  * Get recurring donations due for processing (System function)
  */
 export async function getDueRecurringDonations(
-  supabaseClient?: SupabaseClient
+  supabaseClient?: SupabaseClient,
 ): Promise<RecurringDonation[]> {
-  const supabase = supabaseClient || getBrowserClient()
+  const supabase = supabaseClient || getBrowserClient();
 
-  const today = new Date().toISOString().split('T')[0]
+  const today = new Date().toISOString().split("T")[0];
 
   const { data, error } = await supabase
-    .from('recurring_donations')
-    .select('*')
-    .eq('status', 'active')
-    .lte('next_donation_date', today)
+    .from("recurring_donations")
+    .select("*")
+    .eq("status", "active")
+    .lte("next_donation_date", today);
 
-  if (error) throw error
-  return data || []
+  if (error) throw error;
+  return data || [];
 }
 
 /**
@@ -289,22 +304,22 @@ export async function getDueRecurringDonations(
  */
 export async function processRecurringDonation(
   recurringId: string,
-  supabaseClient?: SupabaseClient
+  supabaseClient?: SupabaseClient,
 ) {
-  const supabase = supabaseClient || getBrowserClient()
+  const supabase = supabaseClient || getBrowserClient();
 
   // Get recurring donation details
   const { data: recurring } = await supabase
-    .from('recurring_donations')
-    .select('*')
-    .eq('id', recurringId)
-    .single()
+    .from("recurring_donations")
+    .select("*")
+    .eq("id", recurringId)
+    .single();
 
-  if (!recurring) throw new Error('Recurring donation not found')
+  if (!recurring) throw new Error("Recurring donation not found");
 
   // Create actual donation
   const { data: donation, error: donationError } = await supabase
-    .from('donations')
+    .from("donations")
     .insert({
       user_id: recurring.user_id,
       ngo_id: recurring.ngo_id,
@@ -312,38 +327,38 @@ export async function processRecurringDonation(
       amount: recurring.amount,
       cause: recurring.cause,
       is_anonymous: recurring.is_anonymous,
-      payment_status: 'completed',
+      payment_status: "completed",
       is_recurring: true,
-      recurring_donation_id: recurring.id
+      recurring_donation_id: recurring.id,
     })
     .select()
-    .single()
+    .single();
 
-  if (donationError) throw donationError
+  if (donationError) throw donationError;
 
   // Update recurring donation
-  const nextDate = calculateNextDonationDate(recurring.frequency)
+  const nextDate = calculateNextDonationDate(recurring.frequency);
 
   const { error: updateError } = await supabase
-    .from('recurring_donations')
+    .from("recurring_donations")
     .update({
-      last_donation_date: new Date().toISOString().split('T')[0],
+      last_donation_date: new Date().toISOString().split("T")[0],
       next_donation_date: nextDate,
-      total_donations_made: recurring.total_donations_made + 1
+      total_donations_made: recurring.total_donations_made + 1,
     })
-    .eq('id', recurringId)
+    .eq("id", recurringId);
 
-  if (updateError) throw updateError
+  if (updateError) throw updateError;
 
   // Update campaign if applicable
   if (recurring.campaign_id) {
-    await supabase.rpc('increment_campaign_amount', {
+    await supabase.rpc("increment_campaign_amount", {
       campaign_id: recurring.campaign_id,
-      amount_to_add: recurring.amount
-    })
+      amount_to_add: recurring.amount,
+    });
   }
 
-  return donation
+  return donation;
 }
 
 // ============================================================================
@@ -355,55 +370,57 @@ export async function processRecurringDonation(
  */
 export async function generateTaxReceipt(
   donationId: string,
-  supabaseClient?: SupabaseClient
+  supabaseClient?: SupabaseClient,
 ): Promise<TaxReceipt> {
-  const supabase = supabaseClient || getBrowserClient()
+  const supabase = supabaseClient || getBrowserClient();
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Unauthorized')
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
 
   // Get donation details
   const { data: donation } = await supabase
-    .from('donations')
-    .select('*')
-    .eq('id', donationId)
-    .eq('user_id', user.id)
-    .single()
+    .from("donations")
+    .select("*")
+    .eq("id", donationId)
+    .eq("user_id", user.id)
+    .single();
 
-  if (!donation) throw new Error('Donation not found')
+  if (!donation) throw new Error("Donation not found");
 
   // Check if receipt already exists
   const { data: existing } = await supabase
-    .from('tax_receipts')
-    .select('id')
-    .eq('donation_id', donationId)
-    .single()
+    .from("tax_receipts")
+    .select("id")
+    .eq("donation_id", donationId)
+    .single();
 
   if (existing) {
-    throw new Error('Tax receipt already generated for this donation')
+    throw new Error("Tax receipt already generated for this donation");
   }
 
   // Determine financial year
-  const donationDate = new Date(donation.created_at)
-  const financialYear = getFinancialYear(donationDate)
+  const donationDate = new Date(donation.created_at);
+  const financialYear = getFinancialYear(donationDate);
 
   // Create tax receipt
   const { data, error } = await supabase
-    .from('tax_receipts')
+    .from("tax_receipts")
     .insert({
       donation_id: donationId,
       user_id: user.id,
       ngo_id: donation.ngo_id,
       financial_year: financialYear,
       amount: donation.amount,
-      tax_exemption_80g: true
+      tax_exemption_80g: true,
     })
     .select()
-    .single()
+    .single();
 
-  if (error) throw error
+  if (error) throw error;
 
-  return data
+  return data;
 }
 
 /**
@@ -411,30 +428,34 @@ export async function generateTaxReceipt(
  */
 export async function getUserTaxReceipts(
   financialYear?: string,
-  supabaseClient?: SupabaseClient
+  supabaseClient?: SupabaseClient,
 ): Promise<TaxReceipt[]> {
-  const supabase = supabaseClient || getBrowserClient()
+  const supabase = supabaseClient || getBrowserClient();
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Unauthorized')
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
 
   let query = supabase
-    .from('tax_receipts')
-    .select(`
+    .from("tax_receipts")
+    .select(
+      `
       *,
       ngo:ngos(id, name)
-    `)
-    .eq('user_id', user.id)
-    .order('generated_at', { ascending: false })
+    `,
+    )
+    .eq("user_id", user.id)
+    .order("generated_at", { ascending: false });
 
   if (financialYear) {
-    query = query.eq('financial_year', financialYear)
+    query = query.eq("financial_year", financialYear);
   }
 
-  const { data, error } = await query
+  const { data, error } = await query;
 
-  if (error) throw error
-  return data || []
+  if (error) throw error;
+  return data || [];
 }
 
 /**
@@ -442,24 +463,27 @@ export async function getUserTaxReceipts(
  */
 export async function getTaxDeductibleAmount(
   financialYear: string,
-  supabaseClient?: SupabaseClient
+  supabaseClient?: SupabaseClient,
 ): Promise<number> {
-  const supabase = supabaseClient || getBrowserClient()
+  const supabase = supabaseClient || getBrowserClient();
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Unauthorized')
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
 
   const { data, error } = await supabase
-    .from('tax_receipts')
-    .select('amount')
-    .eq('user_id', user.id)
-    .eq('financial_year', financialYear)
-    .eq('tax_exemption_80g', true)
+    .from("tax_receipts")
+    .select("amount")
+    .eq("user_id", user.id)
+    .eq("financial_year", financialYear)
+    .eq("tax_exemption_80g", true);
 
-  if (error) throw error
+  if (error) throw error;
 
-  const total = data?.reduce((sum, receipt) => sum + Number(receipt.amount), 0) || 0
-  return total
+  const total =
+    data?.reduce((sum, receipt) => sum + Number(receipt.amount), 0) || 0;
+  return total;
 }
 
 // ============================================================================
@@ -471,27 +495,29 @@ export async function getTaxDeductibleAmount(
  */
 export async function createDonationGiftCard(
   params: CreateGiftCardParams,
-  supabaseClient?: SupabaseClient
+  supabaseClient?: SupabaseClient,
 ): Promise<DonationGiftCard> {
-  const supabase = supabaseClient || getBrowserClient()
+  const supabase = supabaseClient || getBrowserClient();
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('You must be logged in')
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("You must be logged in");
 
   if (params.amount < 10) {
-    throw new Error('Minimum gift card amount is ₹10')
+    throw new Error("Minimum gift card amount is ₹10");
   }
 
   // Generate unique code
-  const code = generateGiftCardCode()
+  const code = generateGiftCardCode();
 
   // Calculate expiry date (default 1 year)
-  const expiryDays = params.expiryDays || 365
-  const expiresAt = new Date()
-  expiresAt.setDate(expiresAt.getDate() + expiryDays)
+  const expiryDays = params.expiryDays || 365;
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + expiryDays);
 
   const { data, error } = await supabase
-    .from('donation_gift_cards')
+    .from("donation_gift_cards")
     .insert({
       code,
       amount: params.amount,
@@ -500,14 +526,14 @@ export async function createDonationGiftCard(
       recipient_name: params.recipientName,
       message: params.message,
       expires_at: expiresAt.toISOString(),
-      status: 'active'
+      status: "active",
     })
     .select()
-    .single()
+    .single();
 
-  if (error) throw error
+  if (error) throw error;
 
-  return data
+  return data;
 }
 
 /**
@@ -515,39 +541,39 @@ export async function createDonationGiftCard(
  */
 export async function validateGiftCard(
   code: string,
-  supabaseClient?: SupabaseClient
+  supabaseClient?: SupabaseClient,
 ): Promise<{ valid: boolean; giftCard?: DonationGiftCard; reason?: string }> {
-  const supabase = supabaseClient || getBrowserClient()
+  const supabase = supabaseClient || getBrowserClient();
 
   const { data: giftCard } = await supabase
-    .from('donation_gift_cards')
-    .select('*')
-    .eq('code', code.toUpperCase())
-    .single()
+    .from("donation_gift_cards")
+    .select("*")
+    .eq("code", code.toUpperCase())
+    .single();
 
   if (!giftCard) {
-    return { valid: false, reason: 'Invalid gift card code' }
+    return { valid: false, reason: "Invalid gift card code" };
   }
 
-  if (giftCard.status === 'redeemed') {
-    return { valid: false, reason: 'Gift card already redeemed' }
+  if (giftCard.status === "redeemed") {
+    return { valid: false, reason: "Gift card already redeemed" };
   }
 
-  if (giftCard.status === 'expired') {
-    return { valid: false, reason: 'Gift card has expired' }
+  if (giftCard.status === "expired") {
+    return { valid: false, reason: "Gift card has expired" };
   }
 
   if (new Date(giftCard.expires_at) < new Date()) {
     // Update status to expired
     await supabase
-      .from('donation_gift_cards')
-      .update({ status: 'expired' })
-      .eq('id', giftCard.id)
+      .from("donation_gift_cards")
+      .update({ status: "expired" })
+      .eq("id", giftCard.id);
 
-    return { valid: false, reason: 'Gift card has expired' }
+    return { valid: false, reason: "Gift card has expired" };
   }
 
-  return { valid: true, giftCard }
+  return { valid: true, giftCard };
 }
 
 /**
@@ -557,81 +583,85 @@ export async function redeemGiftCard(
   code: string,
   ngoId: string,
   campaignId?: string,
-  supabaseClient?: SupabaseClient
+  supabaseClient?: SupabaseClient,
 ) {
-  const supabase = supabaseClient || getBrowserClient()
+  const supabase = supabaseClient || getBrowserClient();
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('You must be logged in')
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("You must be logged in");
 
   // Validate gift card
-  const validation = await validateGiftCard(code, supabase)
+  const validation = await validateGiftCard(code, supabase);
   if (!validation.valid || !validation.giftCard) {
-    throw new Error(validation.reason || 'Invalid gift card')
+    throw new Error(validation.reason || "Invalid gift card");
   }
 
-  const giftCard = validation.giftCard
+  const giftCard = validation.giftCard;
 
   // Create donation
   const { data: donation, error: donationError } = await supabase
-    .from('donations')
+    .from("donations")
     .insert({
       user_id: user.id,
       ngo_id: ngoId,
       campaign_id: campaignId,
       amount: giftCard.amount,
-      cause: 'general',
+      cause: "general",
       is_anonymous: false,
-      payment_status: 'completed',
-      payment_method: 'gift_card'
+      payment_status: "completed",
+      payment_method: "gift_card",
     })
     .select()
-    .single()
+    .single();
 
-  if (donationError) throw donationError
+  if (donationError) throw donationError;
 
   // Mark gift card as redeemed
   const { error: updateError } = await supabase
-    .from('donation_gift_cards')
+    .from("donation_gift_cards")
     .update({
-      status: 'redeemed',
+      status: "redeemed",
       redeemed_by: user.id,
-      redeemed_at: new Date().toISOString()
+      redeemed_at: new Date().toISOString(),
     })
-    .eq('id', giftCard.id)
+    .eq("id", giftCard.id);
 
-  if (updateError) throw updateError
+  if (updateError) throw updateError;
 
   // Update campaign if applicable
   if (campaignId) {
-    await supabase.rpc('increment_campaign_amount', {
+    await supabase.rpc("increment_campaign_amount", {
       campaign_id: campaignId,
-      amount_to_add: giftCard.amount
-    })
+      amount_to_add: giftCard.amount,
+    });
   }
 
-  return donation
+  return donation;
 }
 
 /**
  * Get user's purchased gift cards
  */
 export async function getUserGiftCards(
-  supabaseClient?: SupabaseClient
+  supabaseClient?: SupabaseClient,
 ): Promise<DonationGiftCard[]> {
-  const supabase = supabaseClient || getBrowserClient()
+  const supabase = supabaseClient || getBrowserClient();
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Unauthorized')
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
 
   const { data, error } = await supabase
-    .from('donation_gift_cards')
-    .select('*')
-    .eq('purchased_by', user.id)
-    .order('created_at', { ascending: false })
+    .from("donation_gift_cards")
+    .select("*")
+    .eq("purchased_by", user.id)
+    .order("created_at", { ascending: false });
 
-  if (error) throw error
-  return data || []
+  if (error) throw error;
+  return data || [];
 }
 
 // ============================================================================
@@ -642,40 +672,40 @@ export async function getUserGiftCards(
  * Calculate next donation date based on frequency
  */
 function calculateNextDonationDate(frequency: DonationFrequency): string {
-  const date = new Date()
+  const date = new Date();
 
   switch (frequency) {
-    case 'daily':
-      date.setDate(date.getDate() + 1)
-      break
-    case 'weekly':
-      date.setDate(date.getDate() + 7)
-      break
-    case 'monthly':
-      date.setMonth(date.getMonth() + 1)
-      break
-    case 'quarterly':
-      date.setMonth(date.getMonth() + 3)
-      break
-    case 'yearly':
-      date.setFullYear(date.getFullYear() + 1)
-      break
+    case "daily":
+      date.setDate(date.getDate() + 1);
+      break;
+    case "weekly":
+      date.setDate(date.getDate() + 7);
+      break;
+    case "monthly":
+      date.setMonth(date.getMonth() + 1);
+      break;
+    case "quarterly":
+      date.setMonth(date.getMonth() + 3);
+      break;
+    case "yearly":
+      date.setFullYear(date.getFullYear() + 1);
+      break;
   }
 
-  return date.toISOString().split('T')[0]
+  return date.toISOString().split("T")[0];
 }
 
 /**
  * Get financial year for a date (Apr-Mar in India)
  */
 function getFinancialYear(date: Date): string {
-  const year = date.getFullYear()
-  const month = date.getMonth() + 1 // 1-12
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1; // 1-12
 
   if (month >= 4) {
-    return `${year}-${year + 1}`
+    return `${year}-${year + 1}`;
   } else {
-    return `${year - 1}-${year}`
+    return `${year - 1}-${year}`;
   }
 }
 
@@ -683,17 +713,17 @@ function getFinancialYear(date: Date): string {
  * Generate unique gift card code
  */
 function generateGiftCardCode(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // Excluding ambiguous characters
-  let code = ''
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // Excluding ambiguous characters
+  let code = "";
 
   for (let i = 0; i < 4; i++) {
     for (let j = 0; j < 4; j++) {
-      code += chars.charAt(Math.floor(Math.random() * chars.length))
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
     }
-    if (i < 3) code += '-'
+    if (i < 3) code += "-";
   }
 
-  return code
+  return code;
 }
 
 /**
@@ -701,12 +731,12 @@ function generateGiftCardCode(): string {
  */
 export function getFrequencyText(frequency: DonationFrequency): string {
   const texts: Record<DonationFrequency, string> = {
-    daily: 'Every day',
-    weekly: 'Every week',
-    monthly: 'Every month',
-    quarterly: 'Every 3 months',
-    yearly: 'Every year'
-  }
+    daily: "Every day",
+    weekly: "Every week",
+    monthly: "Every month",
+    quarterly: "Every 3 months",
+    yearly: "Every year",
+  };
 
-  return texts[frequency]
+  return texts[frequency];
 }

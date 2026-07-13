@@ -1,16 +1,16 @@
 interface LeaderboardEntry {
-  rank: number
-  name: string
-  subtitle: string
-  badge: string | null
+  rank: number;
+  name: string;
+  subtitle: string;
+  badge: string | null;
 }
 
 interface LeaderboardSectionProps {
-  title: string
-  description: string
-  icon: string
-  entries: LeaderboardEntry[]
-  emptyMessage: string
+  title: string;
+  description: string;
+  icon: string;
+  entries: LeaderboardEntry[];
+  emptyMessage: string;
 }
 
 export default function LeaderboardSection({
@@ -18,14 +18,14 @@ export default function LeaderboardSection({
   description,
   icon,
   entries,
-  emptyMessage
+  emptyMessage,
 }: LeaderboardSectionProps) {
   const getMedalEmoji = (rank: number) => {
-    if (rank === 1) return '🥇'
-    if (rank === 2) return '🥈'
-    if (rank === 3) return '🥉'
-    return null
-  }
+    if (rank === 1) return "🥇";
+    if (rank === 2) return "🥈";
+    if (rank === 3) return "🥉";
+    return null;
+  };
 
   return (
     <div className="bg-white rounded-lg shadow-sm overflow-hidden">
@@ -51,7 +51,7 @@ export default function LeaderboardSection({
             <div
               key={entry.rank}
               className={`px-6 py-4 flex items-center space-x-4 ${
-                entry.rank <= 3 ? 'bg-yellow-50' : 'hover:bg-gray-50'
+                entry.rank <= 3 ? "bg-yellow-50" : "hover:bg-gray-50"
               } transition`}
             >
               {/* Rank/Medal */}
@@ -59,13 +59,17 @@ export default function LeaderboardSection({
                 {getMedalEmoji(entry.rank) ? (
                   <span className="text-2xl">{getMedalEmoji(entry.rank)}</span>
                 ) : (
-                  <span className="text-lg font-bold text-gray-400">#{entry.rank}</span>
+                  <span className="text-lg font-bold text-gray-400">
+                    #{entry.rank}
+                  </span>
                 )}
               </div>
 
               {/* Info */}
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-gray-900 truncate">{entry.name}</p>
+                <p className="font-semibold text-gray-900 truncate">
+                  {entry.name}
+                </p>
                 <p className="text-sm text-gray-600">{entry.subtitle}</p>
               </div>
 
@@ -82,5 +86,5 @@ export default function LeaderboardSection({
         )}
       </div>
     </div>
-  )
+  );
 }

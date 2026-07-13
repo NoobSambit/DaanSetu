@@ -3,27 +3,42 @@ import Image from "next/image";
 export default function GlobalLoading() {
   return (
     <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white/80 backdrop-blur-3xl overflow-hidden">
-      
       {/* Background ambient glows */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '4s' }} />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-indigo-500/10 rounded-full blur-[80px] animate-pulse" style={{ animationDuration: '3s', animationDelay: '1s' }} />
+      <div
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[100px] animate-pulse"
+        style={{ animationDuration: "4s" }}
+      />
+      <div
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-indigo-500/10 rounded-full blur-[80px] animate-pulse"
+        style={{ animationDuration: "3s", animationDelay: "1s" }}
+      />
 
       <div className="relative flex flex-col items-center">
-        
         {/* Animated outer ring */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[220px] h-[220px]">
-          <svg className="w-full h-full animate-[spin_8s_linear_infinite]" viewBox="0 0 100 100">
+          <svg
+            className="w-full h-full animate-[spin_8s_linear_infinite]"
+            viewBox="0 0 100 100"
+          >
             <defs>
-              <linearGradient id="premium-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <linearGradient
+                id="premium-gradient"
+                x1="0%"
+                y1="0%"
+                x2="100%"
+                y2="100%"
+              >
                 <stop offset="0%" stopColor="#2563EB" stopOpacity="0" />
                 <stop offset="50%" stopColor="#4F46E5" stopOpacity="0.5" />
                 <stop offset="100%" stopColor="#7C3AED" stopOpacity="1" />
               </linearGradient>
             </defs>
-            <circle 
-              cx="50" cy="50" r="48" 
-              fill="none" 
-              stroke="url(#premium-gradient)" 
+            <circle
+              cx="50"
+              cy="50"
+              r="48"
+              fill="none"
+              stroke="url(#premium-gradient)"
               strokeWidth="1.5"
               strokeDasharray="150 150"
               strokeLinecap="round"
@@ -33,11 +48,16 @@ export default function GlobalLoading() {
 
         {/* Second reverse animated ring */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[240px] h-[240px]">
-          <svg className="w-full h-full animate-[spin_12s_linear_infinite_reverse] opacity-50" viewBox="0 0 100 100">
-            <circle 
-              cx="50" cy="50" r="48" 
-              fill="none" 
-              stroke="#60A5FA" 
+          <svg
+            className="w-full h-full animate-[spin_12s_linear_infinite_reverse] opacity-50"
+            viewBox="0 0 100 100"
+          >
+            <circle
+              cx="50"
+              cy="50"
+              r="48"
+              fill="none"
+              stroke="#60A5FA"
               strokeWidth="0.5"
               strokeDasharray="50 100"
               strokeLinecap="round"
@@ -79,7 +99,6 @@ export default function GlobalLoading() {
             <div className="w-1.5 h-1.5 rounded-full bg-purple-600 animate-[pulse_1s_infinite_400ms]"></div>
           </div>
         </div>
-
       </div>
     </div>
   );

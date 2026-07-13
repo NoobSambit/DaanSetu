@@ -1,36 +1,36 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import { getCampaignDonors } from '@/lib/services/campaigns'
+import { useState, useEffect } from "react";
+import { getCampaignDonors } from "@/lib/services/campaigns";
 
 interface Donor {
-  id: string
-  amount: number
-  is_anonymous: boolean
-  created_at: string
+  id: string;
+  amount: number;
+  is_anonymous: boolean;
+  created_at: string;
   users: {
-    name: string
-  } | null
+    name: string;
+  } | null;
 }
 
 export default function CampaignDonors({ campaignId }: { campaignId: string }) {
-  const [donors, setDonors] = useState<Donor[]>([])
-  const [loading, setLoading] = useState(true)
+  const [donors, setDonors] = useState<Donor[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadDonors()
-  }, [campaignId])
+    loadDonors();
+  }, [campaignId]);
 
   const loadDonors = async () => {
     try {
-      const data = await getCampaignDonors(campaignId)
-      setDonors(data as any)
+      const data = await getCampaignDonors(campaignId);
+      setDonors(data as any);
     } catch (error) {
-      console.error('Failed to load donors:', error)
+      console.error("Failed to load donors:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="card p-6">
@@ -40,9 +40,25 @@ export default function CampaignDonors({ campaignId }: { campaignId: string }) {
 
       {loading ? (
         <div className="text-center py-12">
-          <svg className="animate-spin h-8 w-8 text-blue-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          <svg
+            className="animate-spin h-8 w-8 text-blue-600 mx-auto"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            ></circle>
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            ></path>
           </svg>
         </div>
       ) : donors.length === 0 ? (
@@ -55,31 +71,36 @@ export default function CampaignDonors({ campaignId }: { campaignId: string }) {
       ) : (
         <div className="space-y-3 max-h-96 overflow-y-auto pr-2 scrollbar-thin">
           {donors.map((donor) => (
-            <div key={donor.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-b-0">
+            <div
+              key={donor.id}
+              className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-b-0"
+            >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center flex-shrink-0">
                   <span className="text-lg">👤</span>
                 </div>
                 <div>
                   <p className="font-semibold text-slate-900">
-                    {donor.is_anonymous ? 'Anonymous' : donor.users?.name || 'Anonymous'}
+                    {donor.is_anonymous
+                      ? "Anonymous"
+                      : donor.users?.name || "Anonymous"}
                   </p>
                   <p className="text-xs text-slate-500">
-                    {new Date(donor.created_at).toLocaleDateString('en-IN', {
-                      day: 'numeric',
-                      month: 'short',
-                      year: 'numeric',
+                    {new Date(donor.created_at).toLocaleDateString("en-IN", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
                     })}
                   </p>
                 </div>
               </div>
               <p className="text-lg font-bold text-green-600">
-                ₹{donor.amount.toLocaleString('en-IN')}
+                ₹{donor.amount.toLocaleString("en-IN")}
               </p>
             </div>
           ))}
         </div>
       )}
     </div>
-  )
+  );
 }

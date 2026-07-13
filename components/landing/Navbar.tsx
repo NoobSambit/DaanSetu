@@ -4,15 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import {
-  Search,
-  Heart,
-  Users,
-  Globe,
-  BarChart3,
-  Menu,
-  X,
-} from "lucide-react";
+import { Search, Heart, Users, Globe, BarChart3, Menu, X } from "lucide-react";
 
 const navLinks = [
   { label: "Discover NGOs", href: "#discover", icon: Search },
@@ -43,7 +35,13 @@ export default function Navbar() {
         {/* Left: Logo */}
         <Link href="/" className="flex items-center gap-2.5 shrink-0">
           <div className="w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center shrink-0 relative">
-            <Image src="/logo.png" alt="DaanSetu Logo" fill sizes="36px" className="object-cover scale-[1.5]" />
+            <Image
+              src="/logo.png"
+              alt="DaanSetu Logo"
+              fill
+              sizes="36px"
+              className="object-cover scale-[1.5]"
+            />
           </div>
           <div>
             <span className="text-lg font-bold text-heading block leading-tight">
@@ -89,7 +87,11 @@ export default function Navbar() {
           className="lg:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-lg"
           onClick={() => setMobileOpen(!mobileOpen)}
         >
-          {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          {mobileOpen ? (
+            <X className="w-5 h-5" />
+          ) : (
+            <Menu className="w-5 h-5" />
+          )}
         </button>
       </div>
 
@@ -113,10 +115,16 @@ export default function Navbar() {
               </Link>
             ))}
             <div className="pt-2 border-t border-slate-100 flex flex-col gap-2">
-              <Link href="/sign-in" className="px-3 py-2 text-sm font-medium text-center text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50">
+              <Link
+                href="/sign-in"
+                className="px-3 py-2 text-sm font-medium text-center text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50"
+              >
                 Sign In
               </Link>
-              <Link href="/sign-up" className="px-3 py-2 text-sm font-medium text-center text-white bg-primary-600 rounded-lg hover:bg-primary-700">
+              <Link
+                href="/sign-up"
+                className="px-3 py-2 text-sm font-medium text-center text-white bg-primary-600 rounded-lg hover:bg-primary-700"
+              >
                 Join DaanSetu
               </Link>
             </div>

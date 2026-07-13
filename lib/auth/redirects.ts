@@ -1,38 +1,40 @@
-import type { UserRole } from './types'
+import type { UserRole } from "./types";
 
 export function getSafeRedirectPath(
   value: string | null | undefined,
-  fallback = '/dashboard'
+  fallback = "/dashboard",
 ): string {
-  if (!value || !value.startsWith('/') || value.startsWith('//')) {
-    return fallback
+  if (!value || !value.startsWith("/") || value.startsWith("//")) {
+    return fallback;
   }
 
-  if (value.includes('\\') || /[\u0000-\u001F\u007F]/.test(value)) {
-    return fallback
+  if (value.includes("\\") || /[\u0000-\u001F\u007F]/.test(value)) {
+    return fallback;
   }
 
   try {
-    const parsed = new URL(value, 'https://daansetu.local')
-    if (parsed.origin !== 'https://daansetu.local') {
-      return fallback
+    const parsed = new URL(value, "https://daansetu.local");
+    if (parsed.origin !== "https://daansetu.local") {
+      return fallback;
     }
 
-    return `${parsed.pathname}${parsed.search}${parsed.hash}`
+    return `${parsed.pathname}${parsed.search}${parsed.hash}`;
   } catch {
-    return fallback
+    return fallback;
   }
 }
 
-export function getPostAuthDestination(role: UserRole | null | undefined): string {
+export function getPostAuthDestination(
+  role: UserRole | null | undefined,
+): string {
   switch (role) {
-    case 'admin':
-      return '/admin/analytics'
-    case 'corporate':
-      return '/corporate/profile'
-    case 'ngo':
-      return '/ngo/profile'
+    case "admin":
+      return "/admin/analytics";
+    case "corporate":
+      return "/corporate/profile";
+    case "ngo":
+      return "/ngo/profile";
     default:
-      return '/dashboard'
+      return "/dashboard";
   }
 }

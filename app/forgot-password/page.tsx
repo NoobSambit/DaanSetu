@@ -1,11 +1,11 @@
-import type { Metadata } from 'next'
+import type { Metadata } from "next";
 
-import AuthShell from '@/components/auth/AuthShell'
-import ForgotPasswordForm from '@/components/auth/ForgotPasswordForm'
+import AuthShell from "@/components/auth/AuthShell";
+import ForgotPasswordForm from "@/components/auth/ForgotPasswordForm";
 
 export const metadata: Metadata = {
-  title: 'Recover password | DaanSetu',
-}
+  title: "Recover password | DaanSetu",
+};
 
 export default function ForgotPasswordPage() {
   return (
@@ -15,5 +15,5 @@ export default function ForgotPasswordPage() {
     >
       <ForgotPasswordForm />
     </AuthShell>
-  )
+  );
 }

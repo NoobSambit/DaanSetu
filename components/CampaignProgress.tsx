@@ -1,8 +1,8 @@
 interface CampaignProgressProps {
-  currentAmount: number
-  goalAmount: number
-  progress: number
-  daysRemaining: number
+  currentAmount: number;
+  goalAmount: number;
+  progress: number;
+  daysRemaining: number;
 }
 
 export default function CampaignProgress({
@@ -17,12 +17,14 @@ export default function CampaignProgress({
       <div className="flex justify-between items-baseline mb-3">
         <div>
           <span className="text-3xl md:text-4xl font-bold text-slate-900">
-            ₹{currentAmount.toLocaleString('en-IN')}
+            ₹{currentAmount.toLocaleString("en-IN")}
           </span>
-          <span className="text-slate-600 ml-2 text-sm font-medium">raised</span>
+          <span className="text-slate-600 ml-2 text-sm font-medium">
+            raised
+          </span>
         </div>
         <span className="text-base text-slate-600 font-medium">
-          of ₹{goalAmount.toLocaleString('en-IN')}
+          of ₹{goalAmount.toLocaleString("en-IN")}
         </span>
       </div>
 
@@ -37,18 +39,24 @@ export default function CampaignProgress({
       {/* Stats */}
       <div className="grid grid-cols-2 gap-6 text-center">
         <div className="p-3 rounded-lg bg-blue-50 border border-blue-100">
-          <p className="text-3xl font-bold text-blue-600">{progress.toFixed(0)}%</p>
+          <p className="text-3xl font-bold text-blue-600">
+            {progress.toFixed(0)}%
+          </p>
           <p className="text-sm text-slate-600 font-medium mt-1">Funded</p>
         </div>
-        <div className={`p-3 rounded-lg ${daysRemaining > 0 ? 'bg-green-50 border border-green-100' : 'bg-slate-100 border border-slate-200'}`}>
-          <p className={`text-3xl font-bold ${daysRemaining > 0 ? 'text-green-600' : 'text-slate-600'}`}>
+        <div
+          className={`p-3 rounded-lg ${daysRemaining > 0 ? "bg-green-50 border border-green-100" : "bg-slate-100 border border-slate-200"}`}
+        >
+          <p
+            className={`text-3xl font-bold ${daysRemaining > 0 ? "text-green-600" : "text-slate-600"}`}
+          >
             {daysRemaining > 0 ? daysRemaining : 0}
           </p>
           <p className="text-sm text-slate-600 font-medium mt-1">
-            {daysRemaining > 0 ? 'Days Left' : 'Campaign Ended'}
+            {daysRemaining > 0 ? "Days Left" : "Campaign Ended"}
           </p>
         </div>
       </div>
     </div>
-  )
+  );
 }

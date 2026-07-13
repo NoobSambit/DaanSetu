@@ -38,8 +38,8 @@ export default function HeroSection() {
             </h1>
 
             <p className="text-base md:text-lg text-body leading-relaxed mb-8 max-w-lg">
-              Discover trusted NGOs, support meaningful campaigns, volunteer your
-              skills, and see the impact we create together across India.
+              Discover trusted NGOs, support meaningful campaigns, volunteer
+              your skills, and see the impact we create together across India.
             </p>
 
             <div className="flex flex-wrap gap-4 mb-8">

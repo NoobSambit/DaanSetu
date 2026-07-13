@@ -3,63 +3,63 @@
  * Handles certificates, hours tracking, and skill verification
  */
 
-import type { SupabaseClient } from '@supabase/supabase-js'
-import { getBrowserClient } from '@/lib/supabase'
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { getBrowserClient } from "@/lib/supabase";
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
 export interface VolunteerCertificate {
-  id: string
-  user_id: string
-  opportunity_id: string
-  ngo_id: string
-  certificate_number: string
-  hours_completed: number
-  issue_date: string
-  pdf_url?: string
-  verified_by?: string
-  created_at: string
+  id: string;
+  user_id: string;
+  opportunity_id: string;
+  ngo_id: string;
+  certificate_number: string;
+  hours_completed: number;
+  issue_date: string;
+  pdf_url?: string;
+  verified_by?: string;
+  created_at: string;
 }
 
 export interface VolunteerHours {
-  id: string
-  user_id: string
-  opportunity_id: string
-  ngo_id: string
-  hours: number
-  date: string
-  description?: string
-  verified: boolean
-  verified_by?: string
-  verified_at?: string
-  created_at: string
+  id: string;
+  user_id: string;
+  opportunity_id: string;
+  ngo_id: string;
+  hours: number;
+  date: string;
+  description?: string;
+  verified: boolean;
+  verified_by?: string;
+  verified_at?: string;
+  created_at: string;
 }
 
 export interface SkillVerification {
-  id: string
-  user_id: string
-  skill: string
-  verified_by?: string
-  verification_type: 'ngo_endorsement' | 'certificate' | 'peer_review'
-  evidence_url?: string
-  verified_at: string
+  id: string;
+  user_id: string;
+  skill: string;
+  verified_by?: string;
+  verification_type: "ngo_endorsement" | "certificate" | "peer_review";
+  evidence_url?: string;
+  verified_at: string;
 }
 
 export interface LogVolunteerHoursParams {
-  opportunityId: string
-  ngoId: string
-  hours: number
-  date: string
-  description?: string
+  opportunityId: string;
+  ngoId: string;
+  hours: number;
+  date: string;
+  description?: string;
 }
 
 export interface VerifySkillParams {
-  userId: string
-  skill: string
-  verificationType: 'ngo_endorsement' | 'certificate' | 'peer_review'
-  evidenceUrl?: string
+  userId: string;
+  skill: string;
+  verificationType: "ngo_endorsement" | "certificate" | "peer_review";
+  evidenceUrl?: string;
 }
 
 // ============================================================================
@@ -73,90 +73,96 @@ export async function issueVolunteerCertificate(
   userId: string,
   opportunityId: string,
   hoursCompleted: number,
-  supabaseClient?: SupabaseClient
+  supabaseClient?: SupabaseClient,
 ): Promise<VolunteerCertificate> {
-  const supabase = supabaseClient || getBrowserClient()
+  const supabase = supabaseClient || getBrowserClient();
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Unauthorized')
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
 
   // Get opportunity details
   const { data: opportunity } = await supabase
-    .from('volunteer_opportunities')
-    .select('ngo_id')
-    .eq('id', opportunityId)
-    .single()
+    .from("volunteer_opportunities")
+    .select("ngo_id")
+    .eq("id", opportunityId)
+    .single();
 
-  if (!opportunity) throw new Error('Opportunity not found')
+  if (!opportunity) throw new Error("Opportunity not found");
 
   // Verify issuer is NGO owner
   const { data: ngo } = await supabase
-    .from('ngos')
-    .select('user_id')
-    .eq('id', opportunity.ngo_id)
-    .single()
+    .from("ngos")
+    .select("user_id")
+    .eq("id", opportunity.ngo_id)
+    .single();
 
   if (!ngo || ngo.user_id !== user.id) {
-    throw new Error('Unauthorized: Only NGO owners can issue certificates')
+    throw new Error("Unauthorized: Only NGO owners can issue certificates");
   }
 
   // Check if certificate already exists
   const { data: existing } = await supabase
-    .from('volunteer_certificates')
-    .select('id')
-    .eq('user_id', userId)
-    .eq('opportunity_id', opportunityId)
-    .single()
+    .from("volunteer_certificates")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("opportunity_id", opportunityId)
+    .single();
 
   if (existing) {
-    throw new Error('Certificate already issued for this opportunity')
+    throw new Error("Certificate already issued for this opportunity");
   }
 
   // Generate certificate number
-  const certificateNumber = `VC-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`
+  const certificateNumber = `VC-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
 
   // Issue certificate
   const { data, error } = await supabase
-    .from('volunteer_certificates')
+    .from("volunteer_certificates")
     .insert({
       user_id: userId,
       opportunity_id: opportunityId,
       ngo_id: opportunity.ngo_id,
       certificate_number: certificateNumber,
       hours_completed: hoursCompleted,
-      issue_date: new Date().toISOString().split('T')[0],
-      verified_by: user.id
+      issue_date: new Date().toISOString().split("T")[0],
+      verified_by: user.id,
     })
     .select()
-    .single()
+    .single();
 
-  if (error) throw error
-  return data
+  if (error) throw error;
+  return data;
 }
 
 /**
  * Get user's certificates
  */
 export async function getUserCertificates(
-  supabaseClient?: SupabaseClient
+  supabaseClient?: SupabaseClient,
 ): Promise<VolunteerCertificate[]> {
-  const supabase = supabaseClient || getBrowserClient()
+  const supabase = supabaseClient || getBrowserClient();
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Unauthorized')
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
 
   const { data, error } = await supabase
-    .from('volunteer_certificates')
-    .select(`
+    .from("volunteer_certificates")
+    .select(
+      `
       *,
       opportunity:volunteer_opportunities(title),
       ngo:ngos(name)
-    `)
-    .eq('user_id', user.id)
-    .order('issue_date', { ascending: false })
+    `,
+    )
+    .eq("user_id", user.id)
+    .order("issue_date", { ascending: false });
 
-  if (error) throw error
-  return data || []
+  if (error) throw error;
+  return data || [];
 }
 
 /**
@@ -164,22 +170,24 @@ export async function getUserCertificates(
  */
 export async function getNGOCertificates(
   ngoId: string,
-  supabaseClient?: SupabaseClient
+  supabaseClient?: SupabaseClient,
 ): Promise<VolunteerCertificate[]> {
-  const supabase = supabaseClient || getBrowserClient()
+  const supabase = supabaseClient || getBrowserClient();
 
   const { data, error } = await supabase
-    .from('volunteer_certificates')
-    .select(`
+    .from("volunteer_certificates")
+    .select(
+      `
       *,
       user:users(name, email),
       opportunity:volunteer_opportunities(title)
-    `)
-    .eq('ngo_id', ngoId)
-    .order('issue_date', { ascending: false })
+    `,
+    )
+    .eq("ngo_id", ngoId)
+    .order("issue_date", { ascending: false });
 
-  if (error) throw error
-  return data || []
+  if (error) throw error;
+  return data || [];
 }
 
 // ============================================================================
@@ -191,19 +199,21 @@ export async function getNGOCertificates(
  */
 export async function logVolunteerHours(
   params: LogVolunteerHoursParams,
-  supabaseClient?: SupabaseClient
+  supabaseClient?: SupabaseClient,
 ): Promise<VolunteerHours> {
-  const supabase = supabaseClient || getBrowserClient()
+  const supabase = supabaseClient || getBrowserClient();
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Unauthorized')
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
 
   if (params.hours <= 0) {
-    throw new Error('Hours must be greater than 0')
+    throw new Error("Hours must be greater than 0");
   }
 
   const { data, error } = await supabase
-    .from('volunteer_hours')
+    .from("volunteer_hours")
     .insert({
       user_id: user.id,
       opportunity_id: params.opportunityId,
@@ -211,13 +221,13 @@ export async function logVolunteerHours(
       hours: params.hours,
       date: params.date,
       description: params.description,
-      verified: false
+      verified: false,
     })
     .select()
-    .single()
+    .single();
 
-  if (error) throw error
-  return data
+  if (error) throw error;
+  return data;
 }
 
 /**
@@ -225,46 +235,48 @@ export async function logVolunteerHours(
  */
 export async function verifyVolunteerHours(
   hoursId: string,
-  supabaseClient?: SupabaseClient
+  supabaseClient?: SupabaseClient,
 ) {
-  const supabase = supabaseClient || getBrowserClient()
+  const supabase = supabaseClient || getBrowserClient();
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Unauthorized')
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
 
   // Get hours record
   const { data: hours } = await supabase
-    .from('volunteer_hours')
-    .select('ngo_id')
-    .eq('id', hoursId)
-    .single()
+    .from("volunteer_hours")
+    .select("ngo_id")
+    .eq("id", hoursId)
+    .single();
 
-  if (!hours) throw new Error('Hours record not found')
+  if (!hours) throw new Error("Hours record not found");
 
   // Verify user is NGO owner
   const { data: ngo } = await supabase
-    .from('ngos')
-    .select('user_id')
-    .eq('id', hours.ngo_id)
-    .single()
+    .from("ngos")
+    .select("user_id")
+    .eq("id", hours.ngo_id)
+    .single();
 
   if (!ngo || ngo.user_id !== user.id) {
-    throw new Error('Unauthorized: Only NGO owners can verify hours')
+    throw new Error("Unauthorized: Only NGO owners can verify hours");
   }
 
   const { data, error } = await supabase
-    .from('volunteer_hours')
+    .from("volunteer_hours")
     .update({
       verified: true,
       verified_by: user.id,
-      verified_at: new Date().toISOString()
+      verified_at: new Date().toISOString(),
     })
-    .eq('id', hoursId)
+    .eq("id", hoursId)
     .select()
-    .single()
+    .single();
 
-  if (error) throw error
-  return data
+  if (error) throw error;
+  return data;
 }
 
 /**
@@ -272,31 +284,35 @@ export async function verifyVolunteerHours(
  */
 export async function getUserVolunteerHours(
   verified?: boolean,
-  supabaseClient?: SupabaseClient
+  supabaseClient?: SupabaseClient,
 ): Promise<VolunteerHours[]> {
-  const supabase = supabaseClient || getBrowserClient()
+  const supabase = supabaseClient || getBrowserClient();
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Unauthorized')
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
 
   let query = supabase
-    .from('volunteer_hours')
-    .select(`
+    .from("volunteer_hours")
+    .select(
+      `
       *,
       opportunity:volunteer_opportunities(title),
       ngo:ngos(name)
-    `)
-    .eq('user_id', user.id)
-    .order('date', { ascending: false })
+    `,
+    )
+    .eq("user_id", user.id)
+    .order("date", { ascending: false });
 
   if (verified !== undefined) {
-    query = query.eq('verified', verified)
+    query = query.eq("verified", verified);
   }
 
-  const { data, error } = await query
+  const { data, error } = await query;
 
-  if (error) throw error
-  return data || []
+  if (error) throw error;
+  return data || [];
 }
 
 /**
@@ -304,23 +320,25 @@ export async function getUserVolunteerHours(
  */
 export async function getNGOPendingHours(
   ngoId: string,
-  supabaseClient?: SupabaseClient
+  supabaseClient?: SupabaseClient,
 ): Promise<VolunteerHours[]> {
-  const supabase = supabaseClient || getBrowserClient()
+  const supabase = supabaseClient || getBrowserClient();
 
   const { data, error } = await supabase
-    .from('volunteer_hours')
-    .select(`
+    .from("volunteer_hours")
+    .select(
+      `
       *,
       user:users(name, email),
       opportunity:volunteer_opportunities(title)
-    `)
-    .eq('ngo_id', ngoId)
-    .eq('verified', false)
-    .order('date', { ascending: false })
+    `,
+    )
+    .eq("ngo_id", ngoId)
+    .eq("verified", false)
+    .order("date", { ascending: false });
 
-  if (error) throw error
-  return data || []
+  if (error) throw error;
+  return data || [];
 }
 
 /**
@@ -328,28 +346,31 @@ export async function getNGOPendingHours(
  */
 export async function getTotalVolunteerHours(
   userId?: string,
-  supabaseClient?: SupabaseClient
+  supabaseClient?: SupabaseClient,
 ): Promise<number> {
-  const supabase = supabaseClient || getBrowserClient()
+  const supabase = supabaseClient || getBrowserClient();
 
-  let targetUserId = userId
+  let targetUserId = userId;
 
   if (!userId) {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('Unauthorized')
-    targetUserId = user.id
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error("Unauthorized");
+    targetUserId = user.id;
   }
 
   const { data, error } = await supabase
-    .from('volunteer_hours')
-    .select('hours')
-    .eq('user_id', targetUserId!)
-    .eq('verified', true)
+    .from("volunteer_hours")
+    .select("hours")
+    .eq("user_id", targetUserId!)
+    .eq("verified", true);
 
-  if (error) throw error
+  if (error) throw error;
 
-  const total = data?.reduce((sum, record) => sum + Number(record.hours), 0) || 0
-  return total
+  const total =
+    data?.reduce((sum, record) => sum + Number(record.hours), 0) || 0;
+  return total;
 }
 
 // ============================================================================
@@ -361,44 +382,46 @@ export async function getTotalVolunteerHours(
  */
 export async function verifyVolunteerSkill(
   params: VerifySkillParams,
-  supabaseClient?: SupabaseClient
+  supabaseClient?: SupabaseClient,
 ): Promise<SkillVerification> {
-  const supabase = supabaseClient || getBrowserClient()
+  const supabase = supabaseClient || getBrowserClient();
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Unauthorized')
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
 
   // Check if already verified
   const { data: existing } = await supabase
-    .from('skill_verifications')
-    .select('id')
-    .eq('user_id', params.userId)
-    .eq('skill', params.skill)
-    .eq('verified_by', user.id)
-    .single()
+    .from("skill_verifications")
+    .select("id")
+    .eq("user_id", params.userId)
+    .eq("skill", params.skill)
+    .eq("verified_by", user.id)
+    .single();
 
   if (existing) {
-    throw new Error('You have already verified this skill for this user')
+    throw new Error("You have already verified this skill for this user");
   }
 
   const { data, error } = await supabase
-    .from('skill_verifications')
+    .from("skill_verifications")
     .insert({
       user_id: params.userId,
       skill: params.skill,
       verified_by: user.id,
       verification_type: params.verificationType,
-      evidence_url: params.evidenceUrl
+      evidence_url: params.evidenceUrl,
     })
     .select()
-    .single()
+    .single();
 
-  if (error) throw error
+  if (error) throw error;
 
   // Update user's verified skills
-  await updateVerifiedSkills(params.userId, supabase)
+  await updateVerifiedSkills(params.userId, supabase);
 
-  return data
+  return data;
 }
 
 /**
@@ -406,29 +429,33 @@ export async function verifyVolunteerSkill(
  */
 export async function getUserSkillVerifications(
   userId?: string,
-  supabaseClient?: SupabaseClient
+  supabaseClient?: SupabaseClient,
 ): Promise<SkillVerification[]> {
-  const supabase = supabaseClient || getBrowserClient()
+  const supabase = supabaseClient || getBrowserClient();
 
-  let targetUserId = userId
+  let targetUserId = userId;
 
   if (!userId) {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('Unauthorized')
-    targetUserId = user.id
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error("Unauthorized");
+    targetUserId = user.id;
   }
 
   const { data, error } = await supabase
-    .from('skill_verifications')
-    .select(`
+    .from("skill_verifications")
+    .select(
+      `
       *,
       verifier:users!verified_by(name)
-    `)
-    .eq('user_id', targetUserId!)
-    .order('verified_at', { ascending: false })
+    `,
+    )
+    .eq("user_id", targetUserId!)
+    .order("verified_at", { ascending: false });
 
-  if (error) throw error
-  return data || []
+  if (error) throw error;
+  return data || [];
 }
 
 /**
@@ -436,23 +463,23 @@ export async function getUserSkillVerifications(
  */
 async function updateVerifiedSkills(
   userId: string,
-  supabaseClient: SupabaseClient
+  supabaseClient: SupabaseClient,
 ) {
   const { data: verifications } = await supabaseClient
-    .from('skill_verifications')
-    .select('skill')
-    .eq('user_id', userId)
+    .from("skill_verifications")
+    .select("skill")
+    .eq("user_id", userId);
 
-  if (!verifications) return
+  if (!verifications) return;
 
   // Get unique skills
-  const verifiedSkills = [...new Set(verifications.map(v => v.skill))]
+  const verifiedSkills = [...new Set(verifications.map((v) => v.skill))];
 
   // Update volunteer profile
   await supabaseClient
-    .from('volunteer_profiles')
+    .from("volunteer_profiles")
     .update({ verified_skills: verifiedSkills })
-    .eq('user_id', userId)
+    .eq("user_id", userId);
 }
 
 /**
@@ -461,16 +488,16 @@ async function updateVerifiedSkills(
 export async function getSkillVerificationCount(
   userId: string,
   skill: string,
-  supabaseClient?: SupabaseClient
+  supabaseClient?: SupabaseClient,
 ): Promise<number> {
-  const supabase = supabaseClient || getBrowserClient()
+  const supabase = supabaseClient || getBrowserClient();
 
   const { data, error } = await supabase
-    .from('skill_verifications')
-    .select('id')
-    .eq('user_id', userId)
-    .eq('skill', skill)
+    .from("skill_verifications")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("skill", skill);
 
-  if (error) return 0
-  return data?.length || 0
+  if (error) return 0;
+  return data?.length || 0;
 }

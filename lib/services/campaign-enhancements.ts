@@ -3,64 +3,64 @@
  * Handles campaign templates, milestones, and collaborations
  */
 
-import type { SupabaseClient } from '@supabase/supabase-js'
-import { getBrowserClient } from '@/lib/supabase'
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { getBrowserClient } from "@/lib/supabase";
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
 export interface CampaignTemplate {
-  id: string
-  name: string
-  description: string
-  template_category: string
-  default_goal_amount?: number
-  default_duration_days?: number
-  suggested_content?: string
-  image_url?: string
-  created_by?: string
-  is_public: boolean
-  usage_count: number
-  created_at: string
+  id: string;
+  name: string;
+  description: string;
+  template_category: string;
+  default_goal_amount?: number;
+  default_duration_days?: number;
+  suggested_content?: string;
+  image_url?: string;
+  created_by?: string;
+  is_public: boolean;
+  usage_count: number;
+  created_at: string;
 }
 
 export interface CampaignMilestone {
-  id: string
-  campaign_id: string
-  title: string
-  description?: string
-  target_amount: number
-  reward_description?: string
-  achieved: boolean
-  achieved_at?: string
-  milestone_order: number
-  created_at: string
+  id: string;
+  campaign_id: string;
+  title: string;
+  description?: string;
+  target_amount: number;
+  reward_description?: string;
+  achieved: boolean;
+  achieved_at?: string;
+  milestone_order: number;
+  created_at: string;
 }
 
 export interface CampaignCollaborator {
-  id: string
-  campaign_id: string
-  ngo_id: string
-  role: 'owner' | 'partner' | 'beneficiary'
-  funding_percentage?: number
-  joined_at: string
+  id: string;
+  campaign_id: string;
+  ngo_id: string;
+  role: "owner" | "partner" | "beneficiary";
+  funding_percentage?: number;
+  joined_at: string;
 }
 
 export interface CreateMilestoneParams {
-  campaignId: string
-  title: string
-  description?: string
-  targetAmount: number
-  rewardDescription?: string
-  order: number
+  campaignId: string;
+  title: string;
+  description?: string;
+  targetAmount: number;
+  rewardDescription?: string;
+  order: number;
 }
 
 export interface AddCollaboratorParams {
-  campaignId: string
-  ngoId: string
-  role: 'partner' | 'beneficiary'
-  fundingPercentage?: number
+  campaignId: string;
+  ngoId: string;
+  role: "partner" | "beneficiary";
+  fundingPercentage?: number;
 }
 
 // ============================================================================
@@ -72,24 +72,24 @@ export interface AddCollaboratorParams {
  */
 export async function getCampaignTemplates(
   category?: string,
-  supabaseClient?: SupabaseClient
+  supabaseClient?: SupabaseClient,
 ): Promise<CampaignTemplate[]> {
-  const supabase = supabaseClient || getBrowserClient()
+  const supabase = supabaseClient || getBrowserClient();
 
   let query = supabase
-    .from('campaign_templates')
-    .select('*')
-    .eq('is_public', true)
-    .order('usage_count', { ascending: false })
+    .from("campaign_templates")
+    .select("*")
+    .eq("is_public", true)
+    .order("usage_count", { ascending: false });
 
   if (category) {
-    query = query.eq('template_category', category)
+    query = query.eq("template_category", category);
   }
 
-  const { data, error } = await query
+  const { data, error } = await query;
 
-  if (error) throw error
-  return data || []
+  if (error) throw error;
+  return data || [];
 }
 
 /**
@@ -97,18 +97,18 @@ export async function getCampaignTemplates(
  */
 export async function getCampaignTemplate(
   templateId: string,
-  supabaseClient?: SupabaseClient
+  supabaseClient?: SupabaseClient,
 ): Promise<CampaignTemplate | null> {
-  const supabase = supabaseClient || getBrowserClient()
+  const supabase = supabaseClient || getBrowserClient();
 
   const { data, error } = await supabase
-    .from('campaign_templates')
-    .select('*')
-    .eq('id', templateId)
-    .single()
+    .from("campaign_templates")
+    .select("*")
+    .eq("id", templateId)
+    .single();
 
-  if (error) return null
-  return data
+  if (error) return null;
+  return data;
 }
 
 /**
@@ -116,15 +116,15 @@ export async function getCampaignTemplate(
  */
 export async function incrementTemplateUsage(
   templateId: string,
-  supabaseClient?: SupabaseClient
+  supabaseClient?: SupabaseClient,
 ) {
-  const supabase = supabaseClient || getBrowserClient()
+  const supabase = supabaseClient || getBrowserClient();
 
-  const { error } = await supabase.rpc('increment_template_usage', {
-    template_id: templateId
-  })
+  const { error } = await supabase.rpc("increment_template_usage", {
+    template_id: templateId,
+  });
 
-  if (error) console.error('Failed to increment template usage:', error)
+  if (error) console.error("Failed to increment template usage:", error);
 }
 
 // ============================================================================
@@ -136,35 +136,37 @@ export async function incrementTemplateUsage(
  */
 export async function createCampaignMilestone(
   params: CreateMilestoneParams,
-  supabaseClient?: SupabaseClient
+  supabaseClient?: SupabaseClient,
 ): Promise<CampaignMilestone> {
-  const supabase = supabaseClient || getBrowserClient()
+  const supabase = supabaseClient || getBrowserClient();
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Unauthorized')
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
 
   // Verify user owns the campaign
   const { data: campaign } = await supabase
-    .from('campaigns')
-    .select('ngo_id')
-    .eq('id', params.campaignId)
-    .single()
+    .from("campaigns")
+    .select("ngo_id")
+    .eq("id", params.campaignId)
+    .single();
 
-  if (!campaign) throw new Error('Campaign not found')
+  if (!campaign) throw new Error("Campaign not found");
 
   const { data: ngo } = await supabase
-    .from('ngos')
-    .select('user_id')
-    .eq('id', campaign.ngo_id)
-    .single()
+    .from("ngos")
+    .select("user_id")
+    .eq("id", campaign.ngo_id)
+    .single();
 
   if (!ngo || ngo.user_id !== user.id) {
-    throw new Error('Unauthorized: You do not own this campaign')
+    throw new Error("Unauthorized: You do not own this campaign");
   }
 
   // Create milestone
   const { data, error } = await supabase
-    .from('campaign_milestones')
+    .from("campaign_milestones")
     .insert({
       campaign_id: params.campaignId,
       title: params.title,
@@ -172,13 +174,13 @@ export async function createCampaignMilestone(
       target_amount: params.targetAmount,
       reward_description: params.rewardDescription,
       milestone_order: params.order,
-      achieved: false
+      achieved: false,
     })
     .select()
-    .single()
+    .single();
 
-  if (error) throw error
-  return data
+  if (error) throw error;
+  return data;
 }
 
 /**
@@ -186,18 +188,18 @@ export async function createCampaignMilestone(
  */
 export async function getCampaignMilestones(
   campaignId: string,
-  supabaseClient?: SupabaseClient
+  supabaseClient?: SupabaseClient,
 ): Promise<CampaignMilestone[]> {
-  const supabase = supabaseClient || getBrowserClient()
+  const supabase = supabaseClient || getBrowserClient();
 
   const { data, error } = await supabase
-    .from('campaign_milestones')
-    .select('*')
-    .eq('campaign_id', campaignId)
-    .order('milestone_order', { ascending: true })
+    .from("campaign_milestones")
+    .select("*")
+    .eq("campaign_id", campaignId)
+    .order("milestone_order", { ascending: true });
 
-  if (error) throw error
-  return data || []
+  if (error) throw error;
+  return data || [];
 }
 
 /**
@@ -206,32 +208,32 @@ export async function getCampaignMilestones(
 export async function checkMilestoneAchievement(
   campaignId: string,
   currentAmount: number,
-  supabaseClient?: SupabaseClient
+  supabaseClient?: SupabaseClient,
 ) {
-  const supabase = supabaseClient || getBrowserClient()
+  const supabase = supabaseClient || getBrowserClient();
 
   // Get unachieved milestones
   const { data: milestones } = await supabase
-    .from('campaign_milestones')
-    .select('*')
-    .eq('campaign_id', campaignId)
-    .eq('achieved', false)
-    .lte('target_amount', currentAmount)
+    .from("campaign_milestones")
+    .select("*")
+    .eq("campaign_id", campaignId)
+    .eq("achieved", false)
+    .lte("target_amount", currentAmount);
 
-  if (!milestones || milestones.length === 0) return
+  if (!milestones || milestones.length === 0) return;
 
   // Mark milestones as achieved
-  const milestoneIds = milestones.map(m => m.id)
+  const milestoneIds = milestones.map((m) => m.id);
 
   const { error } = await supabase
-    .from('campaign_milestones')
+    .from("campaign_milestones")
     .update({
       achieved: true,
-      achieved_at: new Date().toISOString()
+      achieved_at: new Date().toISOString(),
     })
-    .in('id', milestoneIds)
+    .in("id", milestoneIds);
 
-  if (error) console.error('Failed to update milestones:', error)
+  if (error) console.error("Failed to update milestones:", error);
 
   // Create notifications for each achieved milestone
   for (const milestone of milestones) {
@@ -244,19 +246,21 @@ export async function checkMilestoneAchievement(
  */
 export async function deleteCampaignMilestone(
   milestoneId: string,
-  supabaseClient?: SupabaseClient
+  supabaseClient?: SupabaseClient,
 ) {
-  const supabase = supabaseClient || getBrowserClient()
+  const supabase = supabaseClient || getBrowserClient();
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Unauthorized')
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
 
   const { error } = await supabase
-    .from('campaign_milestones')
+    .from("campaign_milestones")
     .delete()
-    .eq('id', milestoneId)
+    .eq("id", milestoneId);
 
-  if (error) throw error
+  if (error) throw error;
 }
 
 // ============================================================================
@@ -268,52 +272,55 @@ export async function deleteCampaignMilestone(
  */
 export async function addCampaignCollaborator(
   params: AddCollaboratorParams,
-  supabaseClient?: SupabaseClient
+  supabaseClient?: SupabaseClient,
 ): Promise<CampaignCollaborator> {
-  const supabase = supabaseClient || getBrowserClient()
+  const supabase = supabaseClient || getBrowserClient();
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Unauthorized')
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
 
   // Verify user owns the campaign
   const { data: campaign } = await supabase
-    .from('campaigns')
-    .select('ngo_id')
-    .eq('id', params.campaignId)
-    .single()
+    .from("campaigns")
+    .select("ngo_id")
+    .eq("id", params.campaignId)
+    .single();
 
-  if (!campaign) throw new Error('Campaign not found')
+  if (!campaign) throw new Error("Campaign not found");
 
   const { data: ngo } = await supabase
-    .from('ngos')
-    .select('user_id')
-    .eq('id', campaign.ngo_id)
-    .single()
+    .from("ngos")
+    .select("user_id")
+    .eq("id", campaign.ngo_id)
+    .single();
 
   if (!ngo || ngo.user_id !== user.id) {
-    throw new Error('Unauthorized: You do not own this campaign')
+    throw new Error("Unauthorized: You do not own this campaign");
   }
 
   // Add collaborator
   const { data, error } = await supabase
-    .from('campaign_collaborators')
+    .from("campaign_collaborators")
     .insert({
       campaign_id: params.campaignId,
       ngo_id: params.ngoId,
       role: params.role,
-      funding_percentage: params.fundingPercentage
+      funding_percentage: params.fundingPercentage,
     })
     .select()
-    .single()
+    .single();
 
   if (error) {
-    if (error.code === '23505') { // Unique constraint violation
-      throw new Error('This NGO is already a collaborator')
+    if (error.code === "23505") {
+      // Unique constraint violation
+      throw new Error("This NGO is already a collaborator");
     }
-    throw error
+    throw error;
   }
 
-  return data
+  return data;
 }
 
 /**
@@ -321,21 +328,23 @@ export async function addCampaignCollaborator(
  */
 export async function getCampaignCollaborators(
   campaignId: string,
-  supabaseClient?: SupabaseClient
+  supabaseClient?: SupabaseClient,
 ) {
-  const supabase = supabaseClient || getBrowserClient()
+  const supabase = supabaseClient || getBrowserClient();
 
   const { data, error } = await supabase
-    .from('campaign_collaborators')
-    .select(`
+    .from("campaign_collaborators")
+    .select(
+      `
       *,
       ngo:ngos(id, name, category, city)
-    `)
-    .eq('campaign_id', campaignId)
-    .order('joined_at', { ascending: true })
+    `,
+    )
+    .eq("campaign_id", campaignId)
+    .order("joined_at", { ascending: true });
 
-  if (error) throw error
-  return data || []
+  if (error) throw error;
+  return data || [];
 }
 
 /**
@@ -343,19 +352,21 @@ export async function getCampaignCollaborators(
  */
 export async function removeCampaignCollaborator(
   collaboratorId: string,
-  supabaseClient?: SupabaseClient
+  supabaseClient?: SupabaseClient,
 ) {
-  const supabase = supabaseClient || getBrowserClient()
+  const supabase = supabaseClient || getBrowserClient();
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Unauthorized')
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
 
   const { error } = await supabase
-    .from('campaign_collaborators')
+    .from("campaign_collaborators")
     .delete()
-    .eq('id', collaboratorId)
+    .eq("id", collaboratorId);
 
-  if (error) throw error
+  if (error) throw error;
 }
 
 /**
@@ -363,19 +374,21 @@ export async function removeCampaignCollaborator(
  */
 export async function getNGOCollaborations(
   ngoId: string,
-  supabaseClient?: SupabaseClient
+  supabaseClient?: SupabaseClient,
 ) {
-  const supabase = supabaseClient || getBrowserClient()
+  const supabase = supabaseClient || getBrowserClient();
 
   const { data, error } = await supabase
-    .from('campaign_collaborators')
-    .select(`
+    .from("campaign_collaborators")
+    .select(
+      `
       *,
       campaign:campaigns(id, title, description, goal_amount, current_amount, status)
-    `)
-    .eq('ngo_id', ngoId)
-    .order('joined_at', { ascending: false })
+    `,
+    )
+    .eq("ngo_id", ngoId)
+    .order("joined_at", { ascending: false });
 
-  if (error) throw error
-  return data || []
+  if (error) throw error;
+  return data || [];
 }

@@ -1,3 +1,0 @@
-export function canReviewNgo(input:{capturedDonation:boolean;approvedHours:number}){return input.capturedDonation||input.approvedHours>0}
-type Opportunity={id:string;skills:string[];city:string|null;remote:boolean;availability:string[]}
-export function matchVolunteerOpportunities<T extends Opportunity>(opportunities:T[],profile:{skills:string[];city:string|null;availability:string[]}){return opportunities.map(item=>({...item,score:item.skills.filter(s=>profile.skills.includes(s)).length*25+(item.city&&item.city===profile.city?15:0)+(item.remote?8:0)+item.availability.filter(a=>profile.availability.includes(a)).length*20})).sort((a,b)=>b.score-a.score||a.id.localeCompare(b.id))}

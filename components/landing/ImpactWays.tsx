@@ -2,7 +2,14 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { HandCoins, UserCheck, Megaphone, Building2, BookOpen, BrainCircuit } from "lucide-react";
+import {
+  HandCoins,
+  UserCheck,
+  Megaphone,
+  Building2,
+  BookOpen,
+  BrainCircuit,
+} from "lucide-react";
 
 const impactCards = [
   {
@@ -22,14 +29,16 @@ const impactCards = [
   {
     title: "Fundraising\nCampaigns",
     image: "/landing_page_images/how_it_works/fundraising_campaigns.png",
-    description: "Start your own campaign. Inspire your network to create impact.",
+    description:
+      "Start your own campaign. Inspire your network to create impact.",
     Icon: Megaphone,
     iconColor: "bg-[#f97316]", // Orange
   },
   {
     title: "Corporate CSR &\nEmployee Giving",
     image: "/landing_page_images/how_it_works/corporate_csr.png",
-    description: "Drive CSR initiatives and engage employees in meaningful action.",
+    description:
+      "Drive CSR initiatives and engage employees in meaningful action.",
     Icon: Building2,
     iconColor: "bg-[#0d9488]", // Teal
   },
@@ -46,17 +55,17 @@ const impactCards = [
     description: "Get personalized NGO, campaign, and volunteer opportunities.",
     Icon: BrainCircuit,
     iconColor: "bg-[#4f46e5]", // Indigo
-  }
+  },
 ];
 
 export default function ImpactWays() {
   return (
     <section className="py-20 bg-white">
       <div className="container-custom">
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }} 
-          whileInView={{ opacity: 1, y: 0 }} 
-          viewport={{ once: true }} 
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
           className="text-center mb-16"
         >
           <h2 className="text-3xl md:text-4xl font-serif font-bold text-[#1e293b] mb-3">
@@ -79,19 +88,21 @@ export default function ImpactWays() {
             >
               <div className="relative mb-5">
                 <div className="relative w-full aspect-square rounded-2xl overflow-hidden shadow-sm">
-                  <Image 
-                    src={card.image} 
-                    alt={card.title.replace('\n', ' ')} 
-                    fill 
-                    className="object-cover transition-transform duration-500 group-hover:scale-105" 
+                  <Image
+                    src={card.image}
+                    alt={card.title.replace("\n", " ")}
+                    fill
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                 </div>
                 {/* Circular Icon overlay */}
-                <div className={`absolute -bottom-4 left-4 ${card.iconColor} text-white p-2.5 rounded-full shadow-lg ring-4 ring-white z-10`}>
+                <div
+                  className={`absolute -bottom-4 left-4 ${card.iconColor} text-white p-2.5 rounded-full shadow-lg ring-4 ring-white z-10`}
+                >
                   <card.Icon className="w-5 h-5" />
                 </div>
               </div>
-              
+
               <div className="pt-2 px-1">
                 <h3 className="text-[15px] sm:text-base font-bold text-[#1e293b] mb-2 leading-tight whitespace-pre-line group-hover:text-primary-600 transition-colors">
                   {card.title}

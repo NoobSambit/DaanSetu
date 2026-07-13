@@ -1,54 +1,90 @@
-import { randomUUID } from 'node:crypto'
+import { randomUUID } from "node:crypto";
 
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from "next/server";
 
-import { validateVerificationDocument } from '@/lib/ngo/profile'
-import { rateLimit, RATE_LIMITS } from '@/lib/middleware/rate-limit'
-import { createClient } from '@/lib/supabase/server'
+import { validateVerificationDocument } from "@/lib/ngo/profile";
+import { rateLimit, RATE_LIMITS } from "@/lib/middleware/rate-limit";
+import { createClient } from "@/lib/supabase/server";
 
-const documentTypes = new Set(['registration', 'pan', '12a', '80g', 'fcra', 'supporting'])
+const documentTypes = new Set([
+  "registration",
+  "pan",
+  "12a",
+  "80g",
+  "fcra",
+  "supporting",
+]);
 const extensions: Record<string, string> = {
-  'application/pdf': 'pdf',
-  'image/jpeg': 'jpg',
-  'image/png': 'png',
-}
+  "application/pdf": "pdf",
+  "image/jpeg": "jpg",
+  "image/png": "png",
+};
 
 async function handler(request: NextRequest) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const formData = await request.formData()
-  const file = formData.get('file')
-  const verificationId = formData.get('verificationId')
-  const documentType = formData.get('documentType')
-  if (!(file instanceof File) || typeof verificationId !== 'string' || typeof documentType !== 'string') {
-    return NextResponse.json({ error: 'File, verification, and document type are required.' }, { status: 400 })
+  const formData = await request.formData();
+  const file = formData.get("file");
+  const verificationId = formData.get("verificationId");
+  const documentType = formData.get("documentType");
+  if (
+    !(file instanceof File) ||
+    typeof verificationId !== "string" ||
+    typeof documentType !== "string"
+  ) {
+    return NextResponse.json(
+      { error: "File, verification, and document type are required." },
+      { status: 400 },
+    );
   }
   if (!documentTypes.has(documentType)) {
-    return NextResponse.json({ error: 'Invalid document type.' }, { status: 400 })
+    return NextResponse.json(
+      { error: "Invalid document type." },
+      { status: 400 },
+    );
   }
-  const validationError = validateVerificationDocument(file)
-  if (validationError) return NextResponse.json({ error: validationError }, { status: 400 })
+  const validationError = validateVerificationDocument(file);
+  if (validationError)
+    return NextResponse.json({ error: validationError }, { status: 400 });
 
   const { data: verification } = await supabase
-    .from('ngo_verifications')
-    .select('id, ngo_id, verification_status, ngo:ngos!inner(user_id)')
-    .eq('id', verificationId)
-    .maybeSingle()
-  const ownerId = (verification?.ngo as unknown as { user_id?: string } | null)?.user_id
-  if (!verification || ownerId !== user.id || !['draft', 'rejected'].includes(verification.verification_status)) {
-    return NextResponse.json({ error: 'Verification draft is not editable.' }, { status: 403 })
+    .from("ngo_verifications")
+    .select("id, ngo_id, verification_status, ngo:ngos!inner(user_id)")
+    .eq("id", verificationId)
+    .maybeSingle();
+  const ownerId = (verification?.ngo as unknown as { user_id?: string } | null)
+    ?.user_id;
+  if (
+    !verification ||
+    ownerId !== user.id ||
+    !["draft", "rejected"].includes(verification.verification_status)
+  ) {
+    return NextResponse.json(
+      { error: "Verification draft is not editable." },
+      { status: 403 },
+    );
   }
 
-  const path = `${verification.ngo_id}/${verification.id}/${randomUUID()}.${extensions[file.type]}`
+  const path = `${verification.ngo_id}/${verification.id}/${randomUUID()}.${extensions[file.type]}`;
   const { error: uploadError } = await supabase.storage
-    .from('ngo-verification')
-    .upload(path, await file.arrayBuffer(), { contentType: file.type, upsert: false })
-  if (uploadError) return NextResponse.json({ error: 'Document upload failed.' }, { status: 500 })
+    .from("ngo-verification")
+    .upload(path, await file.arrayBuffer(), {
+      contentType: file.type,
+      upsert: false,
+    });
+  if (uploadError)
+    return NextResponse.json(
+      { error: "Document upload failed." },
+      { status: 500 },
+    );
 
   const { data: document, error: insertError } = await supabase
-    .from('ngo_verification_documents')
+    .from("ngo_verification_documents")
     .insert({
       verification_id: verification.id,
       ngo_id: verification.ngo_id,
@@ -59,49 +95,72 @@ async function handler(request: NextRequest) {
       size_bytes: file.size,
       uploaded_by: user.id,
     })
-    .select('id, document_type, original_name, size_bytes, created_at')
-    .single()
+    .select("id, document_type, original_name, size_bytes, created_at")
+    .single();
 
   if (insertError || !document) {
-    await supabase.storage.from('ngo-verification').remove([path])
-    return NextResponse.json({ error: 'Document metadata could not be saved.' }, { status: 500 })
+    await supabase.storage.from("ngo-verification").remove([path]);
+    return NextResponse.json(
+      { error: "Document metadata could not be saved." },
+      { status: 500 },
+    );
   }
-  return NextResponse.json({ document })
+  return NextResponse.json({ document });
 }
 
-export const POST = rateLimit(RATE_LIMITS.UPLOAD)(handler)
+export const POST = rateLimit(RATE_LIMITS.UPLOAD)(handler);
 
 export async function DELETE(request: NextRequest) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const body = await request.json().catch(() => ({}))
-  const documentId = typeof body.documentId === 'string' ? body.documentId : ''
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const body = await request.json().catch(() => ({}));
+  const documentId = typeof body.documentId === "string" ? body.documentId : "";
 
   const { data: document } = await supabase
-    .from('ngo_verification_documents')
-    .select('id, storage_path, verification_id, ngo:ngos!inner(user_id)')
-    .eq('id', documentId)
-    .maybeSingle()
-  const ownerId = (document?.ngo as unknown as { user_id?: string } | null)?.user_id
-  if (!document || ownerId !== user.id) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    .from("ngo_verification_documents")
+    .select("id, storage_path, verification_id, ngo:ngos!inner(user_id)")
+    .eq("id", documentId)
+    .maybeSingle();
+  const ownerId = (document?.ngo as unknown as { user_id?: string } | null)
+    ?.user_id;
+  if (!document || ownerId !== user.id)
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { data: verification } = await supabase
-    .from('ngo_verifications')
-    .select('verification_status')
-    .eq('id', document.verification_id)
-    .single()
-  if (!verification || !['draft', 'rejected'].includes(verification.verification_status)) {
-    return NextResponse.json({ error: 'Submitted documents cannot be deleted.' }, { status: 409 })
+    .from("ngo_verifications")
+    .select("verification_status")
+    .eq("id", document.verification_id)
+    .single();
+  if (
+    !verification ||
+    !["draft", "rejected"].includes(verification.verification_status)
+  ) {
+    return NextResponse.json(
+      { error: "Submitted documents cannot be deleted." },
+      { status: 409 },
+    );
   }
 
   const { error: storageError } = await supabase.storage
-    .from('ngo-verification')
-    .remove([document.storage_path])
-  if (storageError) return NextResponse.json({ error: 'Document deletion failed.' }, { status: 500 })
-  const { error } = await supabase.from('ngo_verification_documents').delete().eq('id', document.id)
+    .from("ngo-verification")
+    .remove([document.storage_path]);
+  if (storageError)
+    return NextResponse.json(
+      { error: "Document deletion failed." },
+      { status: 500 },
+    );
+  const { error } = await supabase
+    .from("ngo_verification_documents")
+    .delete()
+    .eq("id", document.id);
   return error
-    ? NextResponse.json({ error: 'Document record deletion failed.' }, { status: 500 })
-    : NextResponse.json({ success: true })
+    ? NextResponse.json(
+        { error: "Document record deletion failed." },
+        { status: 500 },
+      )
+    : NextResponse.json({ success: true });
 }
-

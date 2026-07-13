@@ -1,19 +1,25 @@
-'use client'
+"use client";
 
-import { useActionState } from 'react'
+import { useActionState } from "react";
 
-import { resetPasswordAction } from '@/app/auth/actions'
-import { INITIAL_AUTH_STATE } from '@/lib/auth/types'
+import { resetPasswordAction } from "@/app/auth/actions";
+import { INITIAL_AUTH_STATE } from "@/lib/auth/types";
 
-import { PasswordInput, SubmitButton } from './FormControls'
+import { PasswordInput, SubmitButton } from "./FormControls";
 
 export default function ResetPasswordForm() {
-  const [state, formAction] = useActionState(resetPasswordAction, INITIAL_AUTH_STATE)
+  const [state, formAction] = useActionState(
+    resetPasswordAction,
+    INITIAL_AUTH_STATE,
+  );
 
   return (
     <form action={formAction} className="space-y-5">
       {state.message && (
-        <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+        <div
+          role="alert"
+          className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+        >
           {state.message}
         </div>
       )}
@@ -34,5 +40,5 @@ export default function ResetPasswordForm() {
       />
       <SubmitButton>Update password</SubmitButton>
     </form>
-  )
+  );
 }

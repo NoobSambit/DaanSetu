@@ -1,11 +1,11 @@
-import { getTrendingPosts } from '@/lib/services/posts'
-import Link from 'next/link'
+import { getTrendingPosts } from "@/lib/services/posts";
+import Link from "next/link";
 
 export default async function TrendingPosts() {
-  const trendingPosts = await getTrendingPosts(5)
+  const trendingPosts = await getTrendingPosts(5);
 
   if (trendingPosts.length === 0) {
-    return null
+    return null;
   }
 
   return (
@@ -23,9 +23,13 @@ export default async function TrendingPosts() {
             className="block p-3 bg-white rounded-lg hover:shadow-md transition-shadow"
           >
             <div className="flex items-start gap-3">
-              <span className="text-lg font-bold text-orange-500">#{index + 1}</span>
+              <span className="text-lg font-bold text-orange-500">
+                #{index + 1}
+              </span>
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-gray-900 truncate">{post.title}</h3>
+                <h3 className="font-semibold text-gray-900 truncate">
+                  {post.title}
+                </h3>
                 <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
                   <span>❤️ {post.like_count}</span>
                   <span>💬 {post.comment_count}</span>
@@ -37,5 +41,5 @@ export default async function TrendingPosts() {
         ))}
       </div>
     </div>
-  )
+  );
 }

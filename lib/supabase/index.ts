@@ -5,14 +5,14 @@
  * It automatically detects the environment and returns the appropriate client.
  */
 
-import { createClient as createBrowserClient } from './client'
-import { SupabaseClient } from '@supabase/supabase-js'
+import { createClient as createBrowserClient } from "./client";
+import { SupabaseClient } from "@supabase/supabase-js";
 
 /**
  * Check if we're running on the server
  */
 function isServer(): boolean {
-  return typeof window === 'undefined'
+  return typeof window === "undefined";
 }
 
 /**
@@ -27,12 +27,12 @@ export function getSupabaseClient(): SupabaseClient {
     // For server context, we need to use the server client
     // However, this is problematic because createServerClient is async
     throw new Error(
-      'Cannot use getSupabaseClient() in server context. ' +
-      'Use createServerClient() from @/lib/supabase/server instead and await it.'
-    )
+      "Cannot use getSupabaseClient() in server context. " +
+        "Use createServerClient() from @/lib/supabase/server instead and await it.",
+    );
   }
 
-  return createBrowserClient()
+  return createBrowserClient();
 }
 
 /**
@@ -40,9 +40,9 @@ export function getSupabaseClient(): SupabaseClient {
  * Use this in client components and client-side code
  */
 export function getBrowserClient(): SupabaseClient {
-  return createBrowserClient()
+  return createBrowserClient();
 }
 
 // Keep this shared entry point browser-safe. Server code should import
 // createClient directly from '@/lib/supabase/server'.
-export { createClient as createBrowserClient } from './client'
+export { createClient as createBrowserClient } from "./client";

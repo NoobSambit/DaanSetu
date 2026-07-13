@@ -1,2 +1,46 @@
-import { createPostAction } from '../actions'
-export default function CreatePostPage(){return <main className="min-h-screen bg-slate-50"><form action={createPostAction} className="mx-auto max-w-2xl space-y-5 px-4 py-10"><h1 className="text-3xl font-bold">Create a community post</h1><input name="title" required minLength={5} placeholder="Post title" className="w-full rounded-xl border px-4 py-3"/><textarea name="body" required minLength={20} rows={10} placeholder="Share an update, story, or useful information" className="w-full rounded-xl border px-4 py-3"/><label className="flex gap-2 text-sm"><input name="isImpactStory" type="checkbox"/>Submit as a public impact story for admin approval</label><button className="rounded-xl bg-blue-600 px-5 py-3 font-bold text-white">Publish post</button></form></main>}
+import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
+import CreatePostForm from "./CreatePostForm";
+
+export default async function CreatePostPage() {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/sign-in");
+  }
+
+  // Get user role
+  const { data: userData } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  const userRole = userData?.role || "user";
+
+  // Only NGO, Corporate, and Admin can create posts
+  if (!["ngo", "corporate", "admin"].includes(userRole)) {
+    redirect("/community");
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Create a Post
+          </h1>
+          <p className="text-gray-600">
+            Share updates, stories, or announcements with the community
+          </p>
+        </div>
+
+        <CreatePostForm userId={user.id} userRole={userRole} />
+      </div>
+    </div>
+  );
+}

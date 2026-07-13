@@ -1,7 +1,12 @@
-import { getTopDonors, getTopVolunteers, getTopNGOs, getTopCorporates } from '@/lib/services/leaderboard'
-import LeaderboardSection from './components/LeaderboardSection'
+import {
+  getTopDonors,
+  getTopVolunteers,
+  getTopNGOs,
+  getTopCorporates,
+} from "@/lib/services/leaderboard";
+import LeaderboardSection from "./components/LeaderboardSection";
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic";
 
 export default async function LeaderboardPage() {
   // Fetch all leaderboards in parallel
@@ -9,15 +14,17 @@ export default async function LeaderboardPage() {
     getTopDonors(10),
     getTopVolunteers(10),
     getTopNGOs(10),
-    getTopCorporates(10)
-  ])
+    getTopCorporates(10),
+  ]);
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Community Leaderboard</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Community Leaderboard
+          </h1>
           <p className="text-gray-600">
             Celebrating our top contributors and impact makers
           </p>
@@ -30,11 +37,11 @@ export default async function LeaderboardPage() {
             title="Top Donors"
             description="Most generous contributors"
             icon="💛"
-            entries={donors.map(d => ({
+            entries={donors.map((d) => ({
               rank: d.rank,
               name: d.user_name,
-              subtitle: `₹${d.total_donated.toLocaleString('en-IN')} donated`,
-              badge: `${d.donation_count} donations`
+              subtitle: `₹${d.total_donated.toLocaleString("en-IN")} donated`,
+              badge: `${d.donation_count} donations`,
             }))}
             emptyMessage="No donors yet. Be the first to donate!"
           />
@@ -44,11 +51,11 @@ export default async function LeaderboardPage() {
             title="Top Volunteers"
             description="Most active volunteers"
             icon="🌟"
-            entries={volunteers.map(v => ({
+            entries={volunteers.map((v) => ({
               rank: v.rank,
               name: v.user_name,
               subtitle: `${v.accepted_count} opportunities completed`,
-              badge: null
+              badge: null,
             }))}
             emptyMessage="No volunteers yet. Be the first to volunteer!"
           />
@@ -58,11 +65,11 @@ export default async function LeaderboardPage() {
             title="Top NGOs"
             description="Most supported organizations"
             icon="🏆"
-            entries={ngos.map(n => ({
+            entries={ngos.map((n) => ({
               rank: n.rank,
               name: n.ngo_name,
-              subtitle: `₹${n.total_received.toLocaleString('en-IN')} received`,
-              badge: `${n.donor_count} donors`
+              subtitle: `₹${n.total_received.toLocaleString("en-IN")} received`,
+              badge: `${n.donor_count} donors`,
             }))}
             emptyMessage="No NGOs with donations yet"
           />
@@ -72,16 +79,16 @@ export default async function LeaderboardPage() {
             title="Top Corporates"
             description="Leading CSR contributors"
             icon="🎯"
-            entries={corporates.map(c => ({
+            entries={corporates.map((c) => ({
               rank: c.rank,
               name: c.company_name,
-              subtitle: `₹${c.total_contributed.toLocaleString('en-IN')} contributed`,
-              badge: `${c.campaign_count} campaigns`
+              subtitle: `₹${c.total_contributed.toLocaleString("en-IN")} contributed`,
+              badge: `${c.campaign_count} campaigns`,
             }))}
             emptyMessage="No corporate CSR campaigns yet"
           />
         </div>
       </div>
     </div>
-  )
+  );
 }

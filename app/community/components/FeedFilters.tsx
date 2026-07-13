@@ -1,38 +1,38 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import type { PostCategory, PostAuthorRole } from '@/lib/types/database.types'
+import { useState } from "react";
+import type { PostCategory, PostAuthorRole } from "@/lib/types/database.types";
 
 interface FeedFiltersProps {
   onFilterChange: (filters: {
-    category?: PostCategory
-    authorRole?: PostAuthorRole
-    search?: string
-  }) => void
+    category?: PostCategory;
+    authorRole?: PostAuthorRole;
+    search?: string;
+  }) => void;
 }
 
 export default function FeedFilters({ onFilterChange }: FeedFiltersProps) {
-  const [category, setCategory] = useState<PostCategory | ''>('')
-  const [authorRole, setAuthorRole] = useState<PostAuthorRole | ''>('')
-  const [search, setSearch] = useState('')
+  const [category, setCategory] = useState<PostCategory | "">("");
+  const [authorRole, setAuthorRole] = useState<PostAuthorRole | "">("");
+  const [search, setSearch] = useState("");
 
   const handleFilterChange = (
-    newCategory?: PostCategory | '',
-    newAuthorRole?: PostAuthorRole | '',
-    newSearch?: string
+    newCategory?: PostCategory | "",
+    newAuthorRole?: PostAuthorRole | "",
+    newSearch?: string,
   ) => {
-    const filters: any = {}
+    const filters: any = {};
 
-    const cat = newCategory !== undefined ? newCategory : category
-    const role = newAuthorRole !== undefined ? newAuthorRole : authorRole
-    const searchTerm = newSearch !== undefined ? newSearch : search
+    const cat = newCategory !== undefined ? newCategory : category;
+    const role = newAuthorRole !== undefined ? newAuthorRole : authorRole;
+    const searchTerm = newSearch !== undefined ? newSearch : search;
 
-    if (cat) filters.category = cat
-    if (role) filters.authorRole = role
-    if (searchTerm) filters.search = searchTerm
+    if (cat) filters.category = cat;
+    if (role) filters.authorRole = role;
+    if (searchTerm) filters.search = searchTerm;
 
-    onFilterChange(filters)
-  }
+    onFilterChange(filters);
+  };
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
@@ -46,8 +46,8 @@ export default function FeedFilters({ onFilterChange }: FeedFiltersProps) {
             type="text"
             value={search}
             onChange={(e) => {
-              setSearch(e.target.value)
-              handleFilterChange(undefined, undefined, e.target.value)
+              setSearch(e.target.value);
+              handleFilterChange(undefined, undefined, e.target.value);
             }}
             placeholder="Search posts..."
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -62,9 +62,9 @@ export default function FeedFilters({ onFilterChange }: FeedFiltersProps) {
           <select
             value={category}
             onChange={(e) => {
-              const value = e.target.value as PostCategory | ''
-              setCategory(value)
-              handleFilterChange(value, undefined, undefined)
+              const value = e.target.value as PostCategory | "";
+              setCategory(value);
+              handleFilterChange(value, undefined, undefined);
             }}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
@@ -83,9 +83,9 @@ export default function FeedFilters({ onFilterChange }: FeedFiltersProps) {
           <select
             value={authorRole}
             onChange={(e) => {
-              const value = e.target.value as PostAuthorRole | ''
-              setAuthorRole(value)
-              handleFilterChange(undefined, value, undefined)
+              const value = e.target.value as PostAuthorRole | "";
+              setAuthorRole(value);
+              handleFilterChange(undefined, value, undefined);
             }}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
@@ -104,11 +104,15 @@ export default function FeedFilters({ onFilterChange }: FeedFiltersProps) {
 
           {category && (
             <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
-              {category === 'update' ? 'Updates' : category === 'story' ? 'Success Stories' : 'Announcements'}
+              {category === "update"
+                ? "Updates"
+                : category === "story"
+                  ? "Success Stories"
+                  : "Announcements"}
               <button
                 onClick={() => {
-                  setCategory('')
-                  handleFilterChange('', undefined, undefined)
+                  setCategory("");
+                  handleFilterChange("", undefined, undefined);
                 }}
                 className="text-blue-600 hover:text-blue-800"
               >
@@ -119,11 +123,15 @@ export default function FeedFilters({ onFilterChange }: FeedFiltersProps) {
 
           {authorRole && (
             <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full">
-              {authorRole === 'ngo' ? 'NGOs' : authorRole === 'corporate' ? 'Corporates' : 'Admins'}
+              {authorRole === "ngo"
+                ? "NGOs"
+                : authorRole === "corporate"
+                  ? "Corporates"
+                  : "Admins"}
               <button
                 onClick={() => {
-                  setAuthorRole('')
-                  handleFilterChange(undefined, '', undefined)
+                  setAuthorRole("");
+                  handleFilterChange(undefined, "", undefined);
                 }}
                 className="text-green-600 hover:text-green-800"
               >
@@ -137,8 +145,8 @@ export default function FeedFilters({ onFilterChange }: FeedFiltersProps) {
               &quot;{search}&quot;
               <button
                 onClick={() => {
-                  setSearch('')
-                  handleFilterChange(undefined, undefined, '')
+                  setSearch("");
+                  handleFilterChange(undefined, undefined, "");
                 }}
                 className="text-purple-600 hover:text-purple-800"
               >
@@ -149,10 +157,10 @@ export default function FeedFilters({ onFilterChange }: FeedFiltersProps) {
 
           <button
             onClick={() => {
-              setCategory('')
-              setAuthorRole('')
-              setSearch('')
-              onFilterChange({})
+              setCategory("");
+              setAuthorRole("");
+              setSearch("");
+              onFilterChange({});
             }}
             className="text-sm text-gray-600 hover:text-gray-800 underline"
           >
@@ -161,5 +169,5 @@ export default function FeedFilters({ onFilterChange }: FeedFiltersProps) {
         </div>
       )}
     </div>
-  )
+  );
 }

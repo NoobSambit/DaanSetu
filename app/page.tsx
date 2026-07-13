@@ -9,11 +9,8 @@ import ImpactDashboard from "@/components/landing/ImpactDashboard";
 import StorySection from "@/components/landing/StorySection";
 import CommunityCTA from "@/components/landing/CommunityCTA";
 import Footer from "@/components/landing/Footer";
-import { getPublicImpact } from "@/lib/repositories/impact";
 
-export const dynamic = 'force-dynamic'
-export default async function Home() {
-  const impact = await getPublicImpact()
+export default function Home() {
   return (
     <>
       <Navbar />
@@ -21,10 +18,10 @@ export default async function Home() {
         <HeroSection />
         <FeatureCards />
         <HowItWorks />
-        <CausesSection campaigns={impact.featuredCampaigns} locations={impact.locations} />
+        <CausesSection />
         <TrustSection />
         <ImpactWays />
-        <ImpactDashboard data={impact} />
+        <ImpactDashboard />
         <StorySection />
       </main>
 
@@ -33,7 +30,10 @@ export default async function Home() {
         {/* Background Image */}
         <div
           className="absolute inset-0 bg-cover bg-no-repeat pointer-events-none"
-          style={{ backgroundImage: "url('/landing_page_images/footer_image.png')", backgroundPosition: "center 80%" }}
+          style={{
+            backgroundImage: "url('/landing_page_images/footer_image.png')",
+            backgroundPosition: "center 80%",
+          }}
         />
         {/* Smooth transition from white StorySection into the sky-blue image top */}
         <div className="absolute top-0 left-0 right-0 h-10 bg-gradient-to-b from-white to-transparent pointer-events-none" />

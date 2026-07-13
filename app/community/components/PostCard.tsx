@@ -1,102 +1,110 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import type { PostWithAuthor, PostCommentWithUser } from '@/lib/services/posts'
-import { POST_CATEGORY_LABELS } from '@/lib/services/posts'
-import { formatDistanceToNow } from 'date-fns'
-import Image from 'next/image'
+import { useState } from "react";
+import type { PostWithAuthor, PostCommentWithUser } from "@/lib/services/posts";
+import { POST_CATEGORY_LABELS } from "@/lib/services/posts";
+import { formatDistanceToNow } from "date-fns";
+import Image from "next/image";
 
 interface PostCardProps {
-  post: PostWithAuthor
-  userId: string
-  onUpdate: (post: PostWithAuthor) => void
-  onDelete: (postId: string) => void
+  post: PostWithAuthor;
+  userId: string;
+  onUpdate: (post: PostWithAuthor) => void;
+  onDelete: (postId: string) => void;
 }
 
-export default function PostCard({ post, userId, onUpdate, onDelete }: PostCardProps) {
-  const [isLiked, setIsLiked] = useState(post.user_has_liked || false)
-  const [likeCount, setLikeCount] = useState(post.like_count)
-  const [commentCount, setCommentCount] = useState(post.comment_count)
-  const [showComments, setShowComments] = useState(false)
-  const [comments, setComments] = useState<PostCommentWithUser[]>([])
-  const [newComment, setNewComment] = useState('')
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isLoadingComments, setIsLoadingComments] = useState(false)
+export default function PostCard({
+  post,
+  userId,
+  onUpdate,
+  onDelete,
+}: PostCardProps) {
+  const [isLiked, setIsLiked] = useState(post.user_has_liked || false);
+  const [likeCount, setLikeCount] = useState(post.like_count);
+  const [commentCount, setCommentCount] = useState(post.comment_count);
+  const [showComments, setShowComments] = useState(false);
+  const [comments, setComments] = useState<PostCommentWithUser[]>([]);
+  const [newComment, setNewComment] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingComments, setIsLoadingComments] = useState(false);
 
   const handleLike = async () => {
     try {
-      const response = await fetch('/api/posts/like', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ postId: post.id, action: isLiked ? 'unlike' : 'like' })
-      })
+      const response = await fetch("/api/posts/like", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          postId: post.id,
+          action: isLiked ? "unlike" : "like",
+        }),
+      });
 
       if (response.ok) {
-        setIsLiked(!isLiked)
-        setLikeCount(isLiked ? likeCount - 1 : likeCount + 1)
+        setIsLiked(!isLiked);
+        setLikeCount(isLiked ? likeCount - 1 : likeCount + 1);
       }
     } catch (error) {
-      console.error('Error toggling like:', error)
+      console.error("Error toggling like:", error);
     }
-  }
+  };
 
   const loadComments = async () => {
     if (comments.length > 0) {
-      setShowComments(!showComments)
-      return
+      setShowComments(!showComments);
+      return;
     }
 
-    setIsLoadingComments(true)
+    setIsLoadingComments(true);
     try {
-      const response = await fetch(`/api/posts/${post.id}/comments`)
+      const response = await fetch(`/api/posts/${post.id}/comments`);
       if (response.ok) {
-        const data = await response.json()
-        setComments(data)
-        setShowComments(true)
+        const data = await response.json();
+        setComments(data);
+        setShowComments(true);
       }
     } catch (error) {
-      console.error('Error loading comments:', error)
+      console.error("Error loading comments:", error);
     } finally {
-      setIsLoadingComments(false)
+      setIsLoadingComments(false);
     }
-  }
+  };
 
   const handleAddComment = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!newComment.trim()) return
+    e.preventDefault();
+    if (!newComment.trim()) return;
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
     try {
-      const response = await fetch('/api/posts/comment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ postId: post.id, content: newComment })
-      })
+      const response = await fetch("/api/posts/comment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ postId: post.id, content: newComment }),
+      });
 
       if (response.ok) {
-        const comment = await response.json()
-        setComments([...comments, comment])
-        setCommentCount(commentCount + 1)
-        setNewComment('')
+        const comment = await response.json();
+        setComments([...comments, comment]);
+        setCommentCount(commentCount + 1);
+        setNewComment("");
       }
     } catch (error) {
-      console.error('Error adding comment:', error)
+      console.error("Error adding comment:", error);
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   const categoryColors: Record<string, string> = {
-    update: 'bg-blue-100 text-blue-800',
-    story: 'bg-green-100 text-green-800',
-    announcement: 'bg-purple-100 text-purple-800'
-  }
+    update: "bg-blue-100 text-blue-800",
+    story: "bg-green-100 text-green-800",
+    announcement: "bg-purple-100 text-purple-800",
+  };
 
   const roleLabels: Record<string, string> = {
-    ngo: 'NGO',
-    corporate: 'Corporate',
-    admin: 'Admin'
-  }
+    ngo: "NGO",
+    corporate: "Corporate",
+    admin: "Admin",
+  };
 
   return (
     <div className="bg-white rounded-lg shadow-sm overflow-hidden">
@@ -116,11 +124,17 @@ export default function PostCard({ post, userId, onUpdate, onDelete }: PostCardP
                   {roleLabels[post.author_role]}
                 </span>
                 <span>•</span>
-                <span>{formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}</span>
+                <span>
+                  {formatDistanceToNow(new Date(post.created_at), {
+                    addSuffix: true,
+                  })}
+                </span>
               </div>
             </div>
           </div>
-          <span className={`px-3 py-1 rounded-full text-xs font-medium ${categoryColors[post.category]}`}>
+          <span
+            className={`px-3 py-1 rounded-full text-xs font-medium ${categoryColors[post.category]}`}
+          >
             {POST_CATEGORY_LABELS[post.category]}
           </span>
         </div>
@@ -142,8 +156,12 @@ export default function PostCard({ post, userId, onUpdate, onDelete }: PostCardP
 
         {/* Engagement Stats */}
         <div className="flex items-center space-x-6 text-sm text-gray-500 mb-4">
-          <span>{likeCount} {likeCount === 1 ? 'like' : 'likes'}</span>
-          <span>{commentCount} {commentCount === 1 ? 'comment' : 'comments'}</span>
+          <span>
+            {likeCount} {likeCount === 1 ? "like" : "likes"}
+          </span>
+          <span>
+            {commentCount} {commentCount === 1 ? "comment" : "comments"}
+          </span>
         </div>
 
         {/* Action Buttons */}
@@ -152,12 +170,22 @@ export default function PostCard({ post, userId, onUpdate, onDelete }: PostCardP
             onClick={handleLike}
             className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition ${
               isLiked
-                ? 'text-blue-600 bg-blue-50'
-                : 'text-gray-600 hover:bg-gray-50'
+                ? "text-blue-600 bg-blue-50"
+                : "text-gray-600 hover:bg-gray-50"
             }`}
           >
-            <svg className="w-5 h-5" fill={isLiked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+            <svg
+              className="w-5 h-5"
+              fill={isLiked ? "currentColor" : "none"}
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+              />
             </svg>
             <span>Like</span>
           </button>
@@ -165,8 +193,18 @@ export default function PostCard({ post, userId, onUpdate, onDelete }: PostCardP
             onClick={loadComments}
             className="flex items-center space-x-2 px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-50 transition"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+              />
             </svg>
             <span>Comment</span>
           </button>
@@ -191,7 +229,7 @@ export default function PostCard({ post, userId, onUpdate, onDelete }: PostCardP
                 disabled={!newComment.trim() || isSubmitting}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
               >
-                {isSubmitting ? 'Posting...' : 'Post'}
+                {isSubmitting ? "Posting..." : "Post"}
               </button>
             </div>
           </form>
@@ -213,9 +251,13 @@ export default function PostCard({ post, userId, onUpdate, onDelete }: PostCardP
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-1">
-                        <span className="font-semibold text-sm text-gray-900">{comment.user.name}</span>
+                        <span className="font-semibold text-sm text-gray-900">
+                          {comment.user.name}
+                        </span>
                         <span className="text-xs text-gray-500">
-                          {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
+                          {formatDistanceToNow(new Date(comment.created_at), {
+                            addSuffix: true,
+                          })}
                         </span>
                       </div>
                       <p className="text-gray-700 text-sm">{comment.content}</p>
@@ -225,10 +267,12 @@ export default function PostCard({ post, userId, onUpdate, onDelete }: PostCardP
               ))}
             </div>
           ) : (
-            <p className="text-center text-gray-500 py-4">No comments yet. Be the first to comment!</p>
+            <p className="text-center text-gray-500 py-4">
+              No comments yet. Be the first to comment!
+            </p>
           )}
         </div>
       )}
     </div>
-  )
+  );
 }

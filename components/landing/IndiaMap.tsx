@@ -14,15 +14,69 @@ const createCustomIcon = (color: string) => {
   });
 };
 
-export default function IndiaMap({ markers }: { markers: Array<{ id: string; latitude: number; longitude: number; name: string }> }) {
+const markers = [
+  {
+    id: 1,
+    position: [28.6139, 77.209] as [number, number],
+    color: "#3b82f6",
+    label: "Delhi",
+  },
+  {
+    id: 2,
+    position: [19.076, 72.8777] as [number, number],
+    color: "#ef4444",
+    label: "Mumbai",
+  },
+  {
+    id: 3,
+    position: [12.9716, 77.5946] as [number, number],
+    color: "#22c55e",
+    label: "Bangalore",
+  },
+  {
+    id: 4,
+    position: [22.5726, 88.3639] as [number, number],
+    color: "#f59e0b",
+    label: "Kolkata",
+  },
+  {
+    id: 5,
+    position: [17.385, 78.4867] as [number, number],
+    color: "#a855f7",
+    label: "Hyderabad",
+  },
+  {
+    id: 6,
+    position: [23.0225, 72.5714] as [number, number],
+    color: "#f97316",
+    label: "Ahmedabad",
+  },
+  {
+    id: 7,
+    position: [13.0827, 80.2707] as [number, number],
+    color: "#06b6d4",
+    label: "Chennai",
+  },
+  {
+    id: 8,
+    position: [26.9124, 75.7873] as [number, number],
+    color: "#ec4899",
+    label: "Jaipur",
+  },
+];
+
+export default function IndiaMap() {
   // Bounding box for India to prevent panning outside
   const indiaBounds = L.latLngBounds(
     [6.5, 68.0], // South-West
-    [35.5, 97.5] // North-East
+    [35.5, 97.5], // North-East
   );
 
   return (
-    <div className="w-full h-full rounded-[24px] overflow-hidden relative" style={{ zIndex: 0 }}>
+    <div
+      className="w-full h-full rounded-[24px] overflow-hidden relative"
+      style={{ zIndex: 0 }}
+    >
       <style>{`
         /* Apply a subtle blue/slate tint to the map tiles to match the landing page theme */
         .theme-tiles {
@@ -51,7 +105,12 @@ export default function IndiaMap({ markers }: { markers: Array<{ id: string; lat
         scrollWheelZoom={true}
         zoomControl={true}
         zoomSnap={0.5}
-        style={{ height: "100%", width: "100%", zIndex: 0, backgroundColor: "#f0f4f8" }}
+        style={{
+          height: "100%",
+          width: "100%",
+          zIndex: 0,
+          backgroundColor: "#f0f4f8",
+        }}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -59,20 +118,23 @@ export default function IndiaMap({ markers }: { markers: Array<{ id: string; lat
           className="theme-tiles"
         />
         {markers.map((marker) => (
-          <Marker 
+          <Marker
             key={marker.id}
-            position={[marker.latitude, marker.longitude]}
-            icon={createCustomIcon("#2563eb")}
+            position={marker.position}
+            icon={createCustomIcon(marker.color)}
           >
             <Popup>
-              <div className="text-xs font-semibold">{marker.name}</div>
+              <div className="text-xs font-semibold">{marker.label}</div>
             </Popup>
           </Marker>
         ))}
       </MapContainer>
-      
+
       {/* Overlay gradient to blend edges slightly (optional) */}
-      <div className="absolute inset-0 pointer-events-none rounded-[24px] shadow-inner" style={{ zIndex: 10 }}></div>
+      <div
+        className="absolute inset-0 pointer-events-none rounded-[24px] shadow-inner"
+        style={{ zIndex: 10 }}
+      ></div>
     </div>
   );
 }

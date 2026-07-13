@@ -10,7 +10,8 @@ const features = [
     icon: Heart,
     iconBg: "bg-blue-600",
     title: "Give with Confidence",
-    description: "Discover verified NGOs, donate securely, and create lasting impact.",
+    description:
+      "Discover verified NGOs, donate securely, and create lasting impact.",
     cta: "Start Giving",
     btnBg: "bg-blue-600 hover:bg-blue-700",
   },
@@ -19,7 +20,8 @@ const features = [
     icon: Users,
     iconBg: "bg-emerald-600",
     title: "Volunteer Your Skills",
-    description: "Find opportunities that match your skills, interests, and availability.",
+    description:
+      "Find opportunities that match your skills, interests, and availability.",
     cta: "Find Opportunities",
     btnBg: "bg-emerald-600 hover:bg-emerald-700",
   },
@@ -28,7 +30,8 @@ const features = [
     icon: TrendingUp,
     iconBg: "bg-orange-600",
     title: "Grow Your Impact",
-    description: "Raise funds, engage volunteers, share updates, and measure results.",
+    description:
+      "Raise funds, engage volunteers, share updates, and measure results.",
     cta: "Register Your NGO",
     btnBg: "bg-orange-600 hover:bg-orange-700",
   },
@@ -79,7 +82,9 @@ export default function FeatureCards() {
                   <p className="text-xs text-body leading-relaxed mb-5 flex-1">
                     {feature.description}
                   </p>
-                  <button className={`px-4 py-2 rounded-lg text-xs font-semibold text-white ${feature.btnBg} transition-all inline-flex items-center gap-1.5 self-start shadow-sm`}>
+                  <button
+                    className={`px-4 py-2 rounded-lg text-xs font-semibold text-white ${feature.btnBg} transition-all inline-flex items-center gap-1.5 self-start shadow-sm`}
+                  >
                     {feature.cta}
                   </button>
                 </div>

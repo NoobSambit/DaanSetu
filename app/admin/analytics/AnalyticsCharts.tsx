@@ -1,17 +1,31 @@
-'use client'
+"use client";
 
-import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Legend,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 interface AnalyticsChartsProps {
-  donationsByRegion: Array<{ region: string; amount: number }>
-  campaignsByCategory: Array<{ category: string; count: number }>
+  donationsByRegion: Array<{ region: string; amount: number }>;
+  campaignsByCategory: Array<{ category: string; count: number }>;
 }
 
-export default function AnalyticsCharts({ donationsByRegion, campaignsByCategory }: AnalyticsChartsProps) {
+export default function AnalyticsCharts({
+  donationsByRegion,
+  campaignsByCategory,
+}: AnalyticsChartsProps) {
   return (
     <div className="grid md:grid-cols-2 gap-8 mb-8">
       <div className="bg-white rounded-lg shadow-sm p-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Top 10 Cities by Donations</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">
+          Top 10 Cities by Donations
+        </h2>
         {donationsByRegion.length > 0 ? (
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={donationsByRegion} layout="vertical">
@@ -24,12 +38,16 @@ export default function AnalyticsCharts({ donationsByRegion, campaignsByCategory
             </BarChart>
           </ResponsiveContainer>
         ) : (
-          <p className="text-gray-500 text-center py-12">No regional data available</p>
+          <p className="text-gray-500 text-center py-12">
+            No regional data available
+          </p>
         )}
       </div>
 
       <div className="bg-white rounded-lg shadow-sm p-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Campaigns by Category</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">
+          Campaigns by Category
+        </h2>
         {campaignsByCategory.length > 0 ? (
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={campaignsByCategory}>
@@ -42,9 +60,11 @@ export default function AnalyticsCharts({ donationsByRegion, campaignsByCategory
             </BarChart>
           </ResponsiveContainer>
         ) : (
-          <p className="text-gray-500 text-center py-12">No campaign data available</p>
+          <p className="text-gray-500 text-center py-12">
+            No campaign data available
+          </p>
         )}
       </div>
     </div>
-  )
+  );
 }

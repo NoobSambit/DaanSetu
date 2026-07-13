@@ -1,6 +1,6 @@
-import type { Metadata } from 'next'
-import Link from 'next/link'
-import { redirect } from 'next/navigation'
+import type { Metadata } from "next";
+import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import {
   AlertTriangle,
@@ -24,38 +24,47 @@ import {
   Target,
   TrendingUp,
   Users,
-} from 'lucide-react'
+} from "lucide-react";
 
-import { signOutAction } from '@/app/auth/actions'
-import { getUserRole } from '@/lib/auth/profile'
-import { calculateNgoProfileCompletion, NGO_CAUSE_LABELS } from '@/lib/ngo/profile'
-import { createClient } from '@/lib/supabase/server'
+import { signOutAction } from "@/app/auth/actions";
+import { getUserRole } from "@/lib/auth/profile";
+import {
+  calculateNgoProfileCompletion,
+  NGO_CAUSE_LABELS,
+} from "@/lib/ngo/profile";
+import { createClient } from "@/lib/supabase/server";
 
-export const metadata: Metadata = { title: 'NGO Dashboard | DaanSetu' }
-export const dynamic = 'force-dynamic'
+export const metadata: Metadata = { title: "NGO Dashboard | DaanSetu" };
+export const dynamic = "force-dynamic";
 
 function assetUrl(path: string | null) {
-  const base = process.env.NEXT_PUBLIC_SUPABASE_URL
-  if (!path || !base) return null
-  return `${base}/storage/v1/object/public/ngos/${path.split('/').map(encodeURIComponent).join('/')}`
+  const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!path || !base) return null;
+  return `${base}/storage/v1/object/public/ngos/${path.split("/").map(encodeURIComponent).join("/")}`;
 }
 
 function formatNumber(value: number | null | undefined) {
-  if (value == null) return '—'
-  return new Intl.NumberFormat('en-IN', {
-    notation: value >= 10000 ? 'compact' : 'standard',
+  if (value == null) return "—";
+  return new Intl.NumberFormat("en-IN", {
+    notation: value >= 10000 ? "compact" : "standard",
     maximumFractionDigits: 1,
-  }).format(value)
+  }).format(value);
 }
 
 export default async function NgoDashboardPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/sign-in?next=/ngo/dashboard')
-  if ((await getUserRole(supabase, user.id)) !== 'ngo') redirect('/dashboard')
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/sign-in?next=/ngo/dashboard");
+  if ((await getUserRole(supabase, user.id)) !== "ngo") redirect("/dashboard");
 
-  const { data: ngo } = await supabase.from('ngos').select('*').eq('user_id', user.id).maybeSingle()
-  if (!ngo) redirect('/ngo/profile')
+  const { data: ngo } = await supabase
+    .from("ngos")
+    .select("*")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (!ngo) redirect("/ngo/profile");
 
   const [
     verificationResult,
@@ -64,23 +73,60 @@ export default async function NgoDashboardPage() {
     followersResult,
     notificationsResult,
   ] = await Promise.allSettled([
-    supabase.from('ngo_verifications').select('verification_status').eq('ngo_id', ngo.id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
-    supabase.from('campaigns').select('id', { count: 'exact', head: true }).eq('ngo_id', ngo.id).eq('status', 'active'),
-    supabase.from('volunteer_opportunities').select('id', { count: 'exact', head: true }).eq('ngo_id', ngo.id).eq('status', 'active'),
-    supabase.rpc('get_follower_count', { entity_uuid: ngo.id, entity_type_param: 'ngo' }),
-    supabase.from('notifications').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('is_read', false),
-  ])
+    supabase
+      .from("ngo_verifications")
+      .select("verification_status")
+      .eq("ngo_id", ngo.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("campaigns")
+      .select("id", { count: "exact", head: true })
+      .eq("ngo_id", ngo.id)
+      .eq("status", "active"),
+    supabase
+      .from("volunteer_opportunities")
+      .select("id", { count: "exact", head: true })
+      .eq("ngo_id", ngo.id)
+      .eq("status", "active"),
+    supabase.rpc("get_follower_count", {
+      entity_uuid: ngo.id,
+      entity_type_param: "ngo",
+    }),
+    supabase
+      .from("notifications")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .eq("is_read", false),
+  ]);
 
-  const verification = verificationResult.status === 'fulfilled' ? verificationResult.value.data : null
-  const campaignsCount = campaignsResult.status === 'fulfilled' ? campaignsResult.value.count ?? 0 : 0
-  const volunteersCount = volunteersResult.status === 'fulfilled' ? volunteersResult.value.count ?? 0 : 0
-  const followerCount = followersResult.status === 'fulfilled' ? Number(followersResult.value.data ?? 0) : 0
-  const unreadCount = notificationsResult.status === 'fulfilled' ? notificationsResult.value.count ?? 0 : 0
+  const verification =
+    verificationResult.status === "fulfilled"
+      ? verificationResult.value.data
+      : null;
+  const campaignsCount =
+    campaignsResult.status === "fulfilled"
+      ? (campaignsResult.value.count ?? 0)
+      : 0;
+  const volunteersCount =
+    volunteersResult.status === "fulfilled"
+      ? (volunteersResult.value.count ?? 0)
+      : 0;
+  const followerCount =
+    followersResult.status === "fulfilled"
+      ? Number(followersResult.value.data ?? 0)
+      : 0;
+  const unreadCount =
+    notificationsResult.status === "fulfilled"
+      ? (notificationsResult.value.count ?? 0)
+      : 0;
 
-  const displayName = ngo.display_name ?? ngo.name ?? 'Your Organization'
-  const logo = assetUrl(ngo.logo_path)
-  const verificationStatus = verification?.verification_status ?? 'not-submitted'
-  const isPublished = ngo.profile_status === 'published'
+  const displayName = ngo.display_name ?? ngo.name ?? "Your Organization";
+  const logo = assetUrl(ngo.logo_path);
+  const verificationStatus =
+    verification?.verification_status ?? "not-submitted";
+  const isPublished = ngo.profile_status === "published";
 
   const profileInput = {
     legalName: ngo.legal_name,
@@ -119,36 +165,86 @@ export default async function NgoDashboardPage() {
     isDiscoverable: ngo.is_discoverable,
     acceptsDonations: ngo.accepts_donations,
     acceptsVolunteers: ngo.accepts_volunteers,
-  }
+  };
   const completion = calculateNgoProfileCompletion(profileInput, {
     verificationStatus: verification?.verification_status,
     onboardingStep: ngo.onboarding_step,
-  })
+  });
 
-  const primaryCause = typeof ngo.category === 'string' && ngo.category in NGO_CAUSE_LABELS
-    ? NGO_CAUSE_LABELS[ngo.category as keyof typeof NGO_CAUSE_LABELS]
-    : null
+  const primaryCause =
+    typeof ngo.category === "string" && ngo.category in NGO_CAUSE_LABELS
+      ? NGO_CAUSE_LABELS[ngo.category as keyof typeof NGO_CAUSE_LABELS]
+      : null;
 
   const quickActions = [
-    { label: 'Edit Profile', href: '/ngo/profile', icon: PenSquare, description: 'Update your organization details' },
-    ...(isPublished ? [{ label: 'View Public Profile', href: `/ngos/${ngo.id}`, icon: Globe2, description: 'See how supporters see you' }] : []),
-    { label: 'Notifications', href: '/notifications', icon: Bell, description: `${unreadCount} unread`, badge: unreadCount > 0 ? unreadCount : null },
-    { label: 'Settings', href: '/ngo/profile', icon: Settings, description: 'Manage account settings' },
-  ]
+    {
+      label: "Edit Profile",
+      href: "/ngo/profile",
+      icon: PenSquare,
+      description: "Update your organization details",
+    },
+    ...(isPublished
+      ? [
+          {
+            label: "View Public Profile",
+            href: `/ngos/${ngo.id}`,
+            icon: Globe2,
+            description: "See how supporters see you",
+          },
+        ]
+      : []),
+    {
+      label: "Notifications",
+      href: "/notifications",
+      icon: Bell,
+      description: `${unreadCount} unread`,
+      badge: unreadCount > 0 ? unreadCount : null,
+    },
+    {
+      label: "Settings",
+      href: "/ngo/profile",
+      icon: Settings,
+      description: "Manage account settings",
+    },
+  ];
 
   const stats = [
-    { label: 'Followers', value: formatNumber(followerCount), icon: Users, color: 'text-blue-600 bg-blue-50' },
-    { label: 'Active Campaigns', value: String(campaignsCount), icon: Target, color: 'text-emerald-600 bg-emerald-50' },
-    { label: 'Volunteer Ops', value: String(volunteersCount), icon: Heart, color: 'text-rose-600 bg-rose-50' },
-    { label: 'Beneficiaries', value: formatNumber(ngo.beneficiaries_reached), icon: TrendingUp, color: 'text-amber-600 bg-amber-50' },
-  ]
+    {
+      label: "Followers",
+      value: formatNumber(followerCount),
+      icon: Users,
+      color: "text-blue-600 bg-blue-50",
+    },
+    {
+      label: "Active Campaigns",
+      value: String(campaignsCount),
+      icon: Target,
+      color: "text-emerald-600 bg-emerald-50",
+    },
+    {
+      label: "Volunteer Ops",
+      value: String(volunteersCount),
+      icon: Heart,
+      color: "text-rose-600 bg-rose-50",
+    },
+    {
+      label: "Beneficiaries",
+      value: formatNumber(ngo.beneficiaries_reached),
+      icon: TrendingUp,
+      color: "text-amber-600 bg-amber-50",
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-[#f8fafc]">
       {/* Dashboard Header */}
       <header className="sticky top-0 z-50 h-14 border-b border-slate-200/80 bg-white/95 backdrop-blur">
         <div className="flex h-full items-center gap-4 px-4 sm:px-6 lg:px-8">
-          <Link href="/ngo/dashboard" className="flex shrink-0 items-center gap-2" aria-label="DaanSetu Dashboard">
+          <Link
+            href="/ngo/dashboard"
+            className="flex shrink-0 items-center gap-2"
+            aria-label="DaanSetu Dashboard"
+          >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <span className="relative flex h-8 w-8 items-center justify-center overflow-hidden rounded-lg">
               <img src="/logo.png" alt="" className="h-10 w-10 object-cover" />
@@ -161,7 +257,10 @@ export default async function NgoDashboardPage() {
             </span>
           </Link>
 
-          <nav className="ml-auto hidden items-center gap-1 md:flex" aria-label="Dashboard navigation">
+          <nav
+            className="ml-auto hidden items-center gap-1 md:flex"
+            aria-label="Dashboard navigation"
+          >
             <Link
               href="/ngo/dashboard"
               className="flex items-center gap-2 rounded-lg bg-blue-50 px-3.5 py-1.5 text-[13px] font-semibold text-blue-600"
@@ -188,11 +287,15 @@ export default async function NgoDashboardPage() {
           </nav>
 
           <div className="ml-auto flex items-center gap-2.5 md:ml-4">
-            <Link href="/notifications" className="relative rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-700" aria-label="Notifications">
+            <Link
+              href="/notifications"
+              className="relative rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+              aria-label="Notifications"
+            >
               <Bell className="h-4 w-4" />
               {unreadCount > 0 && (
                 <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
-                  {unreadCount > 9 ? '9+' : unreadCount}
+                  {unreadCount > 9 ? "9+" : unreadCount}
                 </span>
               )}
             </Link>
@@ -201,10 +304,14 @@ export default async function NgoDashboardPage() {
                 /* eslint-disable-next-line @next/next/no-img-element */
                 <img src={logo} alt="" className="h-full w-full object-cover" />
               ) : (
-                <span className="text-sm font-bold text-slate-500">{displayName.slice(0, 1)}</span>
+                <span className="text-sm font-bold text-slate-500">
+                  {displayName.slice(0, 1)}
+                </span>
               )}
             </div>
-            <span className="hidden text-[13px] font-medium text-slate-500 lg:block max-w-[150px] truncate">{user.email}</span>
+            <span className="hidden text-[13px] font-medium text-slate-500 lg:block max-w-[150px] truncate">
+              {user.email}
+            </span>
             <form action={signOutAction}>
               <button
                 type="submit"
@@ -228,25 +335,35 @@ export default async function NgoDashboardPage() {
                 <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-2 border-white/20 bg-white/10 shadow-lg backdrop-blur-sm">
                   {logo ? (
                     /* eslint-disable-next-line @next/next/no-img-element */
-                    <img src={logo} alt="" className="h-full w-full rounded-xl object-cover" />
+                    <img
+                      src={logo}
+                      alt=""
+                      className="h-full w-full rounded-xl object-cover"
+                    />
                   ) : (
                     <Building2 className="h-8 w-8 text-white/80" />
                   )}
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">{displayName}</h1>
+                  <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+                    {displayName}
+                  </h1>
                   <div className="mt-2 flex flex-wrap items-center gap-3">
                     {primaryCause && (
-                      <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white/90 backdrop-blur-sm">{primaryCause}</span>
+                      <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white/90 backdrop-blur-sm">
+                        {primaryCause}
+                      </span>
                     )}
                     {(ngo.city || ngo.state) && (
                       <span className="flex items-center gap-1 text-sm text-white/70">
                         <MapPin className="h-3.5 w-3.5" />
-                        {[ngo.city, ngo.state].filter(Boolean).join(', ')}
+                        {[ngo.city, ngo.state].filter(Boolean).join(", ")}
                       </span>
                     )}
-                    <span className={`rounded-full px-3 py-1 text-xs font-bold ${isPublished ? 'bg-emerald-400/20 text-emerald-300' : 'bg-amber-400/20 text-amber-300'}`}>
-                      {isPublished ? '● Published' : '○ Draft'}
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-bold ${isPublished ? "bg-emerald-400/20 text-emerald-300" : "bg-amber-400/20 text-amber-300"}`}
+                    >
+                      {isPublished ? "● Published" : "○ Draft"}
                     </span>
                   </div>
                 </div>
@@ -277,8 +394,12 @@ export default async function NgoDashboardPage() {
             <div className="flex items-center gap-4 border-t border-slate-100 px-6 py-3.5 sm:px-8">
               <div className="flex-1">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="font-semibold text-slate-700">Profile Completion</span>
-                  <span className="font-bold text-blue-600">{completion.percentage}%</span>
+                  <span className="font-semibold text-slate-700">
+                    Profile Completion
+                  </span>
+                  <span className="font-bold text-blue-600">
+                    {completion.percentage}%
+                  </span>
                 </div>
                 <div className="mt-2 h-2 rounded-full bg-slate-100">
                   <div
@@ -298,20 +419,32 @@ export default async function NgoDashboardPage() {
         </section>
 
         {/* Stats Grid */}
-        <section className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4" aria-label="Key metrics">
+        <section
+          className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4"
+          aria-label="Key metrics"
+        >
           {stats.map((stat) => {
-            const Icon = stat.icon
+            const Icon = stat.icon;
             return (
-              <div key={stat.label} className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-                <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${stat.color}`}>
+              <div
+                key={stat.label}
+                className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+              >
+                <div
+                  className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${stat.color}`}
+                >
                   <Icon className="h-5 w-5" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold tracking-tight text-slate-900">{stat.value}</p>
-                  <p className="mt-0.5 text-xs font-medium text-slate-500">{stat.label}</p>
+                  <p className="text-2xl font-bold tracking-tight text-slate-900">
+                    {stat.value}
+                  </p>
+                  <p className="mt-0.5 text-xs font-medium text-slate-500">
+                    {stat.label}
+                  </p>
                 </div>
               </div>
-            )
+            );
           })}
         </section>
 
@@ -325,7 +458,7 @@ export default async function NgoDashboardPage() {
             </h2>
             <div className="mt-4 space-y-2">
               {quickActions.map((action) => {
-                const Icon = action.icon
+                const Icon = action.icon;
                 return (
                   <Link
                     key={action.label}
@@ -336,17 +469,21 @@ export default async function NgoDashboardPage() {
                       <Icon className="h-4 w-4" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold text-slate-800">{action.label}</p>
-                      <p className="mt-0.5 text-xs text-slate-500">{action.description}</p>
+                      <p className="text-sm font-semibold text-slate-800">
+                        {action.label}
+                      </p>
+                      <p className="mt-0.5 text-xs text-slate-500">
+                        {action.description}
+                      </p>
                     </div>
-                    {'badge' in action && action.badge != null && (
+                    {"badge" in action && action.badge != null && (
                       <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white">
-                        {action.badge > 9 ? '9+' : action.badge}
+                        {action.badge > 9 ? "9+" : action.badge}
                       </span>
                     )}
                     <ArrowRight className="h-4 w-4 shrink-0 text-slate-400" />
                   </Link>
-                )
+                );
               })}
             </div>
           </section>
@@ -362,11 +499,21 @@ export default async function NgoDashboardPage() {
               {/* Verification Status */}
               <div className="rounded-xl border border-slate-100 p-4">
                 <div className="flex items-center gap-2.5">
-                  <ShieldCheck className={`h-5 w-5 ${verificationStatus === 'verified' ? 'text-emerald-500' : verificationStatus === 'pending' ? 'text-amber-500' : 'text-slate-400'}`} />
+                  <ShieldCheck
+                    className={`h-5 w-5 ${verificationStatus === "verified" ? "text-emerald-500" : verificationStatus === "pending" ? "text-amber-500" : "text-slate-400"}`}
+                  />
                   <div>
-                    <p className="text-sm font-semibold text-slate-800">Verification</p>
-                    <p className={`mt-0.5 text-xs font-bold ${verificationStatus === 'verified' ? 'text-emerald-600' : verificationStatus === 'pending' ? 'text-amber-600' : 'text-slate-500'}`}>
-                      {verificationStatus === 'verified' ? 'Verified ✓' : verificationStatus === 'pending' ? 'Under Review' : 'Not Submitted'}
+                    <p className="text-sm font-semibold text-slate-800">
+                      Verification
+                    </p>
+                    <p
+                      className={`mt-0.5 text-xs font-bold ${verificationStatus === "verified" ? "text-emerald-600" : verificationStatus === "pending" ? "text-amber-600" : "text-slate-500"}`}
+                    >
+                      {verificationStatus === "verified"
+                        ? "Verified ✓"
+                        : verificationStatus === "pending"
+                          ? "Under Review"
+                          : "Not Submitted"}
                     </p>
                   </div>
                 </div>
@@ -375,11 +522,19 @@ export default async function NgoDashboardPage() {
               {/* Profile Status */}
               <div className="rounded-xl border border-slate-100 p-4">
                 <div className="flex items-center gap-2.5">
-                  <CheckCircle2 className={`h-5 w-5 ${isPublished ? 'text-emerald-500' : 'text-slate-400'}`} />
+                  <CheckCircle2
+                    className={`h-5 w-5 ${isPublished ? "text-emerald-500" : "text-slate-400"}`}
+                  />
                   <div>
-                    <p className="text-sm font-semibold text-slate-800">Profile Status</p>
-                    <p className={`mt-0.5 text-xs font-bold ${isPublished ? 'text-emerald-600' : 'text-amber-600'}`}>
-                      {isPublished ? 'Published & Visible' : 'Draft — Not Public'}
+                    <p className="text-sm font-semibold text-slate-800">
+                      Profile Status
+                    </p>
+                    <p
+                      className={`mt-0.5 text-xs font-bold ${isPublished ? "text-emerald-600" : "text-amber-600"}`}
+                    >
+                      {isPublished
+                        ? "Published & Visible"
+                        : "Draft — Not Public"}
                     </p>
                   </div>
                 </div>
@@ -391,8 +546,14 @@ export default async function NgoDashboardPage() {
                   <div className="flex items-center gap-2.5">
                     <CalendarDays className="h-5 w-5 text-blue-500" />
                     <div>
-                      <p className="text-sm font-semibold text-slate-800">Founded</p>
-                      <p className="mt-0.5 text-xs font-bold text-slate-600">{ngo.founding_year} · {new Date().getFullYear() - ngo.founding_year}+ years active</p>
+                      <p className="text-sm font-semibold text-slate-800">
+                        Founded
+                      </p>
+                      <p className="mt-0.5 text-xs font-bold text-slate-600">
+                        {ngo.founding_year} ·{" "}
+                        {new Date().getFullYear() - ngo.founding_year}+ years
+                        active
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -404,8 +565,14 @@ export default async function NgoDashboardPage() {
                   <div className="flex items-center gap-2.5">
                     <MapPin className="h-5 w-5 text-violet-500" />
                     <div>
-                      <p className="text-sm font-semibold text-slate-800">Headquarters</p>
-                      <p className="mt-0.5 text-xs font-bold text-slate-600">{[ngo.city, ngo.state, ngo.country_code].filter(Boolean).join(', ')}</p>
+                      <p className="text-sm font-semibold text-slate-800">
+                        Headquarters
+                      </p>
+                      <p className="mt-0.5 text-xs font-bold text-slate-600">
+                        {[ngo.city, ngo.state, ngo.country_code]
+                          .filter(Boolean)
+                          .join(", ")}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -414,23 +581,41 @@ export default async function NgoDashboardPage() {
 
             {/* Activity Summary */}
             <div className="mt-5 rounded-xl border border-slate-100 bg-slate-50 p-4">
-              <h3 className="text-sm font-bold text-slate-800">Activity Summary</h3>
+              <h3 className="text-sm font-bold text-slate-800">
+                Activity Summary
+              </h3>
               <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
                 <div className="text-center">
-                  <p className="text-xl font-bold text-blue-600">{formatNumber(ngo.team_size)}</p>
-                  <p className="mt-0.5 text-[11px] font-medium text-slate-500">Team Members</p>
+                  <p className="text-xl font-bold text-blue-600">
+                    {formatNumber(ngo.team_size)}
+                  </p>
+                  <p className="mt-0.5 text-[11px] font-medium text-slate-500">
+                    Team Members
+                  </p>
                 </div>
                 <div className="text-center">
-                  <p className="text-xl font-bold text-emerald-600">{formatNumber(ngo.communities_served)}</p>
-                  <p className="mt-0.5 text-[11px] font-medium text-slate-500">Communities</p>
+                  <p className="text-xl font-bold text-emerald-600">
+                    {formatNumber(ngo.communities_served)}
+                  </p>
+                  <p className="mt-0.5 text-[11px] font-medium text-slate-500">
+                    Communities
+                  </p>
                 </div>
                 <div className="text-center">
-                  <p className="text-xl font-bold text-rose-600">{formatNumber(ngo.volunteers_engaged)}</p>
-                  <p className="mt-0.5 text-[11px] font-medium text-slate-500">Volunteers</p>
+                  <p className="text-xl font-bold text-rose-600">
+                    {formatNumber(ngo.volunteers_engaged)}
+                  </p>
+                  <p className="mt-0.5 text-[11px] font-medium text-slate-500">
+                    Volunteers
+                  </p>
                 </div>
                 <div className="text-center">
-                  <p className="text-xl font-bold text-amber-600">{formatNumber(ngo.beneficiaries_reached)}</p>
-                  <p className="mt-0.5 text-[11px] font-medium text-slate-500">Beneficiaries</p>
+                  <p className="text-xl font-bold text-amber-600">
+                    {formatNumber(ngo.beneficiaries_reached)}
+                  </p>
+                  <p className="mt-0.5 text-[11px] font-medium text-slate-500">
+                    Beneficiaries
+                  </p>
                 </div>
               </div>
             </div>
@@ -443,13 +628,16 @@ export default async function NgoDashboardPage() {
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600">
               <BarChart3 className="h-6 w-6" />
             </div>
-            <h3 className="mt-3 text-lg font-bold text-slate-900">More features coming soon</h3>
+            <h3 className="mt-3 text-lg font-bold text-slate-900">
+              More features coming soon
+            </h3>
             <p className="mt-2 text-sm leading-relaxed text-slate-500">
-              Campaign management, volunteer coordination, impact reports, donor analytics, and more are on the way. Stay tuned!
+              Campaign management, volunteer coordination, impact reports, donor
+              analytics, and more are on the way. Stay tuned!
             </p>
           </div>
         </section>
       </main>
     </div>
-  )
+  );
 }

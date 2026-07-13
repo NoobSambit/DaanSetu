@@ -1,8 +1,251 @@
-import Link from 'next/link'
-import { eq, sql } from 'drizzle-orm'
-import { requireSession } from '@/lib/auth/session'
-import { db } from '@/lib/db'
-import { donations, notifications, posts, volunteerApplications, volunteerHours } from '@/lib/db/schema'
-import { formatPaise } from '@/lib/domain/finance'
-export const dynamic='force-dynamic'
-export default async function DashboardPage(){const session=await requireSession();const[giving]=await db.select({amount:sql<number>`coalesce(sum(case when ${donations.status}='captured' then ${donations.amountPaise} else 0 end),0)::bigint`,count:sql<number>`count(case when ${donations.status}='captured' then 1 end)::int`}).from(donations).where(eq(donations.donorId,session.user.id));const[service]=await db.select({minutes:sql<number>`coalesce(sum(case when ${volunteerHours.status}='approved' then ${volunteerHours.minutes} else 0 end),0)::int`}).from(volunteerHours).innerJoin(volunteerApplications,eq(volunteerHours.applicationId,volunteerApplications.id)).where(eq(volunteerApplications.userId,session.user.id));const[community]=await db.select({posts:sql<number>`count(*)::int`}).from(posts).where(eq(posts.authorId,session.user.id));const[alerts]=await db.select({count:sql<number>`count(*)::int`}).from(notifications).where(eq(notifications.userId,session.user.id));const cards=[['Captured giving',formatPaise(giving.amount),'/dashboard/giving'],['Donations',String(giving.count),'/dashboard/giving'],['Approved service',`${(service.minutes/60).toFixed(1)} hours`,'/dashboard/volunteering'],['Community posts',String(community.posts),'/community'],['Notifications',String(alerts.count),'/notifications']];return <main className="min-h-screen bg-slate-50"><div className="mx-auto max-w-6xl px-4 py-10"><h1 className="text-3xl font-bold">Welcome, {session.user.name}</h1><p className="mt-2 text-slate-600">Your dashboard is calculated from captured payments and approved records.</p><div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{cards.map(([label,value,href])=><Link key={label} href={href} className="rounded-2xl border bg-white p-6 shadow-sm"><p className="text-sm text-slate-500">{label}</p><p className="mt-2 text-2xl font-bold">{value}</p></Link>)}</div><div className="mt-8 flex flex-wrap gap-3"><Link href="/campaigns" className="rounded-xl bg-blue-600 px-5 py-3 font-bold text-white">Discover campaigns</Link><Link href="/volunteer/opportunities" className="rounded-xl border bg-white px-5 py-3 font-bold">Find volunteer work</Link><Link href="/community/create" className="rounded-xl border bg-white px-5 py-3 font-bold">Share an update</Link></div></div></main>}
+import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
+import Link from "next/link";
+import type { DonationCause } from "@/lib/types/database.types";
+import AIRecommendations from "./components/AIRecommendations";
+import BadgesDisplay from "./components/BadgesDisplay";
+
+export const dynamic = "force-dynamic";
+
+interface DonationWithNGO {
+  id: string;
+  amount: number;
+  cause: DonationCause;
+  is_anonymous: boolean;
+  created_at: string;
+  ngos: {
+    id: string;
+    name: string;
+    category: string;
+  };
+}
+
+export default async function DashboardPage() {
+  const supabase = await createClient();
+
+  // Check authentication
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    redirect("/sign-in?next=/dashboard");
+  }
+
+  // Fetch user's donations with NGO details
+  const { data: donations, error: donationsError } = await supabase
+    .from("donations")
+    .select(
+      `
+      id,
+      amount,
+      cause,
+      is_anonymous,
+      created_at,
+      ngos (
+        id,
+        name,
+        category
+      )
+    `,
+    )
+    .order("created_at", { ascending: false });
+
+  const donationsList = (donations as unknown as DonationWithNGO[]) || [];
+
+  // Calculate stats
+  const totalAmount = donationsList.reduce(
+    (sum, donation) => sum + donation.amount,
+    0,
+  );
+  const totalDonations = donationsList.length;
+
+  const causeEmojis: Record<DonationCause, string> = {
+    education: "📚",
+    hunger: "🍲",
+    healthcare: "🏥",
+    disaster: "🆘",
+    general: "💝",
+  };
+
+  const causeLabels: Record<DonationCause, string> = {
+    education: "Education",
+    hunger: "Hunger Relief",
+    healthcare: "Healthcare",
+    disaster: "Disaster Relief",
+    general: "General",
+  };
+
+  return (
+    <div className="min-h-[calc(100vh-4rem)] bg-gray-50">
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+            My Dashboard
+          </h1>
+          <p className="text-gray-600">Track your donations and impact</p>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="grid md:grid-cols-2 gap-6 mb-8">
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 mb-1">
+                  Total Donated
+                </p>
+                <p className="text-3xl font-bold text-blue-600">
+                  ₹{totalAmount.toLocaleString("en-IN")}
+                </p>
+              </div>
+              <div className="bg-blue-100 p-4 rounded-full">
+                <svg
+                  className="w-8 h-8 text-blue-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 mb-1">
+                  Total Donations
+                </p>
+                <p className="text-3xl font-bold text-green-600">
+                  {totalDonations}
+                </p>
+              </div>
+              <div className="bg-green-100 p-4 rounded-full">
+                <svg
+                  className="w-8 h-8 text-green-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* AI Recommendations */}
+        <div className="mb-8">
+          <AIRecommendations userId={user.id} />
+        </div>
+
+        {/* Badges Display */}
+        <div className="mb-8">
+          <BadgesDisplay userId={user.id} />
+        </div>
+
+        {/* Donation History */}
+        <div className="bg-white rounded-lg shadow-sm">
+          <div className="p-6 border-b">
+            <h2 className="text-2xl font-bold text-gray-900">
+              Donation History
+            </h2>
+          </div>
+
+          {donationsList.length === 0 ? (
+            <div className="p-12 text-center">
+              <svg
+                className="w-16 h-16 text-gray-400 mx-auto mb-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <p className="text-lg font-medium text-gray-900 mb-2">
+                No donations yet
+              </p>
+              <p className="text-gray-600 mb-6">
+                Start making a difference by supporting NGOs
+              </p>
+              <Link
+                href="/ngos"
+                className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
+              >
+                Explore NGOs
+              </Link>
+            </div>
+          ) : (
+            <div className="divide-y">
+              {donationsList.map((donation) => (
+                <div
+                  key={donation.id}
+                  className="p-6 hover:bg-gray-50 transition"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <Link
+                        href={`/ngos/${donation.ngos.id}`}
+                        className="text-lg font-semibold text-gray-900 hover:text-blue-600 transition"
+                      >
+                        {donation.ngos.name}
+                      </Link>
+                      <div className="flex items-center gap-3 mt-2 text-sm text-gray-600">
+                        <span className="flex items-center">
+                          {causeEmojis[donation.cause]}{" "}
+                          {causeLabels[donation.cause]}
+                        </span>
+                        <span>•</span>
+                        <span>
+                          {new Date(donation.created_at).toLocaleDateString(
+                            "en-IN",
+                            {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            },
+                          )}
+                        </span>
+                        {donation.is_anonymous && (
+                          <>
+                            <span>•</span>
+                            <span className="text-gray-500 italic">
+                              Anonymous
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-right ml-4">
+                      <p className="text-xl font-bold text-green-600">
+                        ₹{donation.amount.toLocaleString("en-IN")}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
