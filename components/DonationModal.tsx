@@ -71,17 +71,20 @@ export default function DonationModal({
     setIsProcessing(true);
 
     try {
-      await createDonation({
-        ngoId,
-        amount: donationAmount,
-        cause,
-        isAnonymous,
+      if (!campaignId) {
+        throw new Error("Choose an active fundraiser before donating");
+      }
+
+      const order = await createDonation({
         campaignId,
+        amountPaise: Math.round(donationAmount * 100),
       });
 
-      // Success!
-      onSuccess();
-      resetForm();
+      if (!order.approvalUrl) {
+        throw new Error("PayPal approval is unavailable for this order");
+      }
+
+      window.location.assign(order.approvalUrl);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to process donation",
