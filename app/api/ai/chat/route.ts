@@ -2,8 +2,16 @@ import { createClient } from "@/lib/supabase/server";
 import { chatWithDaanSetu } from "@/lib/services/gemini";
 import { NextRequest, NextResponse } from "next/server";
 import { rateLimit, RATE_LIMITS } from "@/lib/middleware/rate-limit";
+import { hasValidRequestOrigin } from "@/lib/security/origin";
 
 async function handler(request: NextRequest) {
+  if (!hasValidRequestOrigin(request)) {
+    return NextResponse.json(
+      { error: "Invalid request origin" },
+      { status: 403 },
+    );
+  }
+
   try {
     const { message } = await request.json();
 

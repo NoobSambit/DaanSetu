@@ -1,4 +1,24 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { z } from "zod";
+
+const recommendationSchema = z.array(
+  z.object({
+    ngo_name: z.string().min(1).max(200),
+    reason: z.string().min(1).max(500),
+  }),
+);
+
+async function withTimeout<T>(
+  operation: Promise<T>,
+  timeoutMs = 8_000,
+): Promise<T> {
+  return Promise.race([
+    operation,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error("Gemini timeout")), timeoutMs),
+    ),
+  ]);
+}
 
 // Initialize Gemini AI client
 // SECURITY: Using server-side only environment variable (not NEXT_PUBLIC_)
@@ -88,7 +108,7 @@ Please respond in JSON format with an array of exactly 3 recommendations:
 
 Only recommend NGOs from the provided list. If user has no interests yet, recommend diverse popular NGOs.`;
 
-    const result = await model.generateContent(prompt);
+    const result = await withTimeout(model.generateContent(prompt));
     const response = result.response.text();
 
     // Extract JSON from response
@@ -104,18 +124,14 @@ Only recommend NGOs from the provided list. If user has no interests yet, recomm
         }
 
         // Sanitize and validate each recommendation
-        const validatedRecs = recommendations
-          .filter((rec: any) => rec && typeof rec === "object")
-          .filter(
-            (rec: any) =>
-              typeof rec.ngo_name === "string" &&
-              typeof rec.reason === "string",
-          )
-          .map((rec: any) => ({
-            ngo_name: rec.ngo_name.substring(0, 200), // Limit length
-            reason: rec.reason.substring(0, 500), // Limit length
-          }))
-          .slice(0, 10); // Max 10 recommendations
+        const parsed = recommendationSchema.safeParse(recommendations);
+        if (!parsed.success) return [];
+        const allowedNames = new Set(
+          userContext.ngoList.map((ngo) => ngo.name),
+        );
+        const validatedRecs = parsed.data
+          .filter((recommendation) => allowedNames.has(recommendation.ngo_name))
+          .slice(0, 3);
 
         // Cache the result
         setCachedResponse(cacheKey, validatedRecs);
@@ -128,7 +144,7 @@ Only recommend NGOs from the provided list. If user has no interests yet, recomm
 
     return [];
   } catch (error) {
-    console.error("Error generating NGO recommendations:", error);
+    console.error("Gemini recommendation fallback used:", error);
     return [];
   }
 }

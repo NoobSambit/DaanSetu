@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
 import { rateLimit, RATE_LIMITS } from "@/lib/middleware/rate-limit";
+import { hasValidRequestOrigin } from "@/lib/security/origin";
 
 /**
  * Upload image to Supabase Storage
@@ -12,6 +13,13 @@ import { rateLimit, RATE_LIMITS } from "@/lib/middleware/rate-limit";
  * - folder: Optional folder within the bucket
  */
 async function handler(request: NextRequest) {
+  if (!hasValidRequestOrigin(request)) {
+    return NextResponse.json(
+      { error: "Invalid request origin" },
+      { status: 403 },
+    );
+  }
+
   try {
     const supabase = await createServerClient();
 

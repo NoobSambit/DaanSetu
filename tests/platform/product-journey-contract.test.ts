@@ -62,7 +62,7 @@ test("CSR invitations, pledges, settlement, and analytics are implemented", () =
   assert.match(actions, /invitation|invite/i);
   assert.match(actions, /match.*percent|cap/i);
   assert.match(settlement, /pledge/i);
-  assert.match(settlement, /razorpay/i);
+  assert.match(settlement, /paypal/i);
   assert.match(invitation, /expir|revok|accept/i);
 });
 
