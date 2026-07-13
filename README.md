@@ -1,300 +1,159 @@
-# DaanSetu - Connecting Compassion with Action
+# DaanSetu
 
-DaanSetu is a comprehensive platform connecting donors, NGOs, volunteers, and corporates to maximize social impact across India. Built with Next.js 14, Supabase, and AI-powered recommendations.
+DaanSetu connects supporters, verified NGOs, volunteers, and corporate CSR teams through a single Supabase-backed Next.js platform. It includes NGO and campaign discovery, fundraising, PayPal giving, demo-safe payment showcases, volunteer workflows, community publishing, CSR matching, moderation, and impact reporting.
 
-## 🚀 Features
+## Stack
 
-### Core Features
-- **Smart Donation System**: Support NGOs and campaigns with secure payment processing via Razorpay
-- **AI-Powered Recommendations**: Get personalized NGO and campaign suggestions using Google Gemini AI
-- **Volunteer Management**: Find and apply for volunteer opportunities based on your skills
-- **Campaign Management**: NGOs can create and manage fundraising campaigns with real-time tracking
-- **Social Network**: Follow organizations, like and comment on posts, build community
-- **Corporate CSR Module**: Manage employee donations and corporate social responsibility initiatives
-- **Leaderboards & Gamification**: Earn badges and climb the ranks based on your contributions
-- **Analytics Dashboard**: Comprehensive insights for NGOs and donors
+- Next.js 16 and React 19
+- Supabase Auth, PostgreSQL, Storage, and Realtime
+- PayPal REST Orders, Subscriptions, Refunds, and Webhooks
+- Optional Gemini candidate reranking with deterministic fallback
+- TypeScript, Tailwind CSS, Zod, and Node's test runner
 
-### Technical Features
-- **Server-Side Rendering**: Next.js 14 with App Router for optimal performance
-- **Real-Time Updates**: Supabase real-time subscriptions
-- **Image Upload**: Secure image storage via Supabase Storage
-- **Rate Limiting**: Built-in API protection against abuse
-- **Error Boundaries**: Graceful error handling throughout the application
-- **Responsive Design**: Mobile-first approach with Tailwind CSS
-- **Type Safety**: Full TypeScript implementation
+The application does not require Docker. Development and release validation use the hosted Supabase project selected by the environment.
 
-## 📋 Prerequisites
+## Prerequisites
 
-Before you begin, ensure you have the following installed:
-- **Node.js** 18.x or higher
-- **npm** or **yarn** package manager
-- A **Supabase** account ([Sign up for free](https://supabase.com))
-- A **Razorpay** account for payment processing ([Sign up](https://razorpay.com))
-- A **Google Gemini API** key ([Get one here](https://makersuite.google.com/app/apikey))
+- Node.js 20 or newer
+- npm
+- A hosted Supabase project
+- PayPal developer credentials for sandbox or live payment processing
+- An optional Gemini API key
 
-## 🛠️ Installation & Setup
+## Setup
 
-### 1. Clone the Repository
-
-```bash
-git clone https://github.com/NoobSambit/DaanSetu.git
-cd DaanSetu
-```
-
-### 2. Install Dependencies
+Install dependencies:
 
 ```bash
 npm install
-# or
-yarn install
 ```
 
-### 3. Set Up Supabase
+Copy `.env.example` to `.env` and provide the required values. Never commit `.env` or expose service-role, PayPal secret, or webhook credentials to browser code.
 
-1. Create a new project at [supabase.com](https://supabase.com)
-2. Go to Project Settings → API to find your credentials
-3. Run the database migrations:
-   - Go to the SQL Editor in your Supabase dashboard
-   - Copy the contents of `supabase/schema.sql` and execute it
-   - Then run all migrations in `supabase/migrations/` in numeric order through `015_ngo_profile_redesign.sql`
+Core variables:
 
-4. Set up Storage buckets:
-   - Go to Storage in your Supabase dashboard
-   - Create the following buckets (all public):
-     - `campaigns`
-     - `ngos`
-     - `posts`
-     - `profiles`
-     - `corporate`
+```dotenv
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-publishable-key
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+SUPABASE_PROJECT_ID=your-project-ref
 
-### 4. Configure Environment Variables
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 
-Create a `.env` file in the root directory:
+PAYPAL_ENVIRONMENT=sandbox
+PAYPAL_CLIENT_ID=your-paypal-client-id
+PAYPAL_CLIENT_SECRET=your-paypal-client-secret
+PAYPAL_WEBHOOK_ID=your-paypal-webhook-id
+PAYPAL_INR_PER_USD=83.00
+
+ENABLE_PAYMENTS=true
+ENABLE_SUBSCRIPTIONS=true
+ENABLE_PAYOUTS=false
+ENABLE_DEMO_PAYMENTS=true
+
+GEMINI_API_KEY=
+```
+
+`PAYPAL_INR_PER_USD` is a server-controlled settlement rate. Campaign goals and public impact remain stored as integer INR paise; PayPal settlement currency and minor units are stored separately on payment records.
+
+## Supabase
+
+Migrations under `supabase/migrations/` are the active schema source and must be applied in numeric order. Existing projects should use the linked CLI workflow:
 
 ```bash
-# Supabase Configuration
-NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
-
-# Gemini AI Configuration (Server-side only)
-GEMINI_API_KEY=your-gemini-api-key-here
-
-# Payment Gateway Configuration
-RAZORPAY_KEY_ID=your-razorpay-key-id
-RAZORPAY_KEY_SECRET=your-razorpay-key-secret
-NEXT_PUBLIC_RAZORPAY_KEY_ID=your-razorpay-key-id
-
-# Application Configuration
-NODE_ENV=development
-NEXT_PUBLIC_APP_URL=http://localhost:3000
+npm run db:migrate:dry
+npm run db:push
+npm run db:types
 ```
 
-**Important Security Notes:**
-- Never commit the `.env` file to version control
-- Use `GEMINI_API_KEY` (not `NEXT_PUBLIC_GEMINI_API_KEY`) to keep it server-side only
-- Keep `RAZORPAY_KEY_SECRET` secure and never expose it to the client
+These commands target hosted Supabase and do not start local containers. `db:push` mutates the linked database, so review the dry run first.
 
-### 5. Run Database Migrations
+Private verification and statutory documents must remain in private buckets. Access is granted through authenticated, ownership-aware server routes rather than public object URLs.
 
-The critical fixes migration includes:
-- Auto-create user profile trigger
-- Atomic increment functions for campaigns
-- Performance indexes
-- Activity logging functions
-- Optimized leaderboard queries
+## Payment modes
 
-Make sure to run every migration through `supabase/migrations/015_ngo_profile_redesign.sql`.
-Migration 015 creates the private `ngo-verification` bucket and its owner/admin policies;
-do not configure that bucket as public.
-in your Supabase SQL editor.
+### PayPal Sandbox
 
-### 6. Start the Development Server
+Use `PAYPAL_ENVIRONMENT=sandbox` with sandbox credentials for an end-to-end provider flow using non-production PayPal accounts. Orders are created on the server, captures are verified against PayPal, and signed webhook events are reconciled idempotently.
+
+### Isolated demo payments
+
+Set `ENABLE_DEMO_PAYMENTS=true` only in local or controlled non-production demos. The `/api/demo/payments` route:
+
+- is unavailable when `NODE_ENV=production`;
+- requires an authenticated and email-verified user;
+- marks every record with `is_demo=true`;
+- uses the same atomic donation-recording path as captured payments; and
+- excludes demo donations from campaign totals and public impact aggregates.
+
+This route is for presentation rehearsals where no external transaction should occur. It must never be used as a payment fallback.
+
+### Production
+
+Use PayPal live credentials, register the exact production webhook URL, disable demo payments, and enable only provider products approved for the merchant account. PayPal merchant availability and supported currencies vary by country; validate the final settlement model for the production account before launch.
+
+## Development
 
 ```bash
 npm run dev
-# or
-yarn dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open `http://localhost:3000`.
 
-## 🏗️ Project Structure
+## Verification
 
-```
-DaanSetu/
-├── app/                      # Next.js 14 App Router
-│   ├── api/                  # API routes
-│   │   ├── ai/              # AI-powered endpoints (rate-limited)
-│   │   ├── payment/         # Payment processing
-│   │   ├── upload/          # Image upload
-│   │   ├── posts/           # Social features
-│   │   └── ...
-│   ├── (auth)/              # Authentication pages
-│   ├── campaigns/           # Campaign pages
-│   ├── ngos/                # NGO directory
-│   └── ...
-├── components/              # React components
-│   ├── ErrorBoundary.tsx   # Error handling
-│   └── ...
-├── lib/
-│   ├── services/           # Business logic layer
-│   │   ├── donations.ts    # Donation management
-│   │   ├── campaigns.ts    # Campaign CRUD
-│   │   ├── posts.ts        # Social features
-│   │   ├── gemini.ts       # AI integration
-│   │   └── ...
-│   ├── supabase/           # Supabase client setup
-│   │   ├── client.ts       # Browser client
-│   │   ├── server.ts       # Server client
-│   │   └── index.ts        # Unified access
-│   ├── middleware/         # Custom middleware
-│   │   └── rate-limit.ts   # Rate limiting
-│   └── types/              # TypeScript types
-├── supabase/
-│   ├── schema.sql          # Initial database schema
-│   └── migrations/         # Database migrations
-└── public/                 # Static assets
-```
-
-## 🔧 Configuration
-
-### Rate Limits
-
-Configure rate limits in `lib/middleware/rate-limit.ts`:
-
-```typescript
-export const RATE_LIMITS = {
-  AI: { windowMs: 60 * 1000, maxRequests: 10 },      // AI endpoints
-  UPLOAD: { windowMs: 60 * 1000, maxRequests: 20 },  // Upload endpoints
-  PAYMENT: { windowMs: 60 * 1000, maxRequests: 30 }, // Payment endpoints
-  DEFAULT: { windowMs: 60 * 1000, maxRequests: 100 }, // General API
-}
-```
-
-### Payment Integration
-
-1. Create a Razorpay account at [razorpay.com](https://razorpay.com)
-2. Go to Settings → API Keys
-3. Copy the Key ID and Key Secret to your `.env` file
-4. Test mode is enabled by default for development
-
-### AI Features
-
-The platform uses Google Gemini AI for:
-- Personalized NGO recommendations
-- Campaign suggestions based on user interests
-- Content quality analysis
-
-To enable AI features:
-1. Get an API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
-2. Add it to `.env` as `GEMINI_API_KEY`
-3. AI responses are cached for 1 hour to reduce costs
-
-## 📊 Database Schema
-
-Key tables:
-- `users` - User profiles (auto-created on signup)
-- `ngos` - NGO organizations
-- `campaigns` - Fundraising campaigns
-- `donations` - Donation records with payment tracking
-- `posts` - Social media posts
-- `volunteers` - Volunteer profiles and applications
-- `corporate_campaigns` - Corporate CSR campaigns
-- `badges` - Gamification achievements
-- `activity_logs` - User activity tracking
-
-See `supabase/schema.sql` for complete schema.
-
-## 🚢 Deployment
-
-### Deploy to Vercel
-
-1. Push your code to GitHub
-2. Import your repository in [Vercel](https://vercel.com)
-3. Add environment variables in Vercel project settings
-4. Deploy!
-
-### Environment Variables for Production
-
-Make sure to set all the same environment variables in your Vercel project:
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `GEMINI_API_KEY`
-- `RAZORPAY_KEY_ID`
-- `RAZORPAY_KEY_SECRET`
-- `NEXT_PUBLIC_RAZORPAY_KEY_ID`
-
-### Production Checklist
-
-- ✅ Run all database migrations
-- ✅ Set up Supabase Storage buckets
-- ✅ Configure RLS policies in Supabase
-- ✅ Set Razorpay to live mode
-- ✅ Update `NEXT_PUBLIC_APP_URL` to your domain
-- ✅ Test payment flow end-to-end
-- ✅ Monitor rate limit logs
-- ✅ Set up error tracking (optional: Sentry)
-
-## 🔒 Security
-
-- **RLS Policies**: Row Level Security enabled on all Supabase tables
-- **Rate Limiting**: All API routes are rate-limited
-- **Input Validation**: Server-side validation on all inputs
-- **Payment Security**: Razorpay signature verification
-- **Environment Variables**: Sensitive keys kept server-side
-- **CORS**: Configured for production domain only
-
-## 🧪 Testing
+Run the complete local gate:
 
 ```bash
-# Run tests (if configured)
-npm test
-
-# Type checking
-npm run type-check
-
-# Linting
+npm run format
+npm run format:check
+npm run typecheck
 npm run lint
+npm test
+npm run test:coverage
+npm run build
+npm audit --omit=dev
 ```
 
-## 📈 Performance Optimizations
+Database checks against a linked hosted project:
 
-- ✅ Database indexes on frequently queried columns
-- ✅ Atomic operations to prevent race conditions
-- ✅ Pagination on all list endpoints
-- ✅ AI response caching
-- ✅ Optimized SQL queries with aggregation
-- ✅ Image optimization with Supabase Storage
-- ✅ Server-side rendering for SEO
+```bash
+npm run db:lint
+npm run db:migrate:dry
+```
 
-## 🤝 Contributing
+## Security model
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+- Supabase Auth owns identity and email verification.
+- RLS protects user-owned and role-restricted records.
+- Service-role access is confined to server-only modules.
+- Mutations validate inputs, sessions, ownership, and same-origin requests.
+- Payment events use unique provider identifiers and atomic PostgreSQL functions.
+- Demo payments are structurally separated from real financial reporting.
+- Gemini receives only selected candidate data and silently falls back to deterministic ranking.
+- Official Form 10BE documents are uploaded and mapped; the application does not manufacture statutory certificates.
 
-## 📝 License
+## Important routes
 
-This project is licensed under the MIT License.
+- `/ngos` and `/campaigns` — public discovery
+- `/volunteer/opportunities` — skill-based opportunities
+- `/community` — posts and impact stories
+- `/dashboard/giving` — donations, subscriptions, receipts, and refunds
+- `/ngo/dashboard` — NGO operations
+- `/corporate/dashboard` — CSR programs and employee attribution
+- `/admin/operations` — verification, moderation, refunds, payouts, settlements, and audit records
 
-## 🆘 Support
+## Deployment checklist
 
-If you encounter any issues:
-1. Check the [Issues](https://github.com/NoobSambit/DaanSetu/issues) page
-2. Review the `FIXES_APPLIED.md` for recent changes
-3. Ensure all environment variables are correctly set
-4. Verify database migrations have been run
+1. Apply every pending Supabase migration and regenerate database types.
+2. Configure Supabase Auth redirect URLs and private Storage policies.
+3. Set production-only secrets in the deployment environment.
+4. Set `PAYPAL_ENVIRONMENT=live` only after provider approval and webhook registration.
+5. Set `ENABLE_DEMO_PAYMENTS=false` and verify that the demo route returns `404`.
+6. Run the complete verification gate and linked migration dry run.
+7. Verify payment capture, duplicate webhook delivery, refund, subscription, and reconciliation scenarios with approved provider accounts.
 
-## 🙏 Acknowledgments
+## License
 
-- Built with [Next.js](https://nextjs.org/)
-- Database by [Supabase](https://supabase.com)
-- Payments by [Razorpay](https://razorpay.com)
-- AI by [Google Gemini](https://ai.google.dev/)
-- Styled with [Tailwind CSS](https://tailwindcss.com)
-
----
-
-Made with ❤️ for social good
+MIT

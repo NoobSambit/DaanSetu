@@ -1,10 +1,10 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
+  --font-inter: "Inter Variable";
+  --font-playfair: "Playfair Display Variable";
   --background: #ffffff;
   --background-secondary: #f8fafc;
   --foreground: #0f172a;
@@ -46,7 +46,7 @@ html {
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
   line-height: 1.5;
 }
 

@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
+import Link from "next/link";
 import {
   AlertCircle,
   ArrowRight,
@@ -2173,12 +2174,12 @@ export default function NgoProfileForm({
             A complete profile builds trust, attracts more supporters, and
             creates greater impact.
           </p>
-          <a
-            href="#"
+          <Link
+            href="/terms"
             className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700"
           >
             Learn More <ArrowRight className="h-3.5 w-3.5" />
-          </a>
+          </Link>
         </div>
       </aside>
     </div>

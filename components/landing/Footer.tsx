@@ -2,72 +2,58 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import {
-  Heart,
-  Mail,
-  Phone,
-  MapPin,
-  Globe,
-  MessageCircle,
-  Camera,
-  Briefcase,
-  Play,
-} from "lucide-react";
+import { Heart, Mail, Phone, MapPin } from "lucide-react";
 
 const footerColumns = [
   {
     title: "Explore",
     links: [
-      "Discover NGOs",
-      "Browse Campaigns",
-      "Volunteer",
-      "Community Stories",
-      "Impact Dashboard",
+      ["Discover NGOs", "/ngos"],
+      ["Browse Campaigns", "/campaigns"],
+      ["Volunteer", "/volunteer/opportunities"],
+      ["Community Stories", "/community"],
+      ["Impact Dashboard", "/analytics"],
     ],
   },
   {
     title: "Causes",
     links: [
-      "Education",
-      "Healthcare",
-      "Food Security",
-      "Women Empowerment",
-      "Environment",
-      "Animal Welfare",
+      ["Education", "/ngos?category=education"],
+      ["Healthcare", "/ngos?category=healthcare"],
+      ["Food Security", "/ngos?category=food-security"],
+      ["Women Empowerment", "/ngos?category=women-empowerment"],
+      ["Environment", "/ngos?category=environment"],
+      ["Animal Welfare", "/ngos?category=animal-welfare"],
     ],
   },
   {
     title: "Resources",
     links: [
-      "Blog",
-      "How It Works",
-      "Donor Guide",
-      "NGO Toolkit",
-      "CSR Resources",
+      ["Impact Stories", "/impact-stories"],
+      ["How It Works", "/#how-it-works"],
+      ["Donor Dashboard", "/dashboard"],
+      ["NGO Dashboard", "/ngo/dashboard"],
+      ["CSR Resources", "/csr-campaigns"],
     ],
   },
   {
     title: "About Us",
-    links: ["Our Mission", "Team", "Partners", "Careers", "Press"],
+    links: [
+      ["Our Mission", "/#our-mission"],
+      ["Community", "/community"],
+      ["Corporate CSR", "/corporate/dashboard"],
+    ],
   },
   {
     title: "Trust & Safety",
     links: [
-      "Verification Process",
-      "Privacy Policy",
-      "Terms of Service",
-      "Refund Policy",
-      "Grievance Redressal",
+      ["Verification Process", "/ngo/profile"],
+      ["Privacy Policy", "/privacy"],
+      ["Terms of Service", "/terms"],
+      ["Refund Policy", "/refund-policy"],
+      ["Grievance Redressal", "/grievance"],
     ],
   },
-];
-
-const socialIcons = [
-  { icon: Globe, href: "#", label: "Facebook" },
-  { icon: MessageCircle, href: "#", label: "Twitter" },
-  { icon: Camera, href: "#", label: "Instagram" },
-  { icon: Briefcase, href: "#", label: "LinkedIn" },
-  { icon: Play, href: "#", label: "YouTube" },
 ];
 
 export default function Footer() {
@@ -100,32 +86,12 @@ export default function Footer() {
               Connecting compassionate hearts with verified causes across India.
               Every donation, every volunteer hour — makes a difference.
             </p>
-            <div className="flex gap-2 mb-4">
-              {socialIcons.map((social) => (
-                <a
-                  key={social.label}
-                  href={social.href}
-                  aria-label={social.label}
-                  className="w-8 h-8 bg-slate-800 hover:bg-primary-600 rounded-lg flex items-center justify-center transition-colors duration-200"
-                >
-                  <social.icon className="w-3.5 h-3.5" />
-                </a>
-              ))}
-            </div>
-            <div className="flex gap-2">
-              <div className="bg-slate-800 hover:bg-slate-700 rounded-lg px-3 py-2 cursor-pointer transition-colors">
-                <p className="text-[7px] text-slate-400 uppercase tracking-wider">
-                  Download on the
-                </p>
-                <p className="text-[11px] font-semibold">App Store</p>
-              </div>
-              <div className="bg-slate-800 hover:bg-slate-700 rounded-lg px-3 py-2 cursor-pointer transition-colors">
-                <p className="text-[7px] text-slate-400 uppercase tracking-wider">
-                  Get it on
-                </p>
-                <p className="text-[11px] font-semibold">Google Play</p>
-              </div>
-            </div>
+            <Link
+              href="/community"
+              className="inline-flex rounded-lg bg-slate-800 px-3 py-2 text-[11px] font-semibold transition-colors hover:bg-slate-700"
+            >
+              Join the community
+            </Link>
           </div>
 
           {/* Link Columns */}
@@ -135,13 +101,13 @@ export default function Footer() {
                 {column.title}
               </h4>
               <ul className="space-y-2">
-                {column.links.map((link) => (
-                  <li key={link}>
+                {column.links.map(([label, href]) => (
+                  <li key={href}>
                     <Link
-                      href="#"
+                      href={href}
                       className="text-[11px] text-slate-400 hover:text-white transition-colors duration-200"
                     >
-                      {link}
+                      {label}
                     </Link>
                   </li>
                 ))}
@@ -175,14 +141,17 @@ export default function Footer() {
             in India.
           </p>
           <div className="flex gap-5 text-[10px] text-slate-500">
-            <Link href="#" className="hover:text-white transition-colors">
+            <Link
+              href="/privacy"
+              className="hover:text-white transition-colors"
+            >
               Privacy
             </Link>
-            <Link href="#" className="hover:text-white transition-colors">
+            <Link href="/terms" className="hover:text-white transition-colors">
               Terms
             </Link>
-            <Link href="#" className="hover:text-white transition-colors">
-              Sitemap
+            <Link href="/ngos" className="hover:text-white transition-colors">
+              Explore
             </Link>
           </div>
         </div>

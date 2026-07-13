@@ -7,11 +7,11 @@ import { motion } from "framer-motion";
 import { Search, Heart, Users, Globe, BarChart3, Menu, X } from "lucide-react";
 
 const navLinks = [
-  { label: "Discover NGOs", href: "#discover", icon: Search },
-  { label: "Campaigns", href: "#campaigns", icon: Heart },
-  { label: "Volunteer", href: "#volunteer", icon: Users },
-  { label: "Community", href: "#community", icon: Globe },
-  { label: "Impact", href: "#impact", icon: BarChart3 },
+  { label: "Discover NGOs", href: "/ngos", icon: Search },
+  { label: "Campaigns", href: "/campaigns", icon: Heart },
+  { label: "Volunteer", href: "/volunteer/opportunities", icon: Users },
+  { label: "Community", href: "/community", icon: Globe },
+  { label: "Impact", href: "/analytics", icon: BarChart3 },
 ];
 
 export default function Navbar() {

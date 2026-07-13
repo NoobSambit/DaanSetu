@@ -80,6 +80,25 @@ test("admin operations cover every privileged workflow", () => {
   ]) {
     assert.match(operations, new RegExp(label, "i"));
   }
+
+  for (const path of [
+    "app/admin/moderation/page.tsx",
+    "app/admin/payouts/page.tsx",
+    "app/admin/csr-settlements/page.tsx",
+    "app/admin/audit/page.tsx",
+  ]) {
+    assert.equal(existsSync(pathFor(path)), true, `Missing ${path}`);
+  }
+});
+
+test("retained landing navigation has no placeholder destinations", () => {
+  const navigation = [
+    read("components/landing/Navbar.tsx"),
+    read("components/landing/Footer.tsx"),
+  ].join("\n");
+
+  assert.doesNotMatch(navigation, /href=["'{]?#(?:["'}]|$)/);
+  assert.doesNotMatch(navigation, /App Store|Google Play/);
 });
 
 test("no retained application page advertises unfinished functionality", () => {

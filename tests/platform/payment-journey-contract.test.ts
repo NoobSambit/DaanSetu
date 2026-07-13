@@ -66,6 +66,11 @@ test("payouts, refunds, receipts, and statutory routes exist", () => {
   ]) {
     assert.equal(existsSync(projectPath(path)), true, `Missing ${path}`);
   }
+
+  const payoutMigration = source(
+    "supabase/migrations/022_paypal_payout_provider.sql",
+  );
+  assert.match(payoutMigration, /DEFAULT 'paypal'/);
 });
 
 test("official Form 10BE is uploaded rather than manufactured", () => {
