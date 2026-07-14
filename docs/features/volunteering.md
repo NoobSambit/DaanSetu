@@ -2,6 +2,20 @@
 
 Volunteering supports public opportunity discovery, volunteer profiles, applications, hour submission, NGO review, skill verification, and downloadable certificates.
 
+```mermaid
+flowchart TD
+  Profile[Volunteer profile] --> Match[Opportunity discovery]
+  NGO[NGO creates opportunity] --> Match
+  Match --> Apply[Application]
+  Apply --> Review[NGO application review]
+  Review --> Accepted[Accepted]
+  Review --> Rejected[Rejected]
+  Accepted --> Hours[Submit hours]
+  Hours --> HourReview[NGO hour review]
+  HourReview --> Skills[Verified skills]
+  HourReview --> Certificate[Certificate PDF]
+```
+
 ## Routes
 
 - `/volunteer/profile`
@@ -77,4 +91,3 @@ Certificates include:
 - Opportunity title.
 - Approved hours.
 - Issue date.
-

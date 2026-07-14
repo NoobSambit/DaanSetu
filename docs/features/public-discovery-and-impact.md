@@ -97,4 +97,3 @@ Leaderboards use server-only aggregate logic in `lib/services/leaderboard.ts`. T
 - Demo payments should not inflate public impact totals.
 - Refunded amounts must reduce financial aggregates.
 - Admin-hidden content should not appear in public feeds.
-

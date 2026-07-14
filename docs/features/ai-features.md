@@ -2,6 +2,18 @@
 
 DaanSetu uses AI as a helper, not as the final authority. Gemini can help with recommendations, chat, and content analysis, but the app must keep deterministic fallback behavior.
 
+```mermaid
+flowchart TD
+  Request[AI request] --> Candidates[Selected safe candidate data]
+  Candidates --> Gemini{Gemini available?}
+  Gemini -->|yes| AIRank[AI-assisted ranking or analysis]
+  Gemini -->|no| Fallback[Deterministic fallback]
+  AIRank --> Guardrails[Validate output]
+  Guardrails --> Result[Return safe result]
+  Fallback --> Result
+  Guardrails --> Flags[Optional AI flags for admin review]
+```
+
 ## Routes
 
 - `/api/ai/recommend-ngos`
@@ -48,4 +60,3 @@ If Gemini is unavailable, misconfigured, slow, or returns unusable output, the a
 - Do not send secrets or sensitive documents to the model.
 - Treat AI flags as review signals.
 - Keep deterministic behavior available.
-

@@ -2,6 +2,19 @@
 
 This workflow covers volunteers and NGO volunteer managers.
 
+```mermaid
+stateDiagram-v2
+  [*] --> ProfileCreated
+  ProfileCreated --> Applied: volunteer applies
+  Applied --> Accepted: NGO accepts
+  Applied --> Rejected: NGO rejects
+  Applied --> Withdrawn: volunteer withdraws
+  Accepted --> HoursSubmitted: volunteer submits hours
+  HoursSubmitted --> HoursApproved: NGO approves hours
+  HoursSubmitted --> HoursRejected: NGO rejects hours
+  HoursApproved --> CertificateIssued: certificate created
+```
+
 ## Volunteer Profile
 
 1. User opens `/volunteer/profile`.
@@ -58,4 +71,3 @@ This workflow covers volunteers and NGO volunteer managers.
 - Volunteers can withdraw their own applications.
 - NGO owners can review only opportunities they own.
 - Certificates should only be available to authorized participants.
-

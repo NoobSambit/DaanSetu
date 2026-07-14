@@ -2,6 +2,20 @@
 
 Use these checks before saying the app is ready.
 
+```mermaid
+flowchart LR
+  Format[format:check] --> Typecheck[typecheck]
+  Typecheck --> Lint[lint]
+  Lint --> Tests[test]
+  Tests --> Coverage[test:coverage]
+  Coverage --> Build[build]
+  Build --> Audit[npm audit]
+  Build --> DB{DB change?}
+  DB -->|yes| DryRun[db:migrate:dry]
+  DB -->|no| Done[Ready for review]
+  DryRun --> Done
+```
+
 ## Standard Gate
 
 ```bash
@@ -60,4 +74,3 @@ The current test suite includes contract tests for:
 - Financial notifications.
 - Dashboard integrity.
 - Migration correctness.
-

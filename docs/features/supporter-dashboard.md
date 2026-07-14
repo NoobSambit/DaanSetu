@@ -52,4 +52,3 @@ Sensitive donor tax data is stored in `donor_tax_profiles`. Database triggers an
 ## Account Security
 
 `/dashboard/security` supports global session revocation. This is useful if the user signed in on a shared or lost device.
-

@@ -2,6 +2,22 @@
 
 Campaigns move from draft to public fundraising through owner actions and admin decisions.
 
+```mermaid
+stateDiagram-v2
+  [*] --> Draft
+  Draft --> PendingReview: submit for review
+  PendingReview --> ChangesRequested: admin requests changes
+  ChangesRequested --> PendingReview: owner resubmits
+  PendingReview --> Rejected: admin rejects
+  PendingReview --> Approved: admin approves
+  Approved --> Active: publish
+  Active --> Paused: pause
+  Paused --> Active: resume
+  Active --> Completed: goal or final update
+  Active --> Cancelled: cancel
+  Rejected --> Draft: revise
+```
+
 ## Actors
 
 - NGO owner or supporter fundraiser creator.
@@ -80,4 +96,3 @@ A campaign may be completed when:
 - Admin or owner uses an allowed transition.
 
 Cancelled campaigns should not accept new donations.
-

@@ -2,6 +2,19 @@
 
 NGO verification makes sure public NGOs are reviewed before they receive trusted status.
 
+```mermaid
+stateDiagram-v2
+  [*] --> draft
+  draft --> submitted: NGO submits
+  submitted --> changes_requested: admin requests changes
+  changes_requested --> submitted: NGO resubmits
+  submitted --> verified: admin verifies
+  submitted --> rejected: admin rejects
+  submitted --> expired: review expires
+  rejected --> submitted: NGO revises
+  verified --> expired: verification expires later
+```
+
 ## Actors
 
 - NGO owner.
@@ -69,4 +82,3 @@ When verified:
 - Private documents must not be exposed as public URLs.
 - Review decisions should go through RPCs, not direct table updates.
 - Review history should remain auditable.
-

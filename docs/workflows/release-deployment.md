@@ -2,6 +2,20 @@
 
 This workflow describes the expected path before shipping changes.
 
+```mermaid
+flowchart LR
+  Edit[Code or docs change] --> Format[Format check]
+  Format --> Typecheck[Typecheck]
+  Typecheck --> Lint[Lint]
+  Lint --> Tests[Tests]
+  Tests --> Build[Production build]
+  Build --> DB{Schema changed?}
+  DB -->|yes| DryRun[Migration dry run]
+  DryRun --> Deploy[Deploy]
+  DB -->|no| Deploy
+  Deploy --> Smoke[Smoke checks]
+```
+
 ## Local Verification
 
 Run:
@@ -70,4 +84,3 @@ Do not run seed commands against production.
 8. Confirm `ENABLE_DEMO_PAYMENTS=false`.
 9. Confirm production PayPal environment only after approval.
 10. Smoke test auth, payment, webhook, refund, payout, and admin review flows.
-

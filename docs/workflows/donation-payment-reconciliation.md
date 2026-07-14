@@ -2,6 +2,26 @@
 
 This workflow describes how money moves from user intent to recorded donation.
 
+```mermaid
+sequenceDiagram
+  actor Donor
+  participant App
+  participant PayPal
+  participant DB as Supabase DB
+  Donor->>App: Choose campaign and amount
+  App->>DB: Validate campaign and create payment order
+  App->>PayPal: Create order
+  PayPal-->>Donor: Approval page
+  Donor->>PayPal: Approve payment
+  PayPal-->>App: Return with order id
+  App->>PayPal: Capture order
+  PayPal-->>App: Capture details
+  App->>DB: record_completed_payment
+  DB-->>App: Donation and progress updated
+  PayPal-->>App: Webhook event
+  App->>DB: Store event idempotently
+```
+
 ## One-Time Donation
 
 1. User chooses an amount on a campaign.
@@ -59,4 +79,3 @@ If PayPal reports reversal or dispute-like events:
 - Client-reported amounts are never enough by themselves.
 - Application money is integer paise.
 - Provider settlement fields can store provider currency and minor units separately.
-

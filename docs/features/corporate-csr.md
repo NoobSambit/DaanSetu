@@ -2,6 +2,20 @@
 
 The corporate CSR area lets companies create CSR profiles, invite employees, run corporate campaigns, create matching initiatives, partner with NGOs, and settle matched pledges.
 
+```mermaid
+flowchart TD
+  CorporateProfile[Corporate profile] --> Employees[Employee invitations]
+  CorporateProfile --> Campaign[Corporate campaign]
+  CorporateProfile --> Initiative[CSR match initiative]
+  Employees --> Attribution[Employee donation attribution]
+  Initiative --> Pledge[CSR match pledge]
+  Attribution --> Pledge
+  Campaign --> Partnership[NGO partnership request]
+  Pledge --> Settlement[Settlement batch]
+  Settlement --> PayPal[PayPal capture]
+  PayPal --> MatchedDonation[Matched donation records]
+```
+
 ## Routes
 
 - `/corporate/profile`
@@ -77,4 +91,3 @@ If a settlement is cancelled or reversed, the system should release or reverse r
 
 - `cancel_csr_settlement`
 - `reverse_csr_settlement`
-

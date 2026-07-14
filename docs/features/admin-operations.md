@@ -2,6 +2,22 @@
 
 Admin operations keep the platform safe, accurate, and compliant. Admins should use admin pages and database RPCs instead of manual table edits.
 
+```mermaid
+flowchart TD
+  Ops[/admin/operations/] --> Verification[NGO verification]
+  Ops --> Fundraisers[Fundraiser review]
+  Ops --> Moderation[Content moderation]
+  Ops --> Refunds[Refund review]
+  Ops --> Payouts[Payout review]
+  Ops --> CSR[CSR settlement inspection]
+  Ops --> AI[AI flags]
+  Verification --> Audit[Audit logs]
+  Fundraisers --> Audit
+  Moderation --> Audit
+  Refunds --> Audit
+  Payouts --> Audit
+```
+
 ## Routes
 
 - `/admin/operations`
@@ -74,4 +90,3 @@ AI helper flows can create flags for admin review. Admins inspect these in `/adm
 ## Audit Logs
 
 `/admin/audit` reads `audit_logs`. Important decisions should leave an audit record.
-

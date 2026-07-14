@@ -2,6 +2,27 @@
 
 DaanSetu is a social impact platform. It helps people discover trusted NGOs, donate to causes, volunteer their time, follow updates, and take part in community conversations. It also supports NGOs, corporate CSR teams, and platform administrators.
 
+```mermaid
+flowchart TD
+  Public[Public trust layer] --> Discover[NGO and campaign discovery]
+  Discover --> Supporter[Supporter actions]
+  Supporter --> Donate[Donate]
+  Supporter --> Volunteer[Volunteer]
+  Supporter --> Community[Post, follow, review]
+  NGO[NGO workspace] --> Verify[Verification]
+  NGO --> Campaigns[Campaigns]
+  NGO --> VolunteerOps[Volunteer operations]
+  Corporate[Corporate workspace] --> Matching[CSR matching]
+  Matching --> Settlement[CSR settlement]
+  Donate --> Finance[Financial records]
+  Settlement --> Finance
+  Finance --> Admin[Admin operations]
+  Verify --> Admin
+  Community --> Admin
+  Admin --> Impact[Trusted public impact]
+  Impact --> Public
+```
+
 ## Main Product Areas
 
 ### Public discovery
@@ -52,4 +73,3 @@ The current codebase uses Supabase as the backend boundary:
 - Sensitive documents stay in private buckets.
 - Admin decisions should be atomic, audited, and should notify affected users.
 - Public pages should only show records that are safe and approved for public use.
-

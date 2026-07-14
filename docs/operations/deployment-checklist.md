@@ -2,6 +2,17 @@
 
 Use this before production or serious staging deployment.
 
+```mermaid
+flowchart TD
+  Env[Production env vars] --> Supabase[Apply Supabase migrations]
+  Supabase --> Types[Generate types]
+  Types --> Gate[Verification gate]
+  Gate --> PayPal[PayPal webhook and live settings]
+  PayPal --> Deploy[Deploy app]
+  Deploy --> Smoke[Manual smoke checks]
+  Smoke --> Monitor[Monitor payments, auth, and admin queues]
+```
+
 ## Environment
 
 - Set all required Supabase variables.
@@ -60,4 +71,3 @@ npm audit --omit=dev
 - Create volunteer opportunity and review application.
 - Publish and moderate community content.
 - Create CSR settlement and capture it.
-

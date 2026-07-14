@@ -2,6 +2,17 @@
 
 Supabase migrations and seed files live under `supabase/`.
 
+```mermaid
+flowchart TD
+  Migrations[supabase/migrations] --> DryRun[db:migrate:dry]
+  DryRun --> Push[db:push]
+  Push --> Types[db:types]
+  SeedSQL[supabase/seed.sql] --> SeedRemote[db:seed:remote]
+  SeedAssets[scripts/seed-demo-assets.ts] --> Assets[db:seed:assets]
+  SeedRemote --> VerifySeed[db:seed:verify]
+  Assets --> VerifySeed
+```
+
 ## Schema Source
 
 Migrations:
@@ -78,10 +89,9 @@ DaanSetuDemo@2026
 
 Representative emails:
 
-| Role | Email |
-| --- | --- |
-| Supporter | `supporter001@demo.daansetu.local` |
-| NGO owner | `ngo01@demo.daansetu.local` |
-| Corporate owner | `corporate01@demo.daansetu.local` |
-| Administrator | `admin1@demo.daansetu.local` |
-
+| Role            | Email                              |
+| --------------- | ---------------------------------- |
+| Supporter       | `supporter001@demo.daansetu.local` |
+| NGO owner       | `ngo01@demo.daansetu.local`        |
+| Corporate owner | `corporate01@demo.daansetu.local`  |
+| Administrator   | `admin1@demo.daansetu.local`       |

@@ -2,6 +2,24 @@
 
 CSR settlement turns employee-attributed match pledges into actual matched donations.
 
+```mermaid
+sequenceDiagram
+  actor Corporate
+  participant App
+  participant DB as Supabase DB
+  participant PayPal
+  Corporate->>App: Select outstanding match pledges
+  App->>DB: create_csr_settlement_batch
+  App->>PayPal: Create PayPal order
+  PayPal-->>Corporate: Approval page
+  Corporate->>PayPal: Approve payment
+  PayPal-->>App: Return to settlement page
+  App->>App: POST capture with origin check
+  App->>PayPal: Capture order
+  App->>DB: capture_csr_settlement
+  DB-->>App: Pledges allocated and matched donations recorded
+```
+
 ## Setup
 
 1. Corporate user creates a corporate profile.
@@ -60,4 +78,3 @@ If PayPal later reverses a settlement payment:
 - Capture must validate provider totals.
 - Outstanding pledges should not be double-settled.
 - Reversed settlements must release or reverse related records.
-

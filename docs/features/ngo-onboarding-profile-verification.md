@@ -2,6 +2,21 @@
 
 The NGO feature set lets an NGO build a public profile, submit verification documents, wait for admin review, and operate campaigns and volunteer programs after setup.
 
+```mermaid
+flowchart TD
+  Draft[Draft NGO profile] --> Assets[Public logo, cover, gallery]
+  Draft --> PrivateDocs[Private verification documents]
+  Assets --> Completion[Profile completion]
+  PrivateDocs --> Submission[Submit verification]
+  Completion --> Submission
+  Submission --> AdminReview[Admin review]
+  AdminReview --> Verified[Verified NGO]
+  AdminReview --> Changes[Changes requested]
+  Changes --> Draft
+  Verified --> PublicProfile[Published public profile]
+  Verified --> Campaigns[Campaigns and volunteer ops]
+```
+
 ## Routes
 
 - `/ngo/profile`
@@ -117,4 +132,3 @@ Published NGO profiles can include:
 - Reviews.
 
 Program, update, gallery, and service-area records are dashboard-managed public content.
-

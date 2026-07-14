@@ -2,6 +2,18 @@
 
 Notifications and activity records keep users informed and give admins a trace of important platform events.
 
+```mermaid
+flowchart TD
+  Event[Platform event] --> Kind{Event type}
+  Kind --> UserNotice[User notification]
+  Kind --> Activity[Activity log]
+  Kind --> Audit[Audit log]
+  Kind --> Analytics[Analytics log]
+  UserNotice --> NotificationPage[/notifications/]
+  Audit --> AdminAudit[/admin/audit/]
+  Analytics --> Reports[Reports and dashboards]
+```
+
 ## Routes
 
 - `/notifications`
@@ -53,4 +65,3 @@ Admins inspect audit records in `/admin/audit`.
 ## Analytics Logs
 
 Analytics logs are used for platform measurement and reporting. They should not become a dumping ground for sensitive private content.
-

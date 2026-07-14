@@ -2,6 +2,23 @@
 
 This is a practical reference for the main database tables.
 
+```mermaid
+flowchart TD
+  Identity[Identity] --> NGO[NGO]
+  Identity --> Supporter[Supporter giving]
+  Identity --> Volunteer[Volunteering]
+  Identity --> Community[Community]
+  Identity --> Corporate[Corporate CSR]
+  NGO --> Campaigns[Campaigns and payments]
+  Supporter --> Campaigns
+  Volunteer --> Certificates[Certificates]
+  Community --> Moderation[Moderation]
+  Corporate --> CSR[CSR settlements]
+  Campaigns --> Operations[Notifications, audit, analytics]
+  Moderation --> Operations
+  CSR --> Operations
+```
+
 ## Identity
 
 - `users` - core public account record and role.
@@ -76,4 +93,3 @@ This is a practical reference for the main database tables.
 - `ai_flags`
 - `action_rate_limits`
 - `email_queue`
-

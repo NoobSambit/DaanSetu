@@ -2,6 +2,20 @@
 
 DaanSetu stores several kinds of files. Some are public assets, and some are private sensitive documents.
 
+```mermaid
+flowchart TD
+  Upload[File upload] --> Type{File category}
+  Type --> Public[Public asset]
+  Type --> Private[Private document]
+  Public --> PublicBucket[Public storage bucket]
+  PublicBucket --> DirectDisplay[Direct display]
+  Private --> Validate[Validate type and size]
+  Validate --> Encrypt[Encrypt bytes]
+  Encrypt --> PrivateBucket[Private storage bucket]
+  PrivateBucket --> Metadata[Metadata row]
+  Metadata --> AuthRoute[Authenticated download route]
+```
+
 ## Public Buckets
 
 Public assets include:
@@ -63,4 +77,3 @@ Important distinction:
 - Form 10BD: filing/export workflow for NGO-side compliance.
 
 The app should not pretend that a normal receipt is an official statutory certificate.
-

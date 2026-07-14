@@ -2,6 +2,21 @@
 
 Refunds, payouts, and tax documents are separate but related financial operations.
 
+```mermaid
+flowchart TD
+  Donation[Captured donation] --> RefundRequest[Supporter refund request]
+  RefundRequest --> RefundReview[Admin review]
+  RefundReview --> RefundProvider[PayPal refund]
+  RefundProvider --> RefundReconcile[Refund reconciliation]
+  Donation --> PayoutReady[Donation eligible for payout]
+  PayoutReady --> PayoutAccount[NGO payout account]
+  PayoutAccount --> PayoutReview[Admin payout review]
+  PayoutReview --> Transfer[Transfer reconciliation]
+  Donation --> TaxProfile[Donor tax profile]
+  TaxProfile --> Form10BE[NGO uploads Form 10BE]
+  Form10BE --> TaxDownload[Authorized certificate download]
+```
+
 ## Refund Request
 
 1. Supporter opens `/dashboard/giving`.
@@ -58,4 +73,3 @@ NGOs can use `/ngo/dashboard/tax/10bd` for Form 10BD-related export support.
 - Private tax files must not use public URLs.
 - Refunds must reduce net donation totals.
 - Payout records must keep provider identifiers for reconciliation.
-

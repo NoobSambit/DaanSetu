@@ -2,6 +2,20 @@
 
 DaanSetu has public analytics, supporter analytics, NGO analytics, admin analytics, and public leaderboards.
 
+```mermaid
+flowchart LR
+  Donations[Donations] --> Net[Net non-demo aggregates]
+  Refunds[Refunds] --> Net
+  Volunteers[Volunteer hours] --> Impact[Impact metrics]
+  Campaigns[Campaigns] --> Impact
+  NGOs[NGOs] --> Impact
+  Net --> PublicAnalytics[Public analytics]
+  Net --> SupporterImpact[Supporter impact]
+  Net --> NGOReports[NGO reports]
+  Impact --> AdminAnalytics[Admin analytics]
+  Net --> Leaderboards[Leaderboards]
+```
+
 ## Routes
 
 - `/analytics`
@@ -63,4 +77,3 @@ Leaderboards can rank:
 - Giving.
 - Volunteer hours.
 - User rank or public contribution stats.
-

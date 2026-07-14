@@ -2,6 +2,19 @@
 
 The community area lets verified users share updates, interact with posts, follow entities, and report harmful content.
 
+```mermaid
+flowchart TD
+  VerifiedUser[Verified user] --> Publish[Publish post]
+  Publish --> Feed[Community feed]
+  Feed --> Like[Like]
+  Feed --> Comment[Comment]
+  Feed --> Bookmark[Bookmark]
+  Feed --> Follow[Follow entity]
+  Feed --> Report[Report content]
+  Report --> Admin[Admin moderation]
+  Admin --> Visibility[Visibility decision]
+```
+
 ## Routes
 
 - `/community`
@@ -64,4 +77,3 @@ Post interactions can create notifications through database triggers such as `no
 ## Badges
 
 Badges are stored in `user_badges` and can be fetched through `/api/badges/[userId]`.
-

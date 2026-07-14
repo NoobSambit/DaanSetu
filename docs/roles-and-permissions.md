@@ -2,6 +2,18 @@
 
 DaanSetu has four main account roles. Some public pages are visible without signing in, but most write actions need an authenticated and email-verified user.
 
+```mermaid
+flowchart TD
+  Visitor[Visitor] -->|sign up| Supporter[Supporter]
+  Visitor -->|sign up as NGO| NGO[NGO user]
+  Visitor -->|sign up as company| Corporate[Corporate user]
+  Supporter -->|donates, volunteers, posts| Platform[Platform records]
+  NGO -->|profiles, campaigns, volunteer ops| Platform
+  Corporate -->|CSR campaigns, employees, settlements| Platform
+  Admin[Admin] -->|reviews and audits| Platform
+  Platform --> Public[Public impact and discovery]
+```
+
 ## Visitor
 
 A visitor is not signed in.
@@ -129,4 +141,3 @@ Admins should:
 - Preserve history where possible.
 - Prefer database RPCs for important state changes.
 - Confirm payment-provider state before marking financial records complete.
-

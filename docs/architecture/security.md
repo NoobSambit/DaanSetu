@@ -2,6 +2,21 @@
 
 Security is built from several layers: Supabase Auth, RLS, server-side validation, private storage, encryption, origin checks, rate limits, CSP, and audit logs.
 
+```mermaid
+flowchart TD
+  Request[Incoming request] --> Auth[Supabase Auth]
+  Auth --> Session{Valid session?}
+  Session -->|no| Reject[Reject or redirect]
+  Session -->|yes| Verify{Email or role required?}
+  Verify -->|missing| Reject
+  Verify -->|ok| Validate[Validate input]
+  Validate --> Origin[Origin and rate-limit checks]
+  Origin --> RLS[RLS and ownership checks]
+  RLS --> RPC[Atomic RPC when needed]
+  RPC --> Audit[Audit log and notification]
+  RLS --> Storage[Private storage access]
+```
+
 ## Auth
 
 Supabase Auth owns identity and sessions. The app adds role-aware routing, profile records, and verification gates.
@@ -62,4 +77,3 @@ Payment routes validate:
 ## Audit Logs
 
 Important admin and financial actions should write audit logs. This protects operational accountability and debugging.
-

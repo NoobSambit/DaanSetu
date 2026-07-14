@@ -2,6 +2,17 @@
 
 Service and domain files live under `lib/`.
 
+```mermaid
+flowchart TD
+  Auth[lib/auth] --> Pages[app pages and actions]
+  Supabase[lib/supabase] --> Pages
+  Domain[lib/domain] --> Services[lib/services]
+  Services --> Pages
+  Security[lib/security and middleware] --> Pages
+  Storage[lib/storage] --> UploadRoutes[upload and document routes]
+  Payments[lib/payments] --> PaymentRoutes[payment routes]
+```
+
 ## Auth
 
 - `lib/auth/validation.ts` - auth input validation.
@@ -51,4 +62,3 @@ Service and domain files live under `lib/`.
 - `lib/security/origin.ts`
 - `lib/middleware/rate-limit.ts`
 - `lib/storage/file-validation.ts`
-

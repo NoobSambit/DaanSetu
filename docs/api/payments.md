@@ -1,5 +1,18 @@
 # Payment APIs
 
+```mermaid
+flowchart TD
+  Create[/api/payment/create-order/] --> PayPalOrder[PayPal order]
+  PayPalOrder --> Capture[/api/payment/capture/]
+  Capture --> Donation[record_completed_payment]
+  PayPalWebhook[PayPal webhook] --> Webhook[/api/payment/webhook/]
+  Webhook --> Events[payment_events]
+  Webhook --> Donation
+  Webhook --> Refund[complete_paypal_refund]
+  Webhook --> Subscription[subscription reconciliation]
+  SubscriptionAPI[/api/payment/subscriptions/] --> PayPalSubscription[PayPal subscription]
+```
+
 ## `/api/payment/create-order`
 
 Creates a PayPal order for a one-time donation.
@@ -57,4 +70,3 @@ Rules:
 - Requires authenticated verified user.
 - Marks records as demo.
 - Excluded from public financial impact.
-

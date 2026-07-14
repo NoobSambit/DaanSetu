@@ -2,6 +2,21 @@
 
 Campaigns are fundraising records attached to an NGO or supporter campaign creator. They support draft editing, admin review, public discovery, donation progress, evidence, milestones, updates, and lifecycle transitions.
 
+```mermaid
+flowchart TD
+  Create[Create campaign] --> Draft[Draft]
+  Draft --> Evidence[Private evidence]
+  Draft --> Milestones[Milestones]
+  Draft --> Review[Review]
+  Review --> Active[Active public campaign]
+  Review --> Changes[Changes requested]
+  Changes --> Draft
+  Active --> Donations[Captured donations]
+  Donations --> Progress[Progress and milestone checks]
+  Active --> Updates[Campaign updates]
+  Active --> Complete[Completed or cancelled]
+```
+
 ## Routes
 
 - `/campaigns`
@@ -87,4 +102,3 @@ Admins review supporter fundraisers in `/admin/fundraisers`. The review should b
 - Store raised/current totals as integer paise.
 - Use net donation totals after refunds.
 - Do not count demo payments as real campaign progress.
-

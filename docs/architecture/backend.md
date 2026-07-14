@@ -2,6 +2,21 @@
 
 The backend is implemented through Next.js server actions, route handlers, Supabase RPCs, RLS, storage policies, and external provider clients.
 
+```mermaid
+flowchart LR
+  Form[Form submit] --> Action[Server action]
+  BrowserCall[Browser fetch] --> Route[Route handler]
+  Provider[PayPal webhook] --> Route
+  Action --> Validate[Validate input and session]
+  Route --> Validate
+  Validate --> RPC[Database RPC]
+  Validate --> Tables[Supabase tables]
+  RPC --> Tables
+  Tables --> RLS[RLS policies]
+  Route --> Storage[Private or public storage]
+  Route --> External[PayPal or Gemini]
+```
+
 ## Server Actions
 
 Server actions handle form-based mutations. They are good for:
@@ -64,4 +79,3 @@ PayPal handles provider payment operations. DaanSetu still validates amounts, st
 ### Gemini
 
 Gemini supports recommendations, chat, and content analysis. The app should work without Gemini.
-

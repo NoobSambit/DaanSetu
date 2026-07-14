@@ -29,4 +29,3 @@ The script:
 5. Revokes the user's existing sessions.
 
 The user should sign in again after promotion.
-

@@ -2,6 +2,21 @@
 
 Financial flows are one of the most sensitive parts of DaanSetu. The app uses PayPal for provider-backed payment actions and stores application money values as integer paise.
 
+```mermaid
+flowchart TD
+  Intent[Donation intent] --> Order[PayPal order]
+  Order --> Capture[Capture]
+  Capture --> Donation[Donation ledger]
+  Donation --> Receipt[Receipt]
+  Donation --> CampaignTotal[Campaign progress]
+  Donation --> Subscription{Recurring?}
+  Subscription -->|yes| Invoices[Subscription invoices]
+  Donation --> Refund[Refund request]
+  Refund --> AdminReview[Admin review]
+  AdminReview --> ProviderRefund[PayPal refund]
+  ProviderRefund --> NetTotals[Net totals after refund]
+```
+
 ## Routes
 
 - `/dashboard/giving`
@@ -103,4 +118,3 @@ Important distinction:
 
 - A receipt confirms the donation record.
 - Form 10BE is a statutory certificate handled separately.
-

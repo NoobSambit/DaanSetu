@@ -2,6 +2,24 @@
 
 This workflow covers how a user enters the platform and reaches the right first workspace.
 
+```mermaid
+sequenceDiagram
+  actor User
+  participant App as Next.js app
+  participant Auth as Supabase Auth
+  participant DB as users table
+  User->>App: Submit sign-up form
+  App->>App: Validate role, email, password
+  App->>Auth: Create auth account
+  Auth-->>App: Auth user
+  App->>DB: Create or update profile
+  App-->>User: Send to check email
+  User->>App: Sign in after verification
+  App->>Auth: Validate credentials
+  App->>App: Choose role-aware destination
+  App-->>User: Redirect to workspace
+```
+
 ## Sign-Up
 
 1. User opens `/sign-up` or `/auth/signup`.
@@ -24,12 +42,12 @@ This workflow covers how a user enters the platform and reaches the right first 
 
 ## Role Defaults
 
-| Role | Default page |
-| --- | --- |
-| Supporter | `/dashboard` |
-| NGO | `/ngo/profile` |
+| Role      | Default page         |
+| --------- | -------------------- |
+| Supporter | `/dashboard`         |
+| NGO       | `/ngo/profile`       |
 | Corporate | `/corporate/profile` |
-| Admin | `/admin/analytics` |
+| Admin     | `/admin/analytics`   |
 
 ## Email Verification Gates
 
@@ -56,4 +74,3 @@ If the user is not verified:
 2. User chooses to revoke all sessions.
 3. `revokeAllSessionsAction` calls Supabase global sign-out.
 4. Existing sessions are revoked.
-

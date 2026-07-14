@@ -53,4 +53,3 @@ npm run format:check
 - Payment flows need PayPal sandbox values.
 - AI features can work without Gemini if fallback behavior is preserved.
 - Do not run seed commands against production.
-

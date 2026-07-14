@@ -2,6 +2,18 @@
 
 This documentation is the working handbook for the DaanSetu application. It is written in plain language, but it is intentionally detailed because the app has many connected product areas.
 
+```mermaid
+flowchart TD
+  Start[Start with product overview] --> Features[Feature docs]
+  Start --> Workflows[Workflow docs]
+  Start --> Architecture[Architecture docs]
+  Features --> API[API docs]
+  Workflows --> Operations[Operations docs]
+  Architecture --> Reference[Reference docs]
+  API --> Operations
+  Reference --> Operations
+```
+
 ## Start Here
 
 - [Product overview](product-overview.md)
@@ -76,4 +88,3 @@ This documentation is the working handbook for the DaanSetu application. It is w
 - [Service layer reference](reference/service-layer.md)
 - [Testing reference](reference/testing-reference.md)
 - [Glossary](reference/glossary.md)
-

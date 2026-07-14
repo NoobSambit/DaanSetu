@@ -2,6 +2,19 @@
 
 The frontend uses Next.js App Router, React, TypeScript, and Tailwind CSS.
 
+```mermaid
+flowchart TD
+  Routes[app routes] --> Pages[server-first pages]
+  Pages --> ServerData[server data reads]
+  Pages --> ClientWidgets[client widgets]
+  ClientWidgets --> Forms[interactive forms]
+  Forms --> ServerActions[server actions]
+  Pages --> SharedComponents[components directory]
+  SharedComponents --> Landing[landing sections]
+  SharedComponents --> Auth[auth forms]
+  SharedComponents --> DomainUI[donation, campaign, NGO UI]
+```
+
 ## Routing
 
 Routes live under `app/`. The route folders are organized by product area:
@@ -64,4 +77,3 @@ Charts use Recharts in pages such as:
 - `app/dashboard/impact/ImpactCharts.tsx`
 - `app/admin/analytics/AnalyticsCharts.tsx`
 - `app/ngo/dashboard/analytics/components/DonationsChart.tsx`
-

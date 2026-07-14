@@ -43,4 +43,3 @@ A normal user who donates, volunteers, follows, bookmarks, posts, or participate
 ## Verification
 
 The admin-reviewed process that gives an NGO trusted status.
-

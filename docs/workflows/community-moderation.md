@@ -2,6 +2,22 @@
 
 Community moderation keeps public discussion usable while preserving audit history.
 
+```mermaid
+flowchart TD
+  User[Verified user] --> Post[Publish post]
+  Post --> Feed[Visible feed]
+  Feed --> Interactions[Likes, comments, bookmarks]
+  Feed --> Report[User report]
+  Report --> Queue[Admin moderation queue]
+  Queue --> Decision{Decision}
+  Decision --> Hide[Hide content]
+  Decision --> Restore[Restore or keep visible]
+  Decision --> Dismiss[Dismiss report]
+  Hide --> Audit[Moderation action and audit log]
+  Restore --> Audit
+  Dismiss --> Audit
+```
+
 ## Publishing
 
 1. Verified user opens `/community/create`.
@@ -51,4 +67,3 @@ Admins can also review impact-story visibility with `review_impact_story`.
 - Admin actions must be auditable.
 - Users should not be able to write moderation-only fields.
 - Verified-user checks protect publishing.
-

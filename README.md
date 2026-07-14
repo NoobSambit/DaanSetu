@@ -4,6 +4,22 @@ DaanSetu is a donation, volunteering, NGO discovery, community, and CSR platform
 
 The app is not just a landing page. It has real product areas for public discovery, supporter giving, NGO operations, volunteer management, corporate CSR matching, community posts, moderation, refunds, payouts, tax-document handling, AI recommendations, analytics, and audit trails.
 
+```mermaid
+flowchart LR
+  Visitor[Visitor] --> Discovery[Public discovery]
+  Discovery --> Supporter[Supporter]
+  Discovery --> NGO[NGO]
+  Discovery --> Corporate[Corporate]
+  Supporter --> Giving[Giving and volunteering]
+  NGO --> Operations[NGO operations]
+  Corporate --> CSR[CSR programs]
+  Giving --> Admin[Admin review]
+  Operations --> Admin
+  CSR --> Admin
+  Admin --> Trust[Trust, audit, and public impact]
+  Trust --> Discovery
+```
+
 ## Documentation
 
 The full documentation has been rebuilt under [docs/README.md](docs/README.md).

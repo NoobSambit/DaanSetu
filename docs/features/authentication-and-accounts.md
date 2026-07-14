@@ -2,6 +2,19 @@
 
 Authentication is handled by Supabase Auth. DaanSetu wraps Supabase Auth with account-type validation, profile records, role-aware redirects, email verification checks, and account security controls.
 
+```mermaid
+flowchart TD
+  Signup[Sign up] --> Validate[Validate input]
+  Validate --> Auth[Supabase Auth user]
+  Auth --> Profile[users profile row]
+  Profile --> VerifyEmail[Email verification]
+  VerifyEmail --> Role{Role}
+  Role --> Supporter[/dashboard/]
+  Role --> NGO[/ngo/profile/]
+  Role --> Corporate[/corporate/profile/]
+  Role --> Admin[/admin/analytics/]
+```
+
 ## Main Users
 
 - Supporters
@@ -58,12 +71,12 @@ Sign-in uses normalized email and password values. After sign-in, the user is se
 
 Default destinations:
 
-| Role | Destination |
-| --- | --- |
-| Supporter | `/dashboard` |
-| NGO | `/ngo/profile` |
+| Role      | Destination          |
+| --------- | -------------------- |
+| Supporter | `/dashboard`         |
+| NGO       | `/ngo/profile`       |
 | Corporate | `/corporate/profile` |
-| Admin | `/admin/analytics` |
+| Admin     | `/admin/analytics`   |
 
 The redirect helper blocks open redirects. External URLs, protocol-relative URLs, and suspicious slash patterns fall back to an internal route.
 
@@ -117,4 +130,3 @@ Command:
 ```bash
 npm run admin:bootstrap
 ```
-

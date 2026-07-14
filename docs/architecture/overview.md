@@ -2,6 +2,23 @@
 
 DaanSetu is a Next.js App Router application using Supabase as the active backend boundary.
 
+```mermaid
+flowchart TD
+  Browser[Browser] --> UI[React UI and forms]
+  UI --> AppRouter[Next.js App Router]
+  AppRouter --> ServerComponents[Server components]
+  AppRouter --> ServerActions[Server actions]
+  AppRouter --> RouteHandlers[Route handlers]
+  ServerComponents --> SupabaseUser[Supabase user client]
+  ServerActions --> SupabaseUser
+  RouteHandlers --> SupabaseAdmin[Supabase admin client]
+  SupabaseUser --> RLS[PostgreSQL with RLS]
+  SupabaseAdmin --> RLS
+  RouteHandlers --> PayPal[PayPal]
+  RouteHandlers --> Gemini[Gemini optional]
+  RLS --> Storage[Supabase Storage]
+```
+
 ## High-Level Shape
 
 ```text
@@ -57,4 +74,3 @@ External providers
 - Store money as integer paise.
 - Keep private documents behind authenticated routes.
 - Keep AI optional and fallback-safe.
-

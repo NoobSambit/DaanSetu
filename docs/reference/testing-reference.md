@@ -2,6 +2,19 @@
 
 Tests use Node's built-in test runner.
 
+```mermaid
+flowchart TD
+  Tests[tests directory] --> Auth[auth contracts]
+  Tests --> NGO[NGO contracts]
+  Tests --> Platform[platform journey contracts]
+  Tests --> Security[security contracts]
+  Platform --> Payments[payments]
+  Platform --> CSR[CSR]
+  Platform --> Volunteer[volunteering]
+  Platform --> Community[community]
+  Platform --> Migrations[migrations]
+```
+
 ## Commands
 
 ```bash
@@ -46,4 +59,3 @@ Add or update tests when changing:
 - Admin decision RPCs.
 - Security headers.
 - Database migrations.
-

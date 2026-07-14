@@ -2,6 +2,18 @@
 
 DaanSetu uses layered security. No single layer is trusted to do everything.
 
+```mermaid
+flowchart LR
+  Auth[Auth] --> Validation[Server validation]
+  Validation --> RLS[RLS]
+  RLS --> RPC[Database RPCs]
+  RPC --> Audit[Audit trail]
+  Validation --> RateLimit[Rate limits]
+  Validation --> Origin[Origin checks]
+  Validation --> Encryption[Encryption]
+  Encryption --> PrivateStorage[Private storage]
+```
+
 ## Layers
 
 1. Supabase Auth identifies the user.
@@ -57,4 +69,3 @@ Admin workflows should:
 - Notify affected users.
 - Preserve history.
 - Avoid direct table edits during normal operation.
-

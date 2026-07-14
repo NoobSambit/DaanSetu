@@ -46,4 +46,3 @@ npm run db:seed:remote
 npm run db:seed:assets
 npm run db:seed:verify
 ```
-

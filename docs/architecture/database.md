@@ -2,6 +2,25 @@
 
 Supabase PostgreSQL stores the application data. Migrations in `supabase/migrations/` are the source of truth.
 
+```mermaid
+erDiagram
+  users ||--o{ ngos : owns
+  users ||--o{ donations : makes
+  users ||--o{ volunteer_profiles : has
+  users ||--o{ posts : writes
+  ngos ||--o{ campaigns : runs
+  campaigns ||--o{ donations : receives
+  campaigns ||--o{ campaign_updates : has
+  campaigns ||--o{ campaign_milestones : tracks
+  ngos ||--o{ ngo_verifications : submits
+  ngos ||--o{ volunteer_opportunities : posts
+  volunteer_opportunities ||--o{ volunteer_applications : receives
+  corporate_profiles ||--o{ corporate_campaigns : runs
+  corporate_profiles ||--o{ csr_initiatives : configures
+  csr_initiatives ||--o{ csr_match_pledges : creates
+  csr_settlements ||--o{ csr_settlement_pledges : includes
+```
+
 ## Major Table Groups
 
 ### Identity and profiles
@@ -122,4 +141,3 @@ npm run db:migrate:dry
 npm run db:push
 npm run db:types
 ```
-
