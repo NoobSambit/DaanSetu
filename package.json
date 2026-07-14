@@ -18,8 +18,9 @@
     "db:seed:verify": "supabase db query --linked --file supabase/verify-seed.sql",
     "db:types": "supabase gen types typescript --project-id $SUPABASE_PROJECT_ID > lib/types/database.types.ts",
     "admin:bootstrap": "node --experimental-strip-types scripts/admin-bootstrap.ts",
-    "format": "prettier --write \"app/**/*.{ts,tsx}\" \"components/**/*.{ts,tsx}\" \"lib/**/*.{ts,tsx}\" \"tests/**/*.{ts,tsx}\" \"*.{ts,mjs,json}\"",
-    "format:check": "prettier --check \"app/**/*.{ts,tsx}\" \"components/**/*.{ts,tsx}\" \"lib/**/*.{ts,tsx}\" \"tests/**/*.{ts,tsx}\" \"*.{ts,mjs,json}\""
+    "format": "prettier --write \"app/**/*.{ts,tsx}\" \"components/**/*.{ts,tsx}\" \"lib/**/*.{ts,tsx}\" \"scripts/**/*.{ts,tsx}\" \"tests/**/*.{ts,tsx}\" \"*.{ts,mjs,json}\" && npm run format:sql",
+    "format:sql": "sql-formatter --language postgresql --fix supabase/seed.sql && sql-formatter --language postgresql --fix supabase/verify-seed.sql",
+    "format:check": "prettier --check \"app/**/*.{ts,tsx}\" \"components/**/*.{ts,tsx}\" \"lib/**/*.{ts,tsx}\" \"scripts/**/*.{ts,tsx}\" \"tests/**/*.{ts,tsx}\" \"*.{ts,mjs,json}\""
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.2.8",
@@ -51,8 +52,9 @@
     "eslint-config-next": "^16.2.10",
     "postcss": "^8.4.33",
     "prettier": "^3.6.2",
-    "supabase": "^2.39.2",
     "sharp": "^0.34.5",
+    "sql-formatter": "^15.8.2",
+    "supabase": "^2.39.2",
     "tailwindcss": "^3.4.0",
     "typescript": "^5.3.3"
   }

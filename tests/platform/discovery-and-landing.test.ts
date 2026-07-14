@@ -129,6 +129,8 @@ test("impact stories are public, approved, visible, and link to real routes", ()
   const page = source("app/impact-stories/page.tsx");
 
   assert.doesNotMatch(page, /redirect\("\/sign-in/);
+  assert.match(page, /createAdminClient/);
+  assert.doesNotMatch(page, /createClient.*supabase\/server/);
   assert.match(page, /\.eq\("is_impact_story", true\)/);
   assert.match(page, /\.not\("approved_at", "is", null\)/);
   assert.match(page, /\.is\("hidden_at", null\)/);

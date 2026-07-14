@@ -72,6 +72,44 @@ These commands target hosted Supabase and do not start local containers. `db:pus
 
 Private verification and statutory documents must remain in private buckets. Access is granted through authenticated, ownership-aware server routes rather than public object URLs.
 
+## Comprehensive demo dataset
+
+`supabase/seed.sql` populates the linked development project with a deterministic, fictional dataset for UI debugging. It is deliberately separate from migrations and is safe to rerun. Do not run it against a production project: some synthetic captured donations are intentionally included in development aggregates so dashboards, campaign progress, receipts, payouts, and public-impact screens are populated.
+
+The current seed includes:
+
+- 220 email/password accounts: 180 supporters, 24 NGO owners, 12 corporate owners, and 4 administrators;
+- all 54 public tables and every major lifecycle state;
+- 24 NGOs, 116 NGO and supporter fundraisers, 1,380 donation ledger records, and 110 subscriptions;
+- 160 volunteer profiles, 120 opportunities, and 720 applications;
+- 420 community posts with thousands of reactions, comments, views, follows, reports, and notifications; and
+- 18 reusable public images plus encrypted verification, campaign-evidence, and Form 10BE demo documents.
+
+Apply and verify the seed against the already linked Supabase project:
+
+```bash
+set -a
+source .env
+set +a
+
+npm run db:seed:remote
+npm run db:seed:assets
+npm run db:seed:verify
+```
+
+The seed uses `generate_series` and a small shared asset set to remain suitable for a Supabase Free project. The verified development snapshot uses tens of megabytes rather than hundreds and does not require Docker.
+
+All seeded accounts use the development-only password `DaanSetuDemo@2026`. Representative logins are:
+
+| Role | Email |
+| --- | --- |
+| Supporter | `supporter001@demo.daansetu.local` |
+| NGO owner | `ngo01@demo.daansetu.local` |
+| Corporate owner | `corporate01@demo.daansetu.local` |
+| Administrator | `admin1@demo.daansetu.local` |
+
+The asset script requires `FILE_ENCRYPTION_KEY` and `SUPABASE_SERVICE_ROLE_KEY`. It uploads with deterministic paths and `upsert`, so reruns replace the same objects rather than consuming additional storage.
+
 ## Payment modes
 
 ### PayPal Sandbox

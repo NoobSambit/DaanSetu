@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 
@@ -63,7 +63,11 @@ function StoryCard({
 }
 
 export default async function ImpactStoriesPage() {
-  const supabase = await createClient();
+  // The public users table is intentionally not selectable by anon/authenticated
+  // roles because it contains account email addresses. This server-only query
+  // uses the privileged client but projects only the approved story fields and
+  // the author's public display name.
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("posts")
     .select(
