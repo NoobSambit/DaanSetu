@@ -1,26 +1,36 @@
 # DaanSetu
 
-DaanSetu connects supporters, verified NGOs, volunteers, and corporate CSR teams through a single Supabase-backed Next.js platform. It includes NGO and campaign discovery, fundraising, PayPal giving, demo-safe payment showcases, volunteer workflows, community publishing, CSR matching, moderation, and impact reporting.
+DaanSetu is a donation, volunteering, NGO discovery, community, and CSR platform for India-focused social impact work. It connects supporters, verified NGOs, volunteers, corporate CSR teams, and administrators in one Supabase-backed Next.js application.
 
-## Stack
+The app is not just a landing page. It has real product areas for public discovery, supporter giving, NGO operations, volunteer management, corporate CSR matching, community posts, moderation, refunds, payouts, tax-document handling, AI recommendations, analytics, and audit trails.
 
-- Next.js 16 and React 19
-- Supabase Auth, PostgreSQL, Storage, and Realtime
-- PayPal REST Orders, Subscriptions, Refunds, and Webhooks
-- Optional Gemini candidate reranking with deterministic fallback
-- TypeScript, Tailwind CSS, Zod, and Node's test runner
+## Documentation
 
-The application does not require Docker. Development and release validation use the hosted Supabase project selected by the environment.
+The full documentation has been rebuilt under [docs/README.md](docs/README.md).
 
-## Prerequisites
+Start here:
 
-- Node.js 20 or newer
-- npm
-- A hosted Supabase project
-- PayPal developer credentials for sandbox or live payment processing
-- An optional Gemini API key
+- [Project overview](docs/product-overview.md)
+- [Quick start](docs/getting-started/quick-start.md)
+- [Feature index](docs/features/README.md)
+- [Workflow index](docs/workflows/README.md)
+- [Architecture overview](docs/architecture/overview.md)
+- [API reference](docs/api/README.md)
+- [Security model](docs/security/security-model.md)
+- [Operations guide](docs/operations/README.md)
 
-## Setup
+## Tech Stack
+
+- Next.js 16 with the App Router
+- React 19
+- TypeScript
+- Tailwind CSS
+- Supabase Auth, PostgreSQL, Storage, Realtime, and Row Level Security
+- PayPal Orders, Subscriptions, Refunds, Webhooks, and payout reconciliation
+- Gemini for optional AI support, with deterministic fallback behavior
+- Node's built-in test runner
+
+## Local Setup
 
 Install dependencies:
 
@@ -28,171 +38,96 @@ Install dependencies:
 npm install
 ```
 
-Copy `.env.example` to `.env` and provide the required values. Never commit `.env` or expose service-role, PayPal secret, or webhook credentials to browser code.
-
-Core variables:
-
-```dotenv
-NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-publishable-key
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-SUPABASE_PROJECT_ID=your-project-ref
-
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-
-PAYPAL_ENVIRONMENT=sandbox
-PAYPAL_CLIENT_ID=your-paypal-client-id
-PAYPAL_CLIENT_SECRET=your-paypal-client-secret
-PAYPAL_WEBHOOK_ID=your-paypal-webhook-id
-PAYPAL_INR_PER_USD=83.00
-
-ENABLE_PAYMENTS=true
-ENABLE_SUBSCRIPTIONS=true
-PAYPAL_PAYOUTS_ENABLED=false
-ENABLE_DEMO_PAYMENTS=true
-
-GEMINI_API_KEY=
-FILE_ENCRYPTION_KEY=base64-encoded-32-byte-key
-```
-
-`PAYPAL_INR_PER_USD` is a server-controlled settlement rate. Campaign goals and public impact remain stored as integer INR paise; PayPal settlement currency and minor units are stored separately on payment records. Each configured PayPal subscription plan must also declare its exact INR paise amount through `PAYPAL_PLAN_<INTERVAL>_AMOUNT_PAISE`; the API rejects mismatched recurring gifts.
-
-## Supabase
-
-Migrations under `supabase/migrations/` are the active schema source and must be applied in numeric order. Existing projects should use the linked CLI workflow:
+Create a local environment file:
 
 ```bash
-npm run db:migrate:dry
-npm run db:push
-npm run db:types
+cp .env.example .env
 ```
 
-These commands target hosted Supabase and do not start local containers. `db:push` mutates the linked database, so review the dry run first.
+Fill the Supabase, PayPal, app URL, encryption, and optional Gemini values in `.env`. See [environment variables](docs/operations/environment-variables.md) for the full explanation.
 
-Private verification and statutory documents must remain in private buckets. Access is granted through authenticated, ownership-aware server routes rather than public object URLs.
-
-## Comprehensive demo dataset
-
-`supabase/seed.sql` populates the linked development project with a deterministic, fictional dataset for UI debugging. It is deliberately separate from migrations and is safe to rerun. Do not run it against a production project: some synthetic captured donations are intentionally included in development aggregates so dashboards, campaign progress, receipts, payouts, and public-impact screens are populated.
-
-The current seed includes:
-
-- 220 email/password accounts: 180 supporters, 24 NGO owners, 12 corporate owners, and 4 administrators;
-- all 54 public tables and every major lifecycle state;
-- 24 NGOs, 116 NGO and supporter fundraisers, 1,380 donation ledger records, and 110 subscriptions;
-- 160 volunteer profiles, 120 opportunities, and 720 applications;
-- 420 community posts with thousands of reactions, comments, views, follows, reports, and notifications; and
-- 18 reusable public images plus encrypted verification, campaign-evidence, and Form 10BE demo documents.
-
-Apply and verify the seed against the already linked Supabase project:
-
-```bash
-set -a
-source .env
-set +a
-
-npm run db:seed:remote
-npm run db:seed:assets
-npm run db:seed:verify
-```
-
-The seed uses `generate_series` and a small shared asset set to remain suitable for a Supabase Free project. The verified development snapshot uses tens of megabytes rather than hundreds and does not require Docker.
-
-All seeded accounts use the development-only password `DaanSetuDemo@2026`. Representative logins are:
-
-| Role | Email |
-| --- | --- |
-| Supporter | `supporter001@demo.daansetu.local` |
-| NGO owner | `ngo01@demo.daansetu.local` |
-| Corporate owner | `corporate01@demo.daansetu.local` |
-| Administrator | `admin1@demo.daansetu.local` |
-
-The asset script requires `FILE_ENCRYPTION_KEY` and `SUPABASE_SERVICE_ROLE_KEY`. It uploads with deterministic paths and `upsert`, so reruns replace the same objects rather than consuming additional storage.
-
-## Payment modes
-
-### PayPal Sandbox
-
-Use `PAYPAL_ENVIRONMENT=sandbox` with sandbox credentials for an end-to-end provider flow using non-production PayPal accounts. Orders are created on the server, captures are verified against PayPal, and signed webhook events are reconciled idempotently.
-
-### Isolated demo payments
-
-Set `ENABLE_DEMO_PAYMENTS=true` only in local or controlled non-production demos. The `/api/demo/payments` route:
-
-- is unavailable when `NODE_ENV=production`;
-- requires an authenticated and email-verified user;
-- marks every record with `is_demo=true`;
-- uses the same atomic donation-recording path as captured payments; and
-- excludes demo donations from campaign totals and public impact aggregates.
-
-This route is for presentation rehearsals where no external transaction should occur. It must never be used as a payment fallback.
-
-### Production
-
-Use PayPal live credentials, register the exact production webhook URL, disable demo payments, and enable only provider products approved for the merchant account. PayPal merchant availability and supported currencies vary by country; validate the final settlement model for the production account before launch.
-
-## Development
+Run the app:
 
 ```bash
 npm run dev
 ```
 
-Open `http://localhost:3000`.
+Open:
 
-## Verification
+```text
+http://localhost:3000
+```
 
-Run the complete local gate:
+## Main Commands
 
 ```bash
-npm run format
-npm run format:check
+npm run dev
 npm run typecheck
 npm run lint
 npm test
 npm run test:coverage
 npm run build
-npm audit --omit=dev
+npm run format
+npm run format:check
 ```
 
-Database checks against a linked hosted project:
+Database and seed commands:
 
 ```bash
-npm run db:lint
+npm run db:migrate:dry
+npm run db:push
+npm run db:types
+npm run db:seed:remote
+npm run db:seed:assets
+npm run db:seed:verify
+```
+
+The current codebase uses Supabase as the active backend boundary. Migrations live in `supabase/migrations/`, generated types live in `lib/types/database.types.ts`, and server-only privileged access goes through `lib/supabase/admin.ts`.
+
+## Key Routes
+
+- `/` - landing page and live impact highlights
+- `/ngos` - NGO discovery
+- `/ngos/[id]` - public NGO profile
+- `/campaigns` - campaign discovery
+- `/campaigns/[id]` - campaign detail and giving entry point
+- `/dashboard` - supporter dashboard
+- `/dashboard/giving` - donations, subscriptions, refunds, receipts, and donor tax profile
+- `/volunteer/opportunities` - public volunteer opportunity discovery
+- `/volunteer/dashboard` - volunteer applications, hours, skills, and certificates
+- `/ngo/profile` - NGO onboarding and verification submission
+- `/ngo/dashboard` - NGO operations
+- `/corporate/dashboard` - corporate CSR dashboard
+- `/corporate/settlements` - CSR settlement flow
+- `/community` - community feed
+- `/admin/operations` - admin operations hub
+
+## Verification Gate
+
+Before calling a change ready, run:
+
+```bash
+npm run typecheck
+npm run lint
+npm test
+npm run test:coverage
+npm run build
+```
+
+For database-affecting work, also run:
+
+```bash
 npm run db:migrate:dry
 ```
 
-## Security model
+## Important Production Notes
 
-- Supabase Auth owns identity and email verification.
-- RLS protects user-owned and role-restricted records.
-- Service-role access is confined to server-only modules.
-- Mutations validate inputs, sessions, ownership, and same-origin requests.
-- Payment events use unique provider identifiers and atomic PostgreSQL functions.
-- Demo payments are structurally separated from real financial reporting.
-- Gemini receives only selected candidate data and silently falls back to deterministic ranking.
-- Official Form 10BE documents are uploaded and mapped; the application does not manufacture statutory certificates.
-- Donor statutory identifiers and addresses are encrypted with AES-256-GCM using field-specific authenticated contexts before storage.
-
-## Important routes
-
-- `/ngos` and `/campaigns` — public discovery
-- `/volunteer/opportunities` — skill-based opportunities
-- `/community` — posts and impact stories
-- `/dashboard/giving` — donations, subscriptions, receipts, and refunds
-- `/ngo/dashboard` — NGO operations
-- `/corporate/dashboard` — CSR programs and employee attribution
-- `/admin/operations` — verification, moderation, refunds, payouts, settlements, and audit records
-
-## Deployment checklist
-
-1. Apply every pending Supabase migration and regenerate database types.
-2. Configure Supabase Auth redirect URLs and private Storage policies.
-3. Set production-only secrets in the deployment environment.
-4. Set `PAYPAL_ENVIRONMENT=live` only after provider approval and webhook registration.
-5. Set `ENABLE_DEMO_PAYMENTS=false` and verify that the demo route returns `404`.
-6. Run the complete verification gate and linked migration dry run.
-7. Verify payment capture, duplicate webhook delivery, refund, subscription, and reconciliation scenarios with approved provider accounts.
+- Never expose `SUPABASE_SERVICE_ROLE_KEY`, `PAYPAL_CLIENT_SECRET`, `PAYPAL_WEBHOOK_ID`, or `FILE_ENCRYPTION_KEY` to browser code.
+- Keep `ENABLE_DEMO_PAYMENTS=false` in production.
+- Use PayPal live credentials only after merchant approval and webhook registration.
+- Treat in-app receipts and statutory Form 10BE documents as different things.
+- Keep private verification, campaign evidence, and tax documents in private storage buckets.
+- Apply all Supabase migrations before deploying a new production build.
 
 ## License
 

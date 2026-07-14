@@ -1,86 +1,79 @@
 # DaanSetu Documentation
 
-Welcome to the comprehensive documentation for **DaanSetu** - a platform connecting compassion with action across India.
+This documentation is the working handbook for the DaanSetu application. It is written in plain language, but it is intentionally detailed because the app has many connected product areas.
 
-## Overview
+## Start Here
 
-DaanSetu is a full-stack social impact platform built with Next.js 14, Supabase, and AI-powered features. It connects donors, NGOs, volunteers, and corporates to maximize social impact through:
+- [Product overview](product-overview.md)
+- [User roles and permissions](roles-and-permissions.md)
+- [Route map](route-map.md)
+- [Quick start](getting-started/quick-start.md)
+- [Environment variables](operations/environment-variables.md)
+- [Verification guide](operations/verification.md)
 
-- **Smart Donations**: Secure payment processing and campaign management
-- **AI Recommendations**: Personalized NGO and campaign suggestions using Google Gemini AI
-- **Volunteer Management**: Skills-based volunteer matching
-- **Corporate CSR**: Employee donation matching and CSR initiatives
-- **Social Network**: Community engagement through posts, follows, and comments
-- **Gamification**: Badges, leaderboards, and impact tracking
+## Feature Docs
 
-## Documentation Structure
+- [Feature index](features/README.md)
+- [Authentication and account security](features/authentication-and-accounts.md)
+- [Public discovery and impact surfaces](features/public-discovery-and-impact.md)
+- [NGO onboarding, profile, and verification](features/ngo-onboarding-profile-verification.md)
+- [Campaign fundraising and campaign management](features/campaign-fundraising.md)
+- [Donations, payments, subscriptions, refunds, and receipts](features/donations-payments-refunds.md)
+- [Supporter dashboard and profiles](features/supporter-dashboard.md)
+- [Volunteering](features/volunteering.md)
+- [Community and social features](features/community-and-social.md)
+- [Corporate CSR](features/corporate-csr.md)
+- [Admin operations](features/admin-operations.md)
+- [AI recommendations and moderation helpers](features/ai-features.md)
+- [Analytics, reports, and leaderboards](features/analytics-reports-leaderboards.md)
+- [Documents, storage, and tax records](features/documents-storage-tax.md)
+- [Notifications and activity tracking](features/notifications-and-activity.md)
 
-### 📚 Getting Started
-- [Installation Guide](./getting-started/installation.md) - Set up your development environment
-- [Configuration](./getting-started/configuration.md) - Environment variables and settings
-- [Quick Start](./getting-started/quick-start.md) - Get DaanSetu running in 5 minutes
+## Workflow Docs
 
-### 🏗️ Architecture
-- [Architecture Overview](./architecture/overview.md) - High-level system design
-- [Frontend Architecture](./architecture/frontend.md) - Next.js 14 App Router structure
-- [Backend Architecture](./architecture/backend.md) - API routes and services layer
-- [Database Design](./architecture/database.md) - Supabase schema and relationships
+- [Workflow index](workflows/README.md)
+- [Authentication and onboarding workflow](workflows/authentication-onboarding.md)
+- [NGO verification workflow](workflows/ngo-verification.md)
+- [Campaign lifecycle workflow](workflows/campaign-lifecycle.md)
+- [Donation and payment reconciliation workflow](workflows/donation-payment-reconciliation.md)
+- [Refund, payout, and tax workflow](workflows/refund-payout-tax.md)
+- [Volunteer operations workflow](workflows/volunteer-operations.md)
+- [Community moderation workflow](workflows/community-moderation.md)
+- [Corporate CSR settlement workflow](workflows/corporate-csr-settlement.md)
+- [Admin review workflow](workflows/admin-review.md)
+- [Release and deployment workflow](workflows/release-deployment.md)
 
-### ✨ Features
-- [Donation System](./features/donations.md) - Payment processing with Razorpay
-- [Campaign Management](./features/campaigns.md) - Fundraising campaigns and updates
-- [AI Features](./features/ai-features.md) - Gemini AI integration
-- [Social Features](./features/social-features.md) - Posts, follows, comments, and bookmarks
-- [Corporate CSR Module](./features/corporate-csr.md) - Employee donation matching
-- [Volunteer Management](./features/volunteer-management.md) - Opportunities and applications
-- [Gamification](./features/gamification.md) - Badges, leaderboards, and impact tracking
+## Architecture Docs
 
-### 🔌 API Reference
-- [API Overview](./api/overview.md) - REST API structure and conventions
-- [Authentication](./api/authentication.md) - Auth flows with Supabase
-- [AI Endpoints](./api/ai-endpoints.md) - Recommendations and chat
-- [Payment API](./api/payment.md) - Razorpay integration
-- [Social API](./api/social.md) - Posts, follows, and notifications
+- [Architecture overview](architecture/overview.md)
+- [Frontend architecture](architecture/frontend.md)
+- [Backend architecture](architecture/backend.md)
+- [Database architecture](architecture/database.md)
+- [Security architecture](architecture/security.md)
 
-### 🚀 Deployment
-- [Vercel Deployment](./deployment/vercel.md) - Deploy to Vercel
-- [Production Checklist](./deployment/production-checklist.md) - Pre-launch checklist
+## API Docs
 
-### 🔒 Security
-- [Security Overview](./security/overview.md) - Security architecture
-- [RLS Policies](./security/rls-policies.md) - Row Level Security
-- [Best Practices](./security/best-practices.md) - Security guidelines
+- [API overview](api/README.md)
+- [Payment APIs](api/payments.md)
+- [CSR APIs](api/csr.md)
+- [AI APIs](api/ai.md)
+- [Document and storage APIs](api/documents-and-storage.md)
+- [Social and utility APIs](api/social-and-utility.md)
 
-### 💻 Development
-- [Project Structure](./development/project-structure.md) - Codebase organization
-- [Coding Standards](./development/coding-standards.md) - TypeScript and React patterns
-- [Testing Guide](./development/testing.md) - Testing strategies
+## Operations Docs
 
-## Tech Stack
+- [Operations index](operations/README.md)
+- [Local development](operations/local-development.md)
+- [Environment variables](operations/environment-variables.md)
+- [Database migrations and seed data](operations/database-and-seed-data.md)
+- [Verification](operations/verification.md)
+- [Deployment checklist](operations/deployment-checklist.md)
+- [Admin bootstrap](operations/admin-bootstrap.md)
 
-- **Frontend**: Next.js 14 (App Router), React 18, TypeScript, Tailwind CSS
-- **Backend**: Next.js API Routes, Supabase (PostgreSQL)
-- **AI**: Google Gemini AI (gemini-1.5-flash)
-- **Payments**: Razorpay
-- **Storage**: Supabase Storage
-- **Maps**: Leaflet & React Leaflet
-- **Charts**: Recharts
-- **Authentication**: Supabase Auth
+## Reference
 
-## Quick Links
+- [Data model reference](reference/data-model.md)
+- [Service layer reference](reference/service-layer.md)
+- [Testing reference](reference/testing-reference.md)
+- [Glossary](reference/glossary.md)
 
-- [GitHub Repository](https://github.com/NoobSambit/DaanSetu)
-- [Live Demo](#) - Coming soon
-- [Report Issues](https://github.com/NoobSambit/DaanSetu/issues)
-
-## Contributing
-
-We welcome contributions! Please see our [Contributing Guide](./development/contributing.md) for details.
-
-## License
-
-This project is licensed under the MIT License.
-
----
-
-**Need Help?** Start with the [Quick Start Guide](./getting-started/quick-start.md) or browse specific topics using the navigation above.
