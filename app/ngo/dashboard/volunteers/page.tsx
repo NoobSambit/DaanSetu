@@ -1,525 +1,420 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import {
-  createVolunteerOpportunity,
-  getNGOOpportunities,
-  getOpportunityApplications,
-  updateApplicationStatus,
-  type ApplicationWithDetails,
-} from "@/lib/services/volunteer-opportunities";
-import { VOLUNTEER_SKILLS } from "@/lib/services/volunteers";
-import type { VolunteerOpportunity } from "@/lib/types/database.types";
+  createVolunteerOpportunityFormAction,
+  reviewVolunteerApplicationFormAction,
+  reviewVolunteerHoursFormAction,
+  updateVolunteerOpportunityStatusFormAction,
+} from "@/app/ngo/dashboard/volunteers/actions";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 
-export default function NGOVolunteerDashboard() {
-  const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [ngoId, setNgoId] = useState<string | null>(null);
-  const [opportunities, setOpportunities] = useState<VolunteerOpportunity[]>(
-    [],
+export const dynamic = "force-dynamic";
+
+const skills = [
+  "Teaching",
+  "Medical",
+  "Event Support",
+  "Fundraising",
+  "Logistics",
+  "Technical",
+  "Other",
+] as const;
+const availabilityOptions = ["Weekdays", "Weekends", "Flexible"] as const;
+
+export default async function NgoVolunteerDashboard() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/sign-in?next=/ngo/dashboard/volunteers");
+
+  const { data: ngo } = await supabase
+    .from("ngos")
+    .select("id, name, profile_status")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (!ngo || ngo.profile_status !== "published") redirect("/ngo/profile");
+
+  const admin = createAdminClient();
+  const { data: opportunities } = await admin
+    .from("volunteer_opportunities")
+    .select(
+      "id, title, description, city, required_skills, availability, date, total_needed, status, created_at",
+    )
+    .eq("ngo_id", ngo.id)
+    .order("created_at", { ascending: false });
+  const opportunityIds = (opportunities ?? []).map(
+    (opportunity) => opportunity.id,
   );
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [selectedOpportunity, setSelectedOpportunity] = useState<string | null>(
-    null,
-  );
-  const [applications, setApplications] = useState<ApplicationWithDetails[]>(
-    [],
-  );
-
-  // Form state
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    city: "",
-    requiredSkills: [] as string[],
-    date: "",
-    totalNeeded: 1,
-  });
-  const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
-    checkNGOAuth();
-  }, []);
-
-  async function checkNGOAuth() {
-    const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      router.push("/sign-in");
-      return;
-    }
-
-    // Get NGO owned by this user
-    const { data: ngos } = await supabase
-      .from("ngos")
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("profile_status", "published")
-      .limit(1);
-
-    if (!ngos || ngos.length === 0) {
-      alert("Publish your NGO profile before managing volunteer opportunities");
-      router.push("/ngo/profile");
-      return;
-    }
-
-    setNgoId(ngos[0].id);
-    loadOpportunities(ngos[0].id);
-    setLoading(false);
-  }
-
-  async function loadOpportunities(ngoId: string) {
-    try {
-      const data = await getNGOOpportunities(ngoId);
-      setOpportunities(data);
-    } catch (error) {
-      console.error("Failed to load opportunities:", error);
-    }
-  }
-
-  async function loadApplications(opportunityId: string) {
-    try {
-      const data = await getOpportunityApplications(opportunityId);
-      setApplications(data);
-      setSelectedOpportunity(opportunityId);
-    } catch (error) {
-      console.error("Failed to load applications:", error);
-    }
-  }
-
-  const handleSkillToggle = (skill: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      requiredSkills: prev.requiredSkills.includes(skill)
-        ? prev.requiredSkills.filter((s) => s !== skill)
-        : [...prev.requiredSkills, skill],
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!ngoId) return;
-
-    if (formData.requiredSkills.length === 0) {
-      alert("Please select at least one required skill");
-      return;
-    }
-
-    setSubmitting(true);
-
-    try {
-      await createVolunteerOpportunity({
-        ngoId,
-        ...formData,
-      });
-
-      alert("Volunteer opportunity created successfully!");
-      setShowCreateForm(false);
-      setFormData({
-        title: "",
-        description: "",
-        city: "",
-        requiredSkills: [],
-        date: "",
-        totalNeeded: 1,
-      });
-      loadOpportunities(ngoId);
-    } catch (error) {
-      alert(
-        error instanceof Error ? error.message : "Failed to create opportunity",
-      );
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleApplicationAction = async (
-    applicationId: string,
-    action: "accepted" | "rejected",
-  ) => {
-    try {
-      await updateApplicationStatus(applicationId, action);
-      alert(`Application ${action} successfully!`);
-
-      if (selectedOpportunity) {
-        loadApplications(selectedOpportunity);
-      }
-    } catch (error) {
-      alert(
-        error instanceof Error ? error.message : "Failed to update application",
-      );
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
-  };
-
-  const getStatusBadge = (status: string) => {
-    const styles = {
-      pending: "bg-yellow-100 text-yellow-800",
-      accepted: "bg-green-100 text-green-800",
-      rejected: "bg-red-100 text-red-800",
-    };
-    return styles[status as keyof typeof styles] || "bg-gray-100 text-gray-800";
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-600">Loading...</div>
-      </div>
-    );
-  }
+  const [{ data: applications }, { data: hoursRows }] = await Promise.all([
+    opportunityIds.length
+      ? admin
+          .from("volunteer_applications")
+          .select(
+            "id, opportunity_id, user_id, message, status, applied_at, user:users!volunteer_applications_user_id_fkey(name, email, volunteer_profiles(bio, city, skills, availability))",
+          )
+          .in("opportunity_id", opportunityIds)
+          .order("applied_at", { ascending: true })
+      : Promise.resolve({ data: [] }),
+    admin
+      .from("volunteer_hours")
+      .select(
+        "id, user_id, opportunity_id, hours, date, description, status, review_note, created_at, user:users!volunteer_hours_user_id_fkey(name, email), opportunity:volunteer_opportunities(title)",
+      )
+      .eq("ngo_id", ngo.id)
+      .order("created_at", { ascending: false }),
+  ]);
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
-      <div className="max-w-7xl mx-auto px-4">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            Volunteer Management
-          </h1>
-          <p className="text-gray-600">
-            Create opportunities and manage volunteer applications
-          </p>
-        </div>
+    <main className="min-h-screen bg-slate-50 py-12">
+      <section className="mx-auto max-w-7xl px-4">
+        <p className="text-sm font-bold uppercase tracking-wider text-blue-700">
+          {ngo.name}
+        </p>
+        <h1 className="mt-2 text-4xl font-bold text-slate-950">
+          Volunteer operations
+        </h1>
+        <p className="mt-2 text-slate-600">
+          Publish opportunities, review applications, and approve completed
+          service.
+        </p>
 
-        {/* Create Opportunity Button */}
-        {!showCreateForm && (
-          <div className="mb-8">
-            <button
-              onClick={() => setShowCreateForm(true)}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-            >
-              + Post Volunteer Opportunity
+        <details className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <summary className="cursor-pointer text-lg font-bold text-slate-950">
+            Post a volunteer opportunity
+          </summary>
+          <form
+            action={createVolunteerOpportunityFormAction}
+            className="mt-6 grid gap-5 md:grid-cols-2"
+          >
+            <label className="text-sm font-semibold text-slate-800">
+              Title
+              <input
+                name="title"
+                required
+                minLength={5}
+                maxLength={150}
+                className="input mt-2"
+              />
+            </label>
+            <label className="text-sm font-semibold text-slate-800">
+              City
+              <input
+                name="city"
+                required
+                minLength={2}
+                maxLength={100}
+                className="input mt-2"
+              />
+            </label>
+            <label className="text-sm font-semibold text-slate-800 md:col-span-2">
+              Description
+              <textarea
+                name="description"
+                required
+                minLength={30}
+                maxLength={5000}
+                rows={5}
+                className="input mt-2"
+              />
+            </label>
+            <label className="text-sm font-semibold text-slate-800">
+              Service date
+              <input name="date" type="date" required className="input mt-2" />
+            </label>
+            <label className="text-sm font-semibold text-slate-800">
+              Volunteers needed
+              <input
+                name="totalNeeded"
+                type="number"
+                min={1}
+                max={10000}
+                required
+                defaultValue={1}
+                className="input mt-2"
+              />
+            </label>
+            <fieldset>
+              <legend className="text-sm font-semibold text-slate-800">
+                Required skills
+              </legend>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                {skills.map((skill) => (
+                  <label
+                    key={skill}
+                    className="flex items-center gap-2 text-sm text-slate-700"
+                  >
+                    <input
+                      type="checkbox"
+                      name="requiredSkills"
+                      value={skill}
+                    />
+                    {skill}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+            <fieldset>
+              <legend className="text-sm font-semibold text-slate-800">
+                Availability
+              </legend>
+              <div className="mt-3 space-y-2">
+                {availabilityOptions.map((availability) => (
+                  <label
+                    key={availability}
+                    className="flex items-center gap-2 text-sm text-slate-700"
+                  >
+                    <input
+                      type="checkbox"
+                      name="availability"
+                      value={availability}
+                    />
+                    {availability}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+            <button className="btn btn-primary md:col-span-2">
+              Publish opportunity
             </button>
-          </div>
-        )}
+          </form>
+        </details>
 
-        {/* Create Form */}
-        {showCreateForm && (
-          <div className="bg-white rounded-lg shadow-sm p-8 mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">
-              Create Volunteer Opportunity
-            </h2>
-
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label
-                  htmlFor="title"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Title <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="title"
-                  value={formData.title}
-                  onChange={(e) =>
-                    setFormData({ ...formData, title: e.target.value })
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="description"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Description <span className="text-red-500">*</span>
-                </label>
-                <textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
-                  rows={4}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label
-                    htmlFor="city"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    City <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    id="city"
-                    value={formData.city}
-                    onChange={(e) =>
-                      setFormData({ ...formData, city: e.target.value })
-                    }
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="date"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    Date <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    id="date"
-                    value={formData.date}
-                    onChange={(e) =>
-                      setFormData({ ...formData, date: e.target.value })
-                    }
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="totalNeeded"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Number of Volunteers Needed{" "}
-                  <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  id="totalNeeded"
-                  value={formData.totalNeeded}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      totalNeeded: parseInt(e.target.value),
-                    })
-                  }
-                  min="1"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Required Skills <span className="text-red-500">*</span>
-                </label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {VOLUNTEER_SKILLS.map((skill) => (
-                    <button
-                      key={skill}
-                      type="button"
-                      onClick={() => handleSkillToggle(skill)}
-                      className={`px-4 py-2 rounded-lg border-2 text-sm font-medium transition-all ${
-                        formData.requiredSkills.includes(skill)
-                          ? "border-blue-500 bg-blue-50 text-blue-700"
-                          : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
-                      }`}
-                    >
-                      {skill}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex gap-4">
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-                >
-                  {submitting ? "Creating..." : "Create Opportunity"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowCreateForm(false)}
-                  className="px-6 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
-
-        {/* Opportunities List */}
-        <div className="space-y-6">
-          <h2 className="text-2xl font-bold text-gray-900">
-            Your Opportunities
-          </h2>
-
-          {opportunities.length === 0 ? (
-            <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-              <p className="text-gray-600 mb-4">
-                No volunteer opportunities yet
-              </p>
-              <button
-                onClick={() => setShowCreateForm(true)}
-                className="text-blue-600 hover:text-blue-700 font-medium"
-              >
-                Create your first opportunity
-              </button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-6">
-              {opportunities.map((opportunity) => (
-                <div
+        <h2 className="mt-10 text-2xl font-bold text-slate-950">
+          Opportunities and applicants
+        </h2>
+        <div className="mt-5 space-y-6">
+          {opportunities?.length ? (
+            opportunities.map((opportunity) => {
+              const opportunityApplications = (applications ?? []).filter(
+                (application) => application.opportunity_id === opportunity.id,
+              );
+              return (
+                <article
                   key={opportunity.id}
-                  className="bg-white rounded-lg shadow-sm overflow-hidden"
+                  className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
                 >
-                  <div className="p-6">
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <h3 className="text-xl font-semibold text-gray-900 mb-1">
-                          {opportunity.title}
-                        </h3>
-                        <p className="text-sm text-gray-600">
-                          📍 {opportunity.city} • 📅{" "}
-                          {formatDate(opportunity.date)} • 👥{" "}
-                          {opportunity.total_needed} needed
-                        </p>
-                      </div>
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          opportunity.status === "active"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-gray-100 text-gray-800"
-                        }`}
-                      >
-                        {opportunity.status}
-                      </span>
+                  <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                      <h3 className="text-xl font-bold text-slate-950">
+                        {opportunity.title}
+                      </h3>
+                      <p className="mt-1 text-sm text-slate-600">
+                        {opportunity.city} ·{" "}
+                        {new Date(opportunity.date).toLocaleDateString("en-IN")}{" "}
+                        · {opportunity.total_needed} needed
+                      </p>
                     </div>
-
-                    <p className="text-gray-700 mb-4">
-                      {opportunity.description}
-                    </p>
-
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {opportunity.required_skills.map((skill) => (
-                        <span
-                          key={skill}
-                          className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-full"
-                        >
-                          {skill}
-                        </span>
-                      ))}
-                    </div>
-
-                    <button
-                      onClick={() => loadApplications(opportunity.id)}
-                      className="text-blue-600 hover:text-blue-700 font-medium text-sm"
+                    <form
+                      action={updateVolunteerOpportunityStatusFormAction}
+                      className="flex gap-2"
                     >
-                      View Applications →
-                    </button>
+                      <input
+                        type="hidden"
+                        name="opportunityId"
+                        value={opportunity.id}
+                      />
+                      <select
+                        name="status"
+                        defaultValue={opportunity.status}
+                        className="input py-2"
+                      >
+                        <option value="active">Active</option>
+                        <option value="closed">Closed</option>
+                        <option value="cancelled">Cancelled</option>
+                      </select>
+                      <button className="btn btn-secondary">Save</button>
+                    </form>
                   </div>
-
-                  {/* Applications */}
-                  {selectedOpportunity === opportunity.id && (
-                    <div className="border-t border-gray-200 bg-gray-50 p-6">
-                      <h4 className="font-semibold text-gray-900 mb-4">
-                        Applications ({applications.length})
-                      </h4>
-
-                      {applications.length === 0 ? (
-                        <p className="text-gray-600">No applications yet</p>
-                      ) : (
-                        <div className="space-y-4">
-                          {applications.map((application) => (
-                            <div
-                              key={application.id}
-                              className="bg-white p-4 rounded-lg"
-                            >
-                              <div className="flex justify-between items-start mb-2">
-                                <div>
-                                  <p className="font-medium text-gray-900">
-                                    {application.user.name}
+                  <p className="mt-4 text-sm leading-6 text-slate-600">
+                    {opportunity.description}
+                  </p>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {opportunity.required_skills.map((skill: string) => (
+                      <span
+                        key={skill}
+                        className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-800"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                  <h4 className="mt-6 border-t border-slate-200 pt-5 font-bold text-slate-900">
+                    Applications ({opportunityApplications.length})
+                  </h4>
+                  <div className="mt-4 space-y-3">
+                    {opportunityApplications.length ? (
+                      opportunityApplications.map((application) => {
+                        const applicant = application.user as unknown as {
+                          name: string;
+                          email: string;
+                          volunteer_profiles?: Array<{
+                            city: string;
+                            skills: string[];
+                            availability: string[];
+                          }>;
+                        };
+                        const volunteerProfile =
+                          applicant.volunteer_profiles?.[0];
+                        return (
+                          <div
+                            key={application.id}
+                            className="rounded-xl border border-slate-200 p-4"
+                          >
+                            <div className="flex flex-wrap justify-between gap-3">
+                              <div>
+                                <p className="font-semibold text-slate-900">
+                                  {applicant.name}
+                                </p>
+                                <p className="text-sm text-slate-500">
+                                  {applicant.email}
+                                </p>
+                                {volunteerProfile && (
+                                  <p className="mt-1 text-sm text-slate-600">
+                                    {volunteerProfile.city} ·{" "}
+                                    {volunteerProfile.skills.join(", ")} ·{" "}
+                                    {volunteerProfile.availability.join(", ")}
                                   </p>
-                                  <p className="text-sm text-gray-600">
-                                    {application.user.email}
-                                  </p>
-                                  {application.volunteer_profile && (
-                                    <div className="mt-2">
-                                      <p className="text-sm text-gray-700">
-                                        📍 {application.volunteer_profile.city}
-                                      </p>
-                                      <div className="flex flex-wrap gap-1 mt-1">
-                                        {application.volunteer_profile.skills.map(
-                                          (skill) => (
-                                            <span
-                                              key={skill}
-                                              className="px-2 py-0.5 bg-blue-50 text-blue-700 text-xs rounded"
-                                            >
-                                              {skill}
-                                            </span>
-                                          ),
-                                        )}
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-                                <span
-                                  className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBadge(application.status)}`}
-                                >
-                                  {application.status}
-                                </span>
+                                )}
                               </div>
-
-                              {application.status === "pending" && (
-                                <div className="flex gap-2 mt-3">
-                                  <button
-                                    onClick={() =>
-                                      handleApplicationAction(
-                                        application.id,
-                                        "accepted",
-                                      )
-                                    }
-                                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
-                                  >
-                                    Accept
-                                  </button>
-                                  <button
-                                    onClick={() =>
-                                      handleApplicationAction(
-                                        application.id,
-                                        "rejected",
-                                      )
-                                    }
-                                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm"
-                                  >
-                                    Reject
-                                  </button>
-                                </div>
-                              )}
+                              <span className="capitalize text-sm font-bold text-slate-700">
+                                {application.status}
+                              </span>
                             </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+                            <p className="mt-3 whitespace-pre-wrap text-sm text-slate-700">
+                              {application.message}
+                            </p>
+                            {["submitted", "shortlisted"].includes(
+                              application.status,
+                            ) && (
+                              <form
+                                action={reviewVolunteerApplicationFormAction}
+                                className="mt-4 flex flex-wrap gap-2"
+                              >
+                                <input
+                                  type="hidden"
+                                  name="applicationId"
+                                  value={application.id}
+                                />
+                                {application.status === "submitted" && (
+                                  <button
+                                    name="status"
+                                    value="shortlisted"
+                                    className="btn btn-secondary"
+                                  >
+                                    Shortlist
+                                  </button>
+                                )}
+                                <button
+                                  name="status"
+                                  value="accepted"
+                                  className="btn btn-primary"
+                                >
+                                  Accept
+                                </button>
+                                <button
+                                  name="status"
+                                  value="rejected"
+                                  className="rounded-lg bg-red-700 px-4 py-2 text-sm font-semibold text-white"
+                                >
+                                  Reject
+                                </button>
+                              </form>
+                            )}
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <p className="text-sm text-slate-500">
+                        No applications yet.
+                      </p>
+                    )}
+                  </div>
+                </article>
+              );
+            })
+          ) : (
+            <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-600">
+              No volunteer opportunities have been published.
+            </p>
           )}
         </div>
-      </div>
-    </div>
+
+        <h2 className="mt-12 text-2xl font-bold text-slate-950">
+          Hours awaiting review
+        </h2>
+        <div className="mt-5 space-y-4">
+          {(hoursRows ?? []).filter((row) => row.status === "pending")
+            .length ? (
+            (hoursRows ?? [])
+              .filter((row) => row.status === "pending")
+              .map((hours) => {
+                const volunteer = hours.user as unknown as {
+                  name: string;
+                  email: string;
+                };
+                const opportunity = hours.opportunity as unknown as {
+                  title: string;
+                };
+                return (
+                  <article
+                    key={hours.id}
+                    className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+                  >
+                    <div className="flex flex-wrap justify-between gap-4">
+                      <div>
+                        <h3 className="font-bold text-slate-950">
+                          {volunteer.name} · {hours.hours} hours
+                        </h3>
+                        <p className="mt-1 text-sm text-slate-600">
+                          {opportunity.title} ·{" "}
+                          {new Date(hours.date).toLocaleDateString("en-IN")}
+                        </p>
+                        <p className="mt-3 text-sm text-slate-700">
+                          {hours.description}
+                        </p>
+                      </div>
+                      <form
+                        action={reviewVolunteerHoursFormAction}
+                        className="min-w-72 space-y-3"
+                      >
+                        <input type="hidden" name="hoursId" value={hours.id} />
+                        <textarea
+                          name="note"
+                          maxLength={500}
+                          rows={2}
+                          className="input"
+                          placeholder="Review note"
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            name="status"
+                            value="approved"
+                            className="btn btn-primary"
+                          >
+                            Approve and certify
+                          </button>
+                          <button
+                            name="status"
+                            value="rejected"
+                            className="btn btn-secondary"
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  </article>
+                );
+              })
+          ) : (
+            <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-slate-600">
+              No hours await review.
+            </p>
+          )}
+        </div>
+      </section>
+    </main>
   );
 }

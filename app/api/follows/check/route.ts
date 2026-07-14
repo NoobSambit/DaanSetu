@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { isFollowing } from "@/lib/services/follows";
+import { z } from "zod";
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,18 +15,29 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const targetId = searchParams.get("targetId");
-    const targetType = searchParams.get("targetType") as
-      "user" | "ngo" | "corporate";
+    const values = z
+      .object({
+        targetId: z.string().uuid(),
+        targetType: z.enum(["user", "ngo", "corporate"]),
+      })
+      .safeParse({
+        targetId: searchParams.get("targetId"),
+        targetType: searchParams.get("targetType"),
+      });
 
-    if (!targetId || !targetType) {
+    if (!values.success) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 },
       );
     }
 
-    const following = await isFollowing(user.id, targetId, targetType);
+    const following = await isFollowing(
+      user.id,
+      values.data.targetId,
+      values.data.targetType,
+      supabase,
+    );
 
     return NextResponse.json({ isFollowing: following });
   } catch (error) {

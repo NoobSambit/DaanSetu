@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
 
 import {
@@ -88,4 +89,32 @@ test("uses account-aware onboarding destinations when no return path exists", ()
   assert.equal(getPostAuthDestination("ngo"), "/ngo/profile");
   assert.equal(getPostAuthDestination("supporter"), "/dashboard");
   assert.equal(getPostAuthDestination("admin"), "/admin/analytics");
+});
+
+test("account security supports explicit global session revocation", () => {
+  const actions = readFileSync(
+    new URL("../../app/auth/actions.ts", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(actions, /revokeAllSessionsAction/);
+  assert.match(actions, /signOut\(\{\s*scope:\s*"global"\s*\}\)/);
+  assert.equal(
+    existsSync(
+      new URL("../../app/dashboard/security/page.tsx", import.meta.url),
+    ),
+    true,
+  );
+});
+
+test("verified-page redirects use a real email verification destination", () => {
+  for (const path of [
+    "../../app/corporate/settlements/page.tsx",
+    "../../app/ngo/dashboard/tax/page.tsx",
+    "../../app/community/create/page.tsx",
+  ]) {
+    const page = readFileSync(new URL(path, import.meta.url), "utf8");
+    assert.doesNotMatch(page, /\/verify-email/);
+    assert.match(page, /\/check-email/);
+  }
 });

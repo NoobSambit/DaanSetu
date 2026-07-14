@@ -74,7 +74,7 @@ export async function signInAction(
 
   const role = await getUserRole(supabase, data.user.id);
   if (!role) {
-    await supabase.auth.signOut();
+    await supabase.auth.signOut({ scope: "global" });
     return {
       status: "error",
       message: "Your account setup is incomplete. Please contact support.",
@@ -141,7 +141,7 @@ export async function signUpAction(
 
   const role = await getUserRole(supabase, data.user.id);
   if (!role) {
-    await supabase.auth.signOut();
+    await supabase.auth.signOut({ scope: "global" });
     return {
       status: "error",
       message: "Your profile could not be created. Please try again shortly.",
@@ -217,12 +217,30 @@ export async function resetPasswordAction(
     };
   }
 
-  await supabase.auth.signOut();
+  await supabase.auth.signOut({ scope: "global" });
   redirect("/sign-in?message=password-updated");
 }
 
 export async function signOutAction(): Promise<void> {
   const supabase = await createClient();
-  await supabase.auth.signOut();
+  await supabase.auth.signOut({ scope: "global" });
   redirect("/sign-in?message=signed-out");
+}
+
+export async function revokeAllSessionsAction(): Promise<void> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/sign-in?next=/dashboard/security");
+  }
+
+  const { error } = await supabase.auth.signOut({ scope: "global" });
+  if (error) {
+    throw new Error("Your sessions could not be revoked safely");
+  }
+
+  redirect("/sign-in?message=sessions-revoked");
 }

@@ -7,7 +7,7 @@ import DonationModal from "./DonationModal";
 import Toast from "./Toast";
 
 interface DonateButtonProps {
-  ngoId: string;
+  ngoId: string | null;
   ngoName: string;
   isAuthenticated: boolean;
   campaignId?: string;
@@ -36,7 +36,10 @@ export default function DonateButton({
 
   const handleDonateClick = () => {
     if (!isAuthenticated) {
-      router.push("/sign-in?next=/ngos/" + ngoId);
+      const nextPath = campaignId
+        ? `/campaigns/${campaignId}`
+        : `/ngos/${ngoId}`;
+      router.push(`/sign-in?next=${encodeURIComponent(nextPath)}`);
       return;
     }
     setIsModalOpen(true);
@@ -66,7 +69,6 @@ export default function DonateButton({
 
       {isAuthenticated && (
         <DonationModal
-          ngoId={ngoId}
           ngoName={ngoName}
           campaignId={campaignId}
           campaignTitle={campaignTitle}

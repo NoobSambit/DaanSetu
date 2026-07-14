@@ -90,7 +90,7 @@ CREATE INDEX IF NOT EXISTS idx_activity_logs_user_type_created
 
 -- Index for analytics logs by event type and time
 CREATE INDEX IF NOT EXISTS idx_analytics_logs_event_timestamp
-  ON analytics_logs(event_type, timestamp DESC);
+  ON analytics_logs(event_type, created_at DESC);
 
 -- ============================================================================
 -- 5. PARTIAL INDEXES FOR SPECIFIC USE CASES

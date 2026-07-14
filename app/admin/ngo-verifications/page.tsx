@@ -25,22 +25,9 @@ export default async function NgoVerificationsPage() {
     .select(
       "*, ngo:ngos(id, name, legal_name, city, state), documents:ngo_verification_documents(id, document_type, original_name, storage_path)",
     )
-    .eq("verification_status", "pending")
+    .eq("verification_status", "submitted")
     .order("submitted_at", { ascending: true });
-
-  const hydrated = await Promise.all(
-    (submissions ?? []).map(async (submission: any) => ({
-      ...submission,
-      documents: await Promise.all(
-        (submission.documents ?? []).map(async (document: any) => {
-          const { data } = await supabase.storage
-            .from("ngo-verification")
-            .createSignedUrl(document.storage_path, 300);
-          return { ...document, signedUrl: data?.signedUrl ?? null };
-        }),
-      ),
-    })),
-  );
+  const hydrated = submissions ?? [];
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-8 sm:px-6">
@@ -111,19 +98,17 @@ export default async function NgoVerificationsPage() {
                   Private documents
                 </h3>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  {submission.documents.map((document: any) =>
-                    document.signedUrl ? (
-                      <a
-                        key={document.id}
-                        href={document.signedUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-blue-700 hover:bg-slate-50"
-                      >
-                        {document.document_type}: {document.original_name}
-                      </a>
-                    ) : null,
-                  )}
+                  {submission.documents.map((document: any) => (
+                    <a
+                      key={document.id}
+                      href={`/api/ngo/verification-documents/${document.id}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-blue-700 hover:bg-slate-50"
+                    >
+                      {document.document_type}: {document.original_name}
+                    </a>
+                  ))}
                 </div>
               </div>
               <form
@@ -148,6 +133,13 @@ export default async function NgoVerificationsPage() {
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-100"
                 />
                 <div className="flex gap-3">
+                  <button
+                    name="decision"
+                    value="changes_requested"
+                    className="min-h-11 rounded-lg border border-amber-300 px-5 text-sm font-semibold text-amber-800"
+                  >
+                    Request changes
+                  </button>
                   <button
                     name="decision"
                     value="rejected"

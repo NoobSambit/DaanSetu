@@ -9,7 +9,9 @@ export const dynamic = "force-dynamic";
 
 interface DonationWithNGO {
   id: string;
-  amount: number;
+  amount_paise: number;
+  refunded_paise: number;
+  status: "captured" | "partially_refunded" | "refunded";
   cause: DonationCause;
   is_anonymous: boolean;
   created_at: string;
@@ -39,7 +41,9 @@ export default async function DashboardPage() {
     .select(
       `
       id,
-      amount,
+      amount_paise,
+      refunded_paise,
+      status,
       cause,
       is_anonymous,
       created_at,
@@ -50,16 +54,23 @@ export default async function DashboardPage() {
       )
     `,
     )
+    .eq("user_id", user.id)
+    .in("status", ["captured", "partially_refunded", "refunded"])
+    .eq("is_demo", false)
+    .eq("is_csr_match", false)
     .order("created_at", { ascending: false });
 
   const donationsList = (donations as unknown as DonationWithNGO[]) || [];
 
   // Calculate stats
-  const totalAmount = donationsList.reduce(
-    (sum, donation) => sum + donation.amount,
+  const totalPaise = donationsList.reduce(
+    (sum, donation) =>
+      sum + Math.max(0, donation.amount_paise - donation.refunded_paise),
     0,
   );
-  const totalDonations = donationsList.length;
+  const totalDonations = donationsList.filter(
+    (donation) => donation.amount_paise > donation.refunded_paise,
+  ).length;
 
   const causeEmojis: Record<DonationCause, string> = {
     education: "📚",
@@ -81,11 +92,19 @@ export default async function DashboardPage() {
     <div className="min-h-[calc(100vh-4rem)] bg-gray-50">
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            My Dashboard
-          </h1>
-          <p className="text-gray-600">Track your donations and impact</p>
+        <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h1 className="mb-2 text-4xl font-bold text-gray-900">
+              My Dashboard
+            </h1>
+            <p className="text-gray-600">Track your donations and impact</p>
+          </div>
+          <Link
+            className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:border-blue-300 hover:text-blue-700"
+            href="/dashboard/security"
+          >
+            Account security
+          </Link>
         </div>
 
         {/* Stats Cards */}
@@ -97,7 +116,7 @@ export default async function DashboardPage() {
                   Total Donated
                 </p>
                 <p className="text-3xl font-bold text-blue-600">
-                  ₹{totalAmount.toLocaleString("en-IN")}
+                  ₹{(totalPaise / 100).toLocaleString("en-IN")}
                 </p>
               </div>
               <div className="bg-blue-100 p-4 rounded-full">
@@ -195,53 +214,68 @@ export default async function DashboardPage() {
             </div>
           ) : (
             <div className="divide-y">
-              {donationsList.map((donation) => (
-                <div
-                  key={donation.id}
-                  className="p-6 hover:bg-gray-50 transition"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <Link
-                        href={`/ngos/${donation.ngos.id}`}
-                        className="text-lg font-semibold text-gray-900 hover:text-blue-600 transition"
-                      >
-                        {donation.ngos.name}
-                      </Link>
-                      <div className="flex items-center gap-3 mt-2 text-sm text-gray-600">
-                        <span className="flex items-center">
-                          {causeEmojis[donation.cause]}{" "}
-                          {causeLabels[donation.cause]}
-                        </span>
-                        <span>•</span>
-                        <span>
-                          {new Date(donation.created_at).toLocaleDateString(
-                            "en-IN",
-                            {
-                              day: "numeric",
-                              month: "short",
-                              year: "numeric",
-                            },
+              {donationsList.map((donation) => {
+                const netPaise = Math.max(
+                  0,
+                  donation.amount_paise - donation.refunded_paise,
+                );
+                return (
+                  <div
+                    key={donation.id}
+                    className="p-6 transition hover:bg-gray-50"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <Link
+                          href={`/ngos/${donation.ngos.id}`}
+                          className="text-lg font-semibold text-gray-900 hover:text-blue-600 transition"
+                        >
+                          {donation.ngos.name}
+                        </Link>
+                        <div className="flex items-center gap-3 mt-2 text-sm text-gray-600">
+                          <span className="flex items-center">
+                            {causeEmojis[donation.cause]}{" "}
+                            {causeLabels[donation.cause]}
+                          </span>
+                          <span>•</span>
+                          <span>
+                            {new Date(donation.created_at).toLocaleDateString(
+                              "en-IN",
+                              {
+                                day: "numeric",
+                                month: "short",
+                                year: "numeric",
+                              },
+                            )}
+                          </span>
+                          {donation.is_anonymous && (
+                            <>
+                              <span>•</span>
+                              <span className="text-gray-500 italic">
+                                Anonymous
+                              </span>
+                            </>
                           )}
-                        </span>
-                        {donation.is_anonymous && (
-                          <>
-                            <span>•</span>
-                            <span className="text-gray-500 italic">
-                              Anonymous
-                            </span>
-                          </>
+                        </div>
+                      </div>
+                      <div className="text-right ml-4">
+                        <p className="text-xl font-bold text-green-600">
+                          ₹{(netPaise / 100).toLocaleString("en-IN")}
+                        </p>
+                        {donation.refunded_paise > 0 && (
+                          <p className="mt-1 text-xs font-medium text-amber-700">
+                            ₹
+                            {(donation.refunded_paise / 100).toLocaleString(
+                              "en-IN",
+                            )}{" "}
+                            refunded
+                          </p>
                         )}
                       </div>
                     </div>
-                    <div className="text-right ml-4">
-                      <p className="text-xl font-bold text-green-600">
-                        ₹{donation.amount.toLocaleString("en-IN")}
-                      </p>
-                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

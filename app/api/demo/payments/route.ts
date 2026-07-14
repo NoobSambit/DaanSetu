@@ -46,14 +46,23 @@ async function handler(request: NextRequest) {
 
   const { data: campaign } = await supabase
     .from("campaigns")
-    .select("id, status")
+    .select("id, status, deadline, payout_accounts(status)")
     .eq("id", parsed.data.campaignId)
     .maybeSingle();
-  if (!campaign || campaign.status !== "active")
+  const payout = campaign?.payout_accounts as unknown as {
+    status: string;
+  } | null;
+  if (
+    !campaign ||
+    campaign.status !== "active" ||
+    payout?.status !== "active" ||
+    new Date(campaign.deadline).getTime() <= Date.now()
+  ) {
     return NextResponse.json(
-      { error: "Choose an active campaign" },
+      { error: "Choose an active, payout-enabled campaign" },
       { status: 409 },
     );
+  }
 
   const admin = createAdminClient();
   const internalId = crypto.randomUUID();

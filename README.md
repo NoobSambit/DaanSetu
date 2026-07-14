@@ -49,13 +49,14 @@ PAYPAL_INR_PER_USD=83.00
 
 ENABLE_PAYMENTS=true
 ENABLE_SUBSCRIPTIONS=true
-ENABLE_PAYOUTS=false
+PAYPAL_PAYOUTS_ENABLED=false
 ENABLE_DEMO_PAYMENTS=true
 
 GEMINI_API_KEY=
+FILE_ENCRYPTION_KEY=base64-encoded-32-byte-key
 ```
 
-`PAYPAL_INR_PER_USD` is a server-controlled settlement rate. Campaign goals and public impact remain stored as integer INR paise; PayPal settlement currency and minor units are stored separately on payment records.
+`PAYPAL_INR_PER_USD` is a server-controlled settlement rate. Campaign goals and public impact remain stored as integer INR paise; PayPal settlement currency and minor units are stored separately on payment records. Each configured PayPal subscription plan must also declare its exact INR paise amount through `PAYPAL_PLAN_<INTERVAL>_AMOUNT_PAISE`; the API rejects mismatched recurring gifts.
 
 ## Supabase
 
@@ -133,6 +134,7 @@ npm run db:migrate:dry
 - Demo payments are structurally separated from real financial reporting.
 - Gemini receives only selected candidate data and silently falls back to deterministic ranking.
 - Official Form 10BE documents are uploaded and mapped; the application does not manufacture statutory certificates.
+- Donor statutory identifiers and addresses are encrypted with AES-256-GCM using field-specific authenticated contexts before storage.
 
 ## Important routes
 

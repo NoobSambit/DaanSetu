@@ -1,46 +1,36 @@
-import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import CreatePostForm from "./CreatePostForm";
+
+import CommunityPostComposer from "@/app/community/create/CommunityPostComposer";
+import { createClient } from "@/lib/supabase/server";
 
 export default async function CreatePostPage() {
   const supabase = await createClient();
-
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/sign-in");
+    redirect("/sign-in?next=/community/create");
   }
-
-  // Get user role
-  const { data: userData } = await supabase
-    .from("users")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  const userRole = userData?.role || "user";
-
-  // Only NGO, Corporate, and Admin can create posts
-  if (!["ngo", "corporate", "admin"].includes(userRole)) {
-    redirect("/community");
+  if (!user.email_confirmed_at) {
+    redirect("/check-email?type=signup");
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Create a Post
-          </h1>
-          <p className="text-gray-600">
-            Share updates, stories, or announcements with the community
-          </p>
-        </div>
-
-        <CreatePostForm userId={user.id} userRole={userRole} />
-      </div>
-    </div>
+    <main className="min-h-screen bg-slate-50 px-4 py-12">
+      <section className="mx-auto max-w-3xl">
+        <p className="text-sm font-semibold uppercase tracking-wider text-blue-600">
+          Community
+        </p>
+        <h1 className="mt-2 text-3xl font-bold text-[#10214e]">
+          Publish a post
+        </h1>
+        <p className="mt-2 text-slate-600">
+          Share a factual update, impact story, or announcement with the
+          DaanSetu community.
+        </p>
+        <CommunityPostComposer />
+      </section>
+    </main>
   );
 }

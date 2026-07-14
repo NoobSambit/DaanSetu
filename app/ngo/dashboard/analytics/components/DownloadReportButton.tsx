@@ -1,15 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { exportNGOReport } from "@/lib/services/analytics";
 
 interface DownloadReportButtonProps {
-  ngoId: string;
   ngoName: string;
 }
 
 export default function DownloadReportButton({
-  ngoId,
   ngoName,
 }: DownloadReportButtonProps) {
   const [loading, setLoading] = useState(false);
@@ -18,50 +15,14 @@ export default function DownloadReportButton({
     try {
       setLoading(true);
 
-      // Fetch report data
-      const reportData = await exportNGOReport(ngoId);
-
-      // Convert to CSV
-      const headers = [
-        "Type",
-        "Title",
-        "Goal/Applications",
-        "Raised",
-        "Created",
-        "Deadline",
-      ];
-      const csvRows = [headers.join(",")];
-
-      reportData.forEach((row: any) => {
-        if (row.type === "Campaign") {
-          csvRows.push(
-            [
-              row.type,
-              `"${row.title}"`,
-              row.goal,
-              row.raised,
-              row.created,
-              row.deadline || "",
-            ].join(","),
-          );
-        } else {
-          csvRows.push(
-            [
-              row.type,
-              `"${row.title}"`,
-              row.applications || 0,
-              "",
-              row.created,
-              "",
-            ].join(","),
-          );
-        }
+      const response = await fetch("/api/ngo/reports/impact", {
+        cache: "no-store",
+        credentials: "same-origin",
       });
-
-      const csvContent = csvRows.join("\n");
-
-      // Create and download file
-      const blob = new Blob([csvContent], { type: "text/csv" });
+      if (!response.ok) {
+        throw new Error("Impact report is unavailable");
+      }
+      const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -70,9 +31,8 @@ export default function DownloadReportButton({
       a.click();
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error("Error downloading report:", error);
-      alert("Failed to download report. Please try again.");
+    } catch {
+      alert("The impact report could not be downloaded. Please try again.");
     } finally {
       setLoading(false);
     }

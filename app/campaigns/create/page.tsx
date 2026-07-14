@@ -2,8 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import {
+  createCampaignAction,
+  createSupporterCampaignAction,
+} from "@/app/campaigns/actions";
 import { createClient } from "@/lib/supabase/client";
-import { createCampaign } from "@/lib/services/campaigns";
 import type { CampaignCategory } from "@/lib/types/database.types";
 
 export default function CreateCampaignPage() {
@@ -12,6 +15,10 @@ export default function CreateCampaignPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [userNGOs, setUserNGOs] = useState<any[]>([]);
+  const [campaignOwner, setCampaignOwner] = useState<"ngo" | "supporter">(
+    "ngo",
+  );
+  const [evidenceFile, setEvidenceFile] = useState<File | null>(null);
 
   const [formData, setFormData] = useState({
     ngoId: "",
@@ -22,6 +29,10 @@ export default function CreateCampaignPage() {
     deadline: "",
     imageUrl: "",
     category: "education" as CampaignCategory,
+    beneficiaryName: "",
+    beneficiaryRelationship: "",
+    payoutEmail: "",
+    beneficiaryConsent: false,
   });
 
   useEffect(() => {
@@ -53,7 +64,7 @@ export default function CreateCampaignPage() {
     }
 
     if (!ngos || ngos.length === 0) {
-      setError("Publish your NGO profile before creating a campaign");
+      setCampaignOwner("supporter");
       setLoading(false);
       return;
     }
@@ -98,16 +109,19 @@ export default function CreateCampaignPage() {
     setSubmitting(true);
 
     try {
-      const campaign = await createCampaign({
-        ngoId: formData.ngoId,
-        title: formData.title,
-        shortDescription: formData.shortDescription,
-        description: formData.description,
-        goalAmount,
-        deadline: new Date(formData.deadline).toISOString(),
-        imageUrl: formData.imageUrl || undefined,
-        category: formData.category,
-      });
+      const campaign =
+        campaignOwner === "ngo"
+          ? await createCampaignAction({
+              ngoId: formData.ngoId,
+              title: formData.title,
+              shortDescription: formData.shortDescription,
+              description: formData.description,
+              goalAmount: goalAmount.toFixed(2),
+              deadline: formData.deadline,
+              imageUrl: formData.imageUrl || undefined,
+              category: formData.category,
+            })
+          : await createSupporterFundraiser();
 
       router.push(`/campaigns/${campaign.id}`);
     } catch (err) {
@@ -116,6 +130,35 @@ export default function CreateCampaignPage() {
       );
       setSubmitting(false);
     }
+  };
+
+  const createSupporterFundraiser = async () => {
+    if (
+      !formData.beneficiaryName.trim() ||
+      !formData.beneficiaryRelationship.trim() ||
+      !formData.payoutEmail.trim() ||
+      !formData.beneficiaryConsent ||
+      !evidenceFile
+    ) {
+      throw new Error(
+        "Beneficiary details, consent, payout email, and evidence are required",
+      );
+    }
+
+    const payload = new FormData();
+    payload.set("title", formData.title);
+    payload.set("shortDescription", formData.shortDescription);
+    payload.set("description", formData.description);
+    payload.set("goalAmount", Number(formData.goalAmount).toFixed(2));
+    payload.set("deadline", formData.deadline);
+    payload.set("imageUrl", formData.imageUrl);
+    payload.set("category", formData.category);
+    payload.set("beneficiaryName", formData.beneficiaryName);
+    payload.set("beneficiaryRelationship", formData.beneficiaryRelationship);
+    payload.set("payoutEmail", formData.payoutEmail);
+    payload.set("beneficiaryConsent", "true");
+    payload.set("evidence", evidenceFile);
+    return createSupporterCampaignAction(payload);
   };
 
   const categories: {
@@ -142,22 +185,6 @@ export default function CreateCampaignPage() {
     );
   }
 
-  if (error && userNGOs.length === 0) {
-    return (
-      <div className="min-h-[calc(100vh-4rem)] bg-gray-50 flex items-center justify-center">
-        <div className="text-center max-w-md">
-          <p className="text-red-600 mb-4">{error}</p>
-          <button
-            onClick={() => router.push("/ngos")}
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700"
-          >
-            Browse NGOs
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-gray-50">
       <div className="max-w-3xl mx-auto px-4 py-8">
@@ -172,26 +199,139 @@ export default function CreateCampaignPage() {
           onSubmit={handleSubmit}
           className="bg-white rounded-lg shadow-sm p-8 space-y-6"
         >
+          <fieldset>
+            <legend className="mb-3 block text-sm font-semibold text-gray-900">
+              Fundraiser owner
+            </legend>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <button
+                type="button"
+                disabled={userNGOs.length === 0}
+                onClick={() => setCampaignOwner("ngo")}
+                className={`rounded-lg border-2 px-4 py-3 text-left font-medium ${
+                  campaignOwner === "ngo"
+                    ? "border-blue-600 bg-blue-50 text-blue-800"
+                    : "border-gray-300 text-gray-700"
+                } disabled:cursor-not-allowed disabled:opacity-50`}
+              >
+                My published NGO
+              </button>
+              <button
+                type="button"
+                onClick={() => setCampaignOwner("supporter")}
+                className={`rounded-lg border-2 px-4 py-3 text-left font-medium ${
+                  campaignOwner === "supporter"
+                    ? "border-blue-600 bg-blue-50 text-blue-800"
+                    : "border-gray-300 text-gray-700"
+                }`}
+              >
+                Supporter-led beneficiary fundraiser
+              </button>
+            </div>
+          </fieldset>
+
           {/* NGO Selection */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-900 mb-2">
-              Select NGO <span className="text-red-600">*</span>
-            </label>
-            <select
-              value={formData.ngoId}
-              onChange={(e) =>
-                setFormData({ ...formData, ngoId: e.target.value })
-              }
-              required
-              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-600 focus:outline-none"
-            >
-              {userNGOs.map((ngo) => (
-                <option key={ngo.id} value={ngo.id}>
-                  {ngo.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          {campaignOwner === "ngo" && (
+            <div>
+              <label className="block text-sm font-semibold text-gray-900 mb-2">
+                Select NGO <span className="text-red-600">*</span>
+              </label>
+              <select
+                value={formData.ngoId}
+                onChange={(e) =>
+                  setFormData({ ...formData, ngoId: e.target.value })
+                }
+                required
+                className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-600 focus:outline-none"
+              >
+                {userNGOs.map((ngo) => (
+                  <option key={ngo.id} value={ngo.id}>
+                    {ngo.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {campaignOwner === "supporter" && (
+            <fieldset className="space-y-4 rounded-xl border border-amber-200 bg-amber-50 p-5">
+              <legend className="px-2 font-semibold text-amber-950">
+                Beneficiary verification and payout
+              </legend>
+              <label className="block text-sm font-semibold text-gray-900">
+                Beneficiary name
+                <input
+                  required
+                  value={formData.beneficiaryName}
+                  onChange={(event) =>
+                    setFormData({
+                      ...formData,
+                      beneficiaryName: event.target.value,
+                    })
+                  }
+                  className="mt-2 w-full rounded-lg border-2 border-gray-300 px-4 py-2"
+                />
+              </label>
+              <label className="block text-sm font-semibold text-gray-900">
+                Your relationship to the beneficiary
+                <input
+                  required
+                  value={formData.beneficiaryRelationship}
+                  onChange={(event) =>
+                    setFormData({
+                      ...formData,
+                      beneficiaryRelationship: event.target.value,
+                    })
+                  }
+                  className="mt-2 w-full rounded-lg border-2 border-gray-300 px-4 py-2"
+                />
+              </label>
+              <label className="block text-sm font-semibold text-gray-900">
+                Beneficiary PayPal email
+                <input
+                  type="email"
+                  required
+                  value={formData.payoutEmail}
+                  onChange={(event) =>
+                    setFormData({
+                      ...formData,
+                      payoutEmail: event.target.value,
+                    })
+                  }
+                  className="mt-2 w-full rounded-lg border-2 border-gray-300 px-4 py-2"
+                />
+              </label>
+              <label className="block text-sm font-semibold text-gray-900">
+                Consent or identity evidence (PDF, JPG, or PNG; max 10 MB)
+                <input
+                  type="file"
+                  required
+                  accept="application/pdf,image/jpeg,image/png"
+                  onChange={(event) =>
+                    setEvidenceFile(event.target.files?.[0] ?? null)
+                  }
+                  className="mt-2 block w-full text-sm"
+                />
+              </label>
+              <label className="flex items-start gap-3 text-sm text-gray-800">
+                <input
+                  type="checkbox"
+                  required
+                  checked={formData.beneficiaryConsent}
+                  onChange={(event) =>
+                    setFormData({
+                      ...formData,
+                      beneficiaryConsent: event.target.checked,
+                    })
+                  }
+                  className="mt-1"
+                />
+                I confirm the beneficiary consented to this fundraiser and the
+                evidence is authentic. Admin approval and payout activation are
+                required before donations can begin.
+              </label>
+            </fieldset>
+          )}
 
           {/* Title */}
           <div>

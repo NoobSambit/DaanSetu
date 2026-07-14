@@ -35,8 +35,9 @@ async function handler(request: NextRequest) {
     // Fetch campaigns for context
     const { data: campaigns } = await supabase
       .from("campaigns")
-      .select("title, category, goal_amount")
+      .select("title, category, target_paise")
       .eq("status", "active")
+      .not("published_at", "is", null)
       .limit(15);
 
     // Generate AI response

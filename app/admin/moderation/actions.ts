@@ -3,64 +3,63 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+import { requireAdmin } from "@/lib/auth/require-admin";
 import { createClient } from "@/lib/supabase/server";
 
 const moderationSchema = z.object({
-  reviewId: z.string().uuid(),
   reportId: z.string().uuid(),
   action: z.enum(["hide", "restore", "dismiss"]),
-  reason: z.string().trim().min(10).max(1000),
+  reason: z.string().trim().min(10).max(1_000),
 });
 
-export async function moderateReviewAction(input: unknown) {
-  const values = moderationSchema.parse(input);
+export async function moderateContentFormAction(formData: FormData) {
+  const values = moderationSchema.parse({
+    reportId: formData.get("reportId"),
+    action: formData.get("action"),
+    reason: formData.get("reason"),
+  });
+  await requireAdmin("/admin/moderation");
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Authentication required");
+  const { data, error } = await supabase.rpc("moderate_reported_content", {
+    report_uuid: values.reportId,
+    moderation_action: values.action,
+    decision_reason: values.reason,
+  });
 
-  const { data: profile } = await supabase
-    .from("users")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-  if (profile?.role !== "admin") throw new Error("Admin access required");
-
-  const hiddenAt = values.action === "hide" ? new Date().toISOString() : null;
-  if (values.action !== "dismiss") {
-    const { error } = await supabase
-      .from("ngo_reviews")
-      .update({
-        hidden_at: hiddenAt,
-        hidden_reason: values.reason,
-        moderated_by: user.id,
-      })
-      .eq("id", values.reviewId);
-    if (error) throw new Error("The review could not be moderated");
+  if (error || !data) {
+    throw new Error("The moderation decision could not be recorded");
   }
 
-  const { error: auditError } = await supabase
-    .from("moderation_actions")
-    .insert({
-      report_id: values.reportId,
-      moderator_id: user.id,
-      entity_type: "ngo_review",
-      entity_id: values.reviewId,
-      action: values.action,
-      reason: values.reason,
-    });
-  if (auditError)
-    throw new Error("The moderation audit record could not be saved");
-
-  await supabase
-    .from("content_reports")
-    .update({
-      status: values.action === "dismiss" ? "dismissed" : "resolved",
-      reviewed_by: user.id,
-      resolution_notes: values.reason,
-      resolved_at: new Date().toISOString(),
-    })
-    .eq("id", values.reportId);
   revalidatePath("/admin/moderation");
+  revalidatePath("/community");
+}
+
+const storyReviewSchema = z.object({
+  postId: z.string().uuid(),
+  feature: z.enum(["true", "false"]),
+  reason: z.string().trim().min(10).max(1_000),
+});
+
+export async function reviewImpactStoryFormAction(formData: FormData) {
+  const values = storyReviewSchema.parse({
+    postId: formData.get("postId"),
+    feature: formData.get("feature"),
+    reason: formData.get("reason"),
+  });
+  await requireAdmin("/admin/moderation");
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("review_impact_story", {
+    post_uuid: values.postId,
+    should_feature: values.feature === "true",
+    decision_reason: values.reason,
+  });
+
+  if (error || !data) {
+    throw new Error("The impact-story decision could not be recorded");
+  }
+
+  revalidatePath("/admin/moderation");
+  revalidatePath("/impact-stories");
+  revalidatePath("/");
+  revalidatePath(`/community/${values.postId}`);
 }

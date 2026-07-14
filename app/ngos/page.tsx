@@ -1,81 +1,111 @@
-import { createClient } from "@/lib/supabase/server";
-import NGOList from "@/components/NGOList";
+import Link from "next/link";
+
 import SearchFilters from "@/components/SearchFilters";
+import NgoExplorer from "@/components/discovery/NgoExplorer";
+import { parseNgoDiscoveryParams } from "@/lib/discovery/filters";
+import { discoverNgos } from "@/lib/discovery/ngos";
 
 export const dynamic = "force-dynamic";
+
+type SearchParams = Record<string, string | string[] | undefined>;
+
+function pageUrl(params: SearchParams, page: number) {
+  const url = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    const scalar = Array.isArray(value) ? value[0] : value;
+    if (scalar && key !== "page") url.set(key, scalar);
+  }
+  url.set("page", String(page));
+  return `/ngos?${url.toString()}`;
+}
 
 export default async function NGOsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string; city?: string; search?: string }>;
+  searchParams: Promise<SearchParams>;
 }) {
   const params = await searchParams;
-  const supabase = await createClient();
-
-  // Build query
-  let query = supabase
-    .from("ngos")
-    .select("*")
-    .eq("profile_status", "published")
-    .eq("is_discoverable", true)
-    .order("created_at", { ascending: false });
-
-  // Apply filters
-  if (params.category) {
-    query = query.eq("category", params.category);
-  }
-
-  if (params.city) {
-    query = query.ilike("city", `%${params.city}%`);
-  }
-
-  if (params.search) {
-    query = query.or(
-      `name.ilike.%${params.search}%,description.ilike.%${params.search}%`,
-    );
-  }
-
-  const { data: ngos, error } = await query;
-
-  if (error) {
-    console.error("Error fetching NGOs:", error);
-  }
+  const filters = parseNgoDiscoveryParams(params);
+  const result = await discoverNgos(filters);
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+    <main className="min-h-[calc(100vh-4rem)] bg-slate-50">
+      <div className="mx-auto max-w-7xl px-4 py-8">
+        <header className="mb-8">
+          <h1 className="mb-2 text-4xl font-bold text-slate-950">
             Discover NGOs
           </h1>
-          <p className="text-gray-600">
-            Find and connect with organizations making a difference
+          <p className="text-slate-600">
+            Search published organizations using verified platform records.
           </p>
-        </div>
+        </header>
 
-        <SearchFilters />
+        <SearchFilters filters={filters} />
 
-        <div className="mt-8">
-          {ngos && ngos.length > 0 ? (
-            <>
-              <p className="text-sm text-gray-600 mb-4">
-                Found {ngos.length} {ngos.length === 1 ? "NGO" : "NGOs"}
-              </p>
-              <NGOList ngos={ngos} />
-            </>
-          ) : (
-            <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-              <div className="text-6xl mb-4">🔍</div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                No NGOs Found
-              </h3>
-              <p className="text-gray-600">
-                Try adjusting your search filters or check back later
+        <section className="mt-8" aria-live="polite">
+          {result.error ? (
+            <div
+              role="alert"
+              className="rounded-xl border border-red-200 bg-red-50 p-8 text-center"
+            >
+              <h2 className="text-lg font-semibold text-red-900">
+                NGO discovery is temporarily unavailable
+              </h2>
+              <p className="mt-2 text-sm text-red-700">
+                Please retry shortly. No results were substituted or invented.
               </p>
             </div>
+          ) : result.ngos.length ? (
+            <>
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                <p className="text-sm text-slate-600">
+                  {result.total.toLocaleString("en-IN")} published{" "}
+                  {result.total === 1 ? "organization" : "organizations"}
+                </p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Page {result.page} of {result.totalPages}
+                </p>
+              </div>
+              <NgoExplorer ngos={result.ngos} />
+              {result.totalPages > 1 && (
+                <nav
+                  aria-label="NGO result pages"
+                  className="mt-8 flex items-center justify-center gap-3"
+                >
+                  {result.page > 1 && (
+                    <Link
+                      href={pageUrl(params, result.page - 1)}
+                      className="btn btn-secondary"
+                    >
+                      Previous
+                    </Link>
+                  )}
+                  {result.page < result.totalPages && (
+                    <Link
+                      href={pageUrl(params, result.page + 1)}
+                      className="btn btn-primary"
+                    >
+                      Next
+                    </Link>
+                  )}
+                </nav>
+              )}
+            </>
+          ) : (
+            <div className="rounded-xl border border-dashed border-slate-300 bg-white p-12 text-center">
+              <h2 className="text-xl font-semibold text-slate-900">
+                No NGOs match these filters
+              </h2>
+              <p className="mt-2 text-slate-600">
+                Clear one or more filters or broaden the distance range.
+              </p>
+              <Link href="/ngos" className="btn btn-secondary mt-5">
+                Reset filters
+              </Link>
+            </div>
           )}
-        </div>
+        </section>
       </div>
-    </div>
+    </main>
   );
 }

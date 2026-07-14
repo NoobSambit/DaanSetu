@@ -1,6 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import {
+  addPostCommentFormAction,
+  bookmarkPostFormAction,
+  togglePostLikeFormAction,
+} from "@/app/community/actions";
 import type { PostWithAuthor, PostCommentWithUser } from "@/lib/services/posts";
 import { POST_CATEGORY_LABELS } from "@/lib/services/posts";
 import { formatDistanceToNow } from "date-fns";
@@ -8,13 +13,9 @@ import Link from "next/link";
 
 interface EnhancedPostCardProps {
   post: PostWithAuthor;
-  userId: string;
 }
 
-export default function EnhancedPostCard({
-  post,
-  userId,
-}: EnhancedPostCardProps) {
+export default function EnhancedPostCard({ post }: EnhancedPostCardProps) {
   const [isLiked, setIsLiked] = useState(post.user_has_liked || false);
   const [likeCount, setLikeCount] = useState(post.like_count);
   const [commentCount, setCommentCount] = useState(post.comment_count);
@@ -42,19 +43,11 @@ export default function EnhancedPostCard({
 
   const handleLike = async () => {
     try {
-      const response = await fetch("/api/posts/like", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          postId: post.id,
-          action: isLiked ? "unlike" : "like",
-        }),
-      });
-
-      if (response.ok) {
-        setIsLiked(!isLiked);
-        setLikeCount(isLiked ? likeCount - 1 : likeCount + 1);
-      }
+      const formData = new FormData();
+      formData.set("postId", post.id);
+      await togglePostLikeFormAction(formData);
+      setIsLiked(!isLiked);
+      setLikeCount(isLiked ? likeCount - 1 : likeCount + 1);
     } catch (error) {
       console.error("Error toggling like:", error);
     }
@@ -62,23 +55,17 @@ export default function EnhancedPostCard({
 
   const handleBookmark = async () => {
     try {
-      const response = await fetch("/api/bookmarks/toggle", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ postId: post.id }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setIsBookmarked(data.isBookmarked);
-      }
+      const formData = new FormData();
+      formData.set("postId", post.id);
+      await bookmarkPostFormAction(formData);
+      setIsBookmarked(!isBookmarked);
     } catch (error) {
       console.error("Error toggling bookmark:", error);
     }
   };
 
   const handleShare = (platform: string) => {
-    const postUrl = `${window.location.origin}/community/posts/${post.id}`;
+    const postUrl = `${window.location.origin}/community/${post.id}`;
     const text = `Check out this post: ${post.title}`;
 
     let shareUrl = "";
@@ -133,18 +120,16 @@ export default function EnhancedPostCard({
 
     setIsSubmitting(true);
     try {
-      const response = await fetch("/api/posts/comment", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ postId: post.id, content: newComment }),
-      });
-
+      const formData = new FormData();
+      formData.set("postId", post.id);
+      formData.set("content", newComment);
+      await addPostCommentFormAction(formData);
+      const response = await fetch(`/api/posts/${post.id}/comments`);
       if (response.ok) {
-        const comment = await response.json();
-        setComments([...comments, comment]);
-        setCommentCount(commentCount + 1);
-        setNewComment("");
+        setComments(await response.json());
       }
+      setCommentCount(commentCount + 1);
+      setNewComment("");
     } catch (error) {
       console.error("Error adding comment:", error);
     } finally {

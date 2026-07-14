@@ -235,7 +235,7 @@ export async function chatWithDaanSetu(
       city: string;
       description: string;
     }>;
-    campaigns: Array<{ title: string; category: string; goal_amount: number }>;
+    campaigns: Array<{ title: string; category: string; target_paise: number }>;
   },
 ) {
   try {
@@ -256,7 +256,12 @@ ${context.ngos
 Available Campaigns:
 ${context.campaigns
   .slice(0, 10)
-  .map((c) => `- ${c.title} (${c.category}) - Goal: ₹${c.goal_amount}`)
+  .map(
+    (campaign) =>
+      `- ${campaign.title} (${campaign.category}) - Goal: ₹${(
+        campaign.target_paise / 100
+      ).toLocaleString("en-IN")}`,
+  )
   .join("\n")}
 
 User Question: ${userMessage}

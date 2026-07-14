@@ -2,11 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { saveVolunteerProfileAction } from "@/app/volunteer/profile/actions";
 import { createClient } from "@/lib/supabase/client";
 import {
   getVolunteerProfile,
-  createVolunteerProfile,
-  updateVolunteerProfile,
   VOLUNTEER_SKILLS,
   VOLUNTEER_AVAILABILITY,
 } from "@/lib/services/volunteers";
@@ -97,14 +96,17 @@ export default function VolunteerProfilePage() {
     setSaving(true);
 
     try {
-      if (profile) {
-        await updateVolunteerProfile(formData);
-        setSuccess("Profile updated successfully!");
-      } else {
-        const newProfile = await createVolunteerProfile(formData);
-        setProfile(newProfile);
-        setSuccess("Profile created successfully!");
-      }
+      const result = await saveVolunteerProfileAction(formData);
+      setProfile((current) =>
+        current
+          ? current
+          : ({ id: result.id, ...formData } as VolunteerProfile),
+      );
+      setSuccess(
+        profile
+          ? "Profile updated successfully!"
+          : "Profile created successfully!",
+      );
 
       setTimeout(() => {
         router.push("/volunteer/opportunities");

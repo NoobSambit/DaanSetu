@@ -8,12 +8,10 @@ import FeedFilters from "./FeedFilters";
 
 interface EnhancedPostFeedProps {
   initialPosts: PostWithAuthor[];
-  userId: string;
 }
 
 export default function EnhancedPostFeed({
   initialPosts,
-  userId,
 }: EnhancedPostFeedProps) {
   const [posts, setPosts] = useState<PostWithAuthor[]>(initialPosts);
   const [filteredPosts, setFilteredPosts] =
@@ -69,7 +67,7 @@ export default function EnhancedPostFeed({
       ) : (
         <div className="space-y-6">
           {filteredPosts.map((post) => (
-            <EnhancedPostCard key={post.id} post={post} userId={userId} />
+            <EnhancedPostCard key={post.id} post={post} />
           ))}
         </div>
       )}

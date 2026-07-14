@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+import { enforceActionRateLimit } from "@/lib/security/action-rate-limit";
 import { createClient } from "@/lib/supabase/server";
 
 const reviewSchema = z.object({
@@ -20,6 +21,11 @@ export async function submitNgoReviewAction(input: unknown) {
 
   if (!user || !user.email_confirmed_at)
     throw new Error("A verified account is required");
+  await enforceActionRateLimit({
+    action: "ngo.review.submit",
+    maximumHits: 5,
+    windowSeconds: 3_600,
+  });
 
   const { data: eligible } = await supabase.rpc("can_review_ngo", {
     target_ngo_id: values.ngoId,
@@ -56,7 +62,13 @@ export async function reportNgoReviewAction(input: unknown) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) throw new Error("Authentication required");
+  if (!user?.email_confirmed_at)
+    throw new Error("Verified authentication required");
+  await enforceActionRateLimit({
+    action: "ngo.review.report",
+    maximumHits: 10,
+    windowSeconds: 3_600,
+  });
 
   const { error } = await supabase.from("content_reports").insert({
     reported_by: user.id,

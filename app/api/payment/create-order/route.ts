@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
+import { paiseToSettlementMinor } from "@/lib/domain/payment-money";
 import { rateLimit, RATE_LIMITS } from "@/lib/middleware/rate-limit";
 import { createPayPalOrder } from "@/lib/payments/paypal";
 import { hasValidRequestOrigin } from "@/lib/security/origin";
@@ -12,14 +13,10 @@ export const runtime = "nodejs";
 const orderSchema = z.object({
   campaignId: z.string().uuid(),
   amountPaise: z.number().int().min(100).max(100_000_000),
+  cause: z.enum(["education", "hunger", "healthcare", "disaster", "general"]),
+  isAnonymous: z.boolean(),
+  csrInitiativeId: z.string().uuid().nullable().optional(),
 });
-
-function convertPaiseToUsdCents(
-  amountPaise: number,
-  inrPerUsd: number,
-): number {
-  return Math.max(1, Math.round(amountPaise / inrPerUsd));
-}
 
 async function handler(request: NextRequest) {
   if (!hasValidRequestOrigin(request)) {
@@ -77,15 +74,56 @@ async function handler(request: NextRequest) {
   }
 
   const admin = createAdminClient();
+  let employeeId: string | null = null;
+  if (parsed.data.csrInitiativeId) {
+    const [{ data: employee }, { data: initiative }] = await Promise.all([
+      admin
+        .from("corporate_employees")
+        .select("id, corporate_id")
+        .eq("user_id", user.id)
+        .maybeSingle(),
+      admin
+        .from("csr_initiatives")
+        .select("id, corporate_id, campaign_id, status, starts_at, ends_at")
+        .eq("id", parsed.data.csrInitiativeId)
+        .maybeSingle(),
+    ]);
+    const now = Date.now();
+    if (
+      !employee ||
+      !initiative ||
+      employee.corporate_id !== initiative.corporate_id ||
+      initiative.status !== "active" ||
+      (initiative.campaign_id !== null &&
+        initiative.campaign_id !== campaign.id) ||
+      new Date(initiative.starts_at).getTime() > now ||
+      new Date(initiative.ends_at).getTime() < now
+    ) {
+      return NextResponse.json(
+        { error: "This employee match is not eligible for the donation" },
+        { status: 409 },
+      );
+    }
+    employeeId = employee.id;
+  }
   const internalOrderId = crypto.randomUUID();
-  const amountUsdCents = convertPaiseToUsdCents(
+  const amountUsdCents = paiseToSettlementMinor(
     parsed.data.amountPaise,
     inrPerUsd,
   );
+  const appUrl = process.env.APP_URL ?? process.env.NEXT_PUBLIC_APP_URL;
+  if (!appUrl) {
+    return NextResponse.json(
+      { error: "Application URL is unavailable" },
+      { status: 503 },
+    );
+  }
   const paypalOrder = await createPayPalOrder({
     internalOrderId,
     campaignId: campaign.id,
     amountUsdCents,
+    returnUrl: `${appUrl}/donation/paypal-return`,
+    cancelUrl: `${appUrl}/dashboard/giving?payment=cancelled`,
   });
   const { error } = await admin.from("payment_orders").insert({
     id: internalOrderId,
@@ -99,6 +137,10 @@ async function handler(request: NextRequest) {
     settlement_currency: "USD",
     settlement_amount_minor: amountUsdCents,
     exchange_rate: inrPerUsd,
+    cause: parsed.data.cause,
+    is_anonymous: parsed.data.isAnonymous,
+    csr_initiative_id: parsed.data.csrInitiativeId ?? null,
+    corporate_employee_id: employeeId,
   });
   if (error)
     return NextResponse.json(

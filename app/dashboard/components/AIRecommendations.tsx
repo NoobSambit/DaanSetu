@@ -70,7 +70,8 @@ export default function AIRecommendations({ userId }: AIRecommendationsProps) {
             Recommended NGOs for You
           </h2>
           <p className="text-sm text-gray-600 mt-1">
-            AI-powered suggestions based on your interests
+            Deterministic matches from your activity, with optional AI
+            explanations
           </p>
         </div>
         <button

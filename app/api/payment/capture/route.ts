@@ -26,23 +26,32 @@ async function handler(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user)
+  if (!user || !user.email_confirmed_at)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const admin = createAdminClient();
   const { data: order } = await admin
     .from("payment_orders")
-    .select("donor_id, amount_paise, settlement_amount_minor")
+    .select("donor_id, amount_paise, settlement_amount_minor, status")
     .eq("gateway_order_id", parsed.data.orderId)
     .maybeSingle();
   if (!order || order.donor_id !== user.id)
     return NextResponse.json({ error: "Order not found" }, { status: 404 });
+  if (order.status === "captured") {
+    const { data: donation } = await admin
+      .from("donations")
+      .select("id")
+      .eq("gateway_order_id", parsed.data.orderId)
+      .maybeSingle();
+    return NextResponse.json({ success: true, donationId: donation?.id });
+  }
 
   const capture = await capturePayPalOrder(parsed.data.orderId);
   const payment = capture.purchase_units?.[0]?.payments?.captures?.[0];
   if (
     capture.status !== "COMPLETED" ||
     payment?.status !== "COMPLETED" ||
+    payment.amount.currency_code !== "USD" ||
     Math.round(Number(payment.amount.value) * 100) !==
       order.settlement_amount_minor
   ) {

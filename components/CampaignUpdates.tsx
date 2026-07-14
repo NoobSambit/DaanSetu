@@ -1,34 +1,27 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import {
-  getCampaignUpdates,
-  createCampaignUpdate,
-} from "@/lib/services/campaigns";
-import { createClient } from "@/lib/supabase/client";
+import { createCampaignUpdateAction } from "@/app/campaigns/actions";
+import { getCampaignUpdates } from "@/lib/services/campaigns";
 import type { CampaignUpdate } from "@/lib/types/database.types";
 
 interface CampaignUpdatesProps {
   campaignId: string;
-  ngoId: string;
+  canPost: boolean;
 }
 
 export default function CampaignUpdates({
   campaignId,
-  ngoId,
+  canPost,
 }: CampaignUpdatesProps) {
-  const router = useRouter();
   const [updates, setUpdates] = useState<CampaignUpdate[]>([]);
   const [loading, setLoading] = useState(true);
-  const [canPost, setCanPost] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [newUpdate, setNewUpdate] = useState("");
   const [posting, setPosting] = useState(false);
 
   useEffect(() => {
     loadUpdates();
-    checkPermissions();
   }, [campaignId]);
 
   const loadUpdates = async () => {
@@ -42,27 +35,6 @@ export default function CampaignUpdates({
     }
   };
 
-  const checkPermissions = async () => {
-    const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      setCanPost(false);
-      return;
-    }
-
-    // Check if user owns the NGO
-    const { data: ngo } = await supabase
-      .from("ngos")
-      .select("user_id")
-      .eq("id", ngoId)
-      .single();
-
-    setCanPost(ngo?.user_id === user.id);
-  };
-
   const handlePostUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -70,7 +42,10 @@ export default function CampaignUpdates({
 
     setPosting(true);
     try {
-      await createCampaignUpdate(campaignId, newUpdate.trim());
+      await createCampaignUpdateAction({
+        campaignId,
+        text: newUpdate.trim(),
+      });
       setNewUpdate("");
       setShowForm(false);
       await loadUpdates();

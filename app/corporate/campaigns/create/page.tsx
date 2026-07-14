@@ -2,12 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { createCorporateCampaignAction } from "@/app/corporate/actions";
 import { createClient } from "@/lib/supabase/client";
 import { getCorporateProfile } from "@/lib/services/corporate";
-import {
-  createCorporateCampaign,
-  CORPORATE_CAMPAIGN_CAUSES,
-} from "@/lib/services/corporate-campaigns";
+import { CORPORATE_CAMPAIGN_CAUSES } from "@/lib/services/corporate-campaigns";
 import type { CorporateCampaignCause } from "@/lib/types/database.types";
 
 export default function CreateCorporateCampaignPage() {
@@ -15,7 +13,6 @@ export default function CreateCorporateCampaignPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [corporateId, setCorporateId] = useState("");
 
   const [formData, setFormData] = useState({
     title: "",
@@ -58,8 +55,6 @@ export default function CreateCorporateCampaignPage() {
         router.push("/corporate/profile");
         return;
       }
-
-      setCorporateId(profile.id);
     } catch (error) {
       console.error("Error checking auth:", error);
     } finally {
@@ -82,12 +77,11 @@ export default function CreateCorporateCampaignPage() {
         throw new Error("Please enter a valid goal amount");
       }
 
-      const campaign = await createCorporateCampaign({
-        corporateId,
+      const campaign = await createCorporateCampaignAction({
         title: formData.title,
         description: formData.description,
         cause: formData.cause,
-        goalAmount,
+        goalAmount: goalAmount.toFixed(2),
         deadline: formData.deadline,
         imageUrl: formData.imageUrl,
       });

@@ -3,28 +3,23 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { inviteCorporateEmployeeAction } from "@/app/corporate/actions";
 import { createClient } from "@/lib/supabase/client";
 import { getCorporateProfile } from "@/lib/services/corporate";
-import {
-  getEmployeesByCorporate,
-  createEmployee,
-  deleteEmployee,
-} from "@/lib/services/corporate-employees";
+import { getEmployeesByCorporate } from "@/lib/services/corporate-employees";
 import type { CorporateEmployee } from "@/lib/types/database.types";
 
 export default function CorporateEmployeesPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [employees, setEmployees] = useState<CorporateEmployee[]>([]);
-  const [corporateId, setCorporateId] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [invitationUrl, setInvitationUrl] = useState("");
 
   const [formData, setFormData] = useState({
-    name: "",
     email: "",
-    designation: "",
   });
 
   useEffect(() => {
@@ -49,7 +44,6 @@ export default function CorporateEmployeesPage() {
         return;
       }
 
-      setCorporateId(profile.id);
       const employeesData = await getEmployeesByCorporate(profile.id);
       setEmployees(employeesData);
     } catch (error) {
@@ -65,33 +59,16 @@ export default function CorporateEmployeesPage() {
     setSubmitting(true);
 
     try {
-      await createEmployee({
-        corporateId,
-        name: formData.name,
+      const result = await inviteCorporateEmployeeAction({
         email: formData.email,
-        designation: formData.designation,
       });
 
-      setFormData({ name: "", email: "", designation: "" });
-      setShowForm(false);
-      await loadEmployees();
+      setFormData({ email: "" });
+      setInvitationUrl(result.invitationUrl);
     } catch (err: any) {
       setError(err.message);
     } finally {
       setSubmitting(false);
-    }
-  }
-
-  async function handleDelete(employeeId: string) {
-    if (!confirm("Are you sure you want to remove this employee?")) {
-      return;
-    }
-
-    try {
-      await deleteEmployee(employeeId);
-      await loadEmployees();
-    } catch (error) {
-      console.error("Error deleting employee:", error);
     }
   }
 
@@ -119,14 +96,14 @@ export default function CorporateEmployeesPage() {
             onClick={() => setShowForm(!showForm)}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
           >
-            {showForm ? "Cancel" : "Add Employee"}
+            {showForm ? "Cancel" : "Invite Employee"}
           </button>
         </div>
 
         {showForm && (
           <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">
-              Add New Employee
+              Invite an Employee
             </h2>
             {error && (
               <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600">
@@ -134,26 +111,6 @@ export default function CorporateEmployeesPage() {
               </div>
             )}
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label
-                  htmlFor="name"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Name *
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  required
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Employee name"
-                />
-              </div>
-
               <div>
                 <label
                   htmlFor="email"
@@ -174,31 +131,22 @@ export default function CorporateEmployeesPage() {
                 />
               </div>
 
-              <div>
-                <label
-                  htmlFor="designation"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Designation
-                </label>
-                <input
-                  type="text"
-                  id="designation"
-                  value={formData.designation}
-                  onChange={(e) =>
-                    setFormData({ ...formData, designation: e.target.value })
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Job title"
-                />
-              </div>
+              {invitationUrl && (
+                <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
+                  Invitation created. In local demo mode, share this link with
+                  the invited employee:
+                  <div className="mt-2 break-all font-mono">
+                    {invitationUrl}
+                  </div>
+                </div>
+              )}
 
               <button
                 type="submit"
                 disabled={submitting}
                 className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {submitting ? "Adding..." : "Add Employee"}
+                {submitting ? "Creating invitation..." : "Create invitation"}
               </button>
             </form>
           </div>
@@ -223,13 +171,13 @@ export default function CorporateEmployeesPage() {
               No employees yet
             </h2>
             <p className="text-gray-600 mb-6">
-              Add employees to track their engagement in CSR activities
+              Invite employees to track their engagement in CSR activities
             </p>
             <button
               onClick={() => setShowForm(true)}
               className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
             >
-              Add Employee
+              Invite Employee
             </button>
           </div>
         ) : (
@@ -248,9 +196,6 @@ export default function CorporateEmployeesPage() {
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Joined
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
                   </th>
                 </tr>
               </thead>
@@ -276,14 +221,6 @@ export default function CorporateEmployeesPage() {
                       <div className="text-sm text-gray-600">
                         {new Date(employee.joined_at).toLocaleDateString()}
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button
-                        onClick={() => handleDelete(employee.id)}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        Remove
-                      </button>
                     </td>
                   </tr>
                 ))}

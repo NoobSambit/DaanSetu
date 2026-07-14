@@ -1,156 +1,239 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useEffect } from "react";
+import { LocateFixed, RotateCcw, Search } from "lucide-react";
+import Link from "next/link";
+import { useRef, useState } from "react";
+
+import type { NgoDiscoveryFilters } from "@/lib/discovery/filters";
 
 const categories = [
-  { value: "", label: "All Categories" },
-  { value: "education", label: "📚 Education" },
-  { value: "food", label: "🍲 Food" },
-  { value: "health", label: "🏥 Health" },
-  { value: "women", label: "👩 Women" },
-  { value: "animals", label: "🐾 Animals" },
-  { value: "children", label: "Children" },
-  { value: "environment", label: "Environment" },
-  { value: "livelihoods", label: "Livelihoods" },
-  { value: "disability", label: "Disability inclusion" },
-  { value: "disaster-relief", label: "Disaster relief" },
-  { value: "elderly", label: "Elder care" },
-  { value: "human-rights", label: "Human rights" },
-  { value: "rural-development", label: "Rural development" },
-  { value: "arts-culture", label: "Arts and culture" },
-  { value: "other", label: "Other" },
-];
+  ["", "All categories"],
+  ["education", "Education"],
+  ["food", "Food security"],
+  ["health", "Healthcare"],
+  ["women", "Women empowerment"],
+  ["animals", "Animal welfare"],
+  ["children", "Children"],
+  ["environment", "Environment"],
+  ["livelihoods", "Livelihoods"],
+  ["disability", "Disability inclusion"],
+  ["disaster-relief", "Disaster relief"],
+  ["elderly", "Elder care"],
+  ["human-rights", "Human rights"],
+  ["rural-development", "Rural development"],
+  ["arts-culture", "Arts and culture"],
+  ["other", "Other"],
+] as const;
 
-export default function SearchFilters() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+function booleanValue(value: boolean | undefined) {
+  return value === undefined ? "" : String(value);
+}
 
-  const [search, setSearch] = useState(searchParams.get("search") || "");
-  const [category, setCategory] = useState(searchParams.get("category") || "");
-  const [city, setCity] = useState(searchParams.get("city") || "");
+export default function SearchFilters({
+  filters,
+}: {
+  filters: NgoDiscoveryFilters;
+}) {
+  const formRef = useRef<HTMLFormElement>(null);
+  const [locationStatus, setLocationStatus] = useState<string | null>(null);
 
-  useEffect(() => {
-    const params = new URLSearchParams();
-
-    if (search) params.set("search", search);
-    if (category) params.set("category", category);
-    if (city) params.set("city", city);
-
-    const queryString = params.toString();
-    router.push(`/ngos${queryString ? `?${queryString}` : ""}`);
-  }, [search, category, city, router]);
-
-  const handleReset = () => {
-    setSearch("");
-    setCategory("");
-    setCity("");
-  };
+  function useCurrentLocation() {
+    if (!navigator.geolocation) {
+      setLocationStatus("Location is not available in this browser.");
+      return;
+    }
+    setLocationStatus("Finding your location…");
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        const form = formRef.current;
+        if (!form) return;
+        const latitude = form.elements.namedItem(
+          "latitude",
+        ) as HTMLInputElement;
+        const longitude = form.elements.namedItem(
+          "longitude",
+        ) as HTMLInputElement;
+        const distance = form.elements.namedItem(
+          "distanceKm",
+        ) as HTMLSelectElement;
+        latitude.value = String(coords.latitude);
+        longitude.value = String(coords.longitude);
+        if (!distance.value) distance.value = "25";
+        setLocationStatus("Location added. Apply filters to search nearby.");
+      },
+      () => setLocationStatus("Location permission was not granted."),
+      { enableHighAccuracy: false, timeout: 8_000, maximumAge: 300_000 },
+    );
+  }
 
   return (
-    <div className="card p-6 animate-fade-in">
-      <div className="grid md:grid-cols-4 gap-4">
-        {/* Search */}
-        <div>
-          <label
-            htmlFor="search"
-            className="block text-sm font-semibold text-slate-900 mb-2"
-          >
-            Search
-          </label>
-          <div className="relative">
-            <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
+    <form
+      ref={formRef}
+      action="/ngos"
+      method="get"
+      className="card animate-fade-in p-6"
+    >
+      <input type="hidden" name="latitude" defaultValue={filters.latitude} />
+      <input type="hidden" name="longitude" defaultValue={filters.longitude} />
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <label className="block text-sm font-semibold text-slate-900">
+          Search
+          <span className="relative mt-2 block">
+            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
             <input
-              id="search"
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search NGOs..."
+              name="search"
+              type="search"
+              defaultValue={filters.search}
+              placeholder="Name, mission, or cause"
               className="input pl-10"
             />
-          </div>
-        </div>
+          </span>
+        </label>
 
-        {/* Category */}
-        <div>
-          <label
-            htmlFor="category"
-            className="block text-sm font-semibold text-slate-900 mb-2"
-          >
-            Category
-          </label>
+        <label className="block text-sm font-semibold text-slate-900">
+          Category
           <select
-            id="category"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="input"
+            name="category"
+            defaultValue={filters.category ?? ""}
+            className="input mt-2"
           >
-            {categories.map((cat) => (
-              <option key={cat.value} value={cat.value}>
-                {cat.label}
+            {categories.map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
               </option>
             ))}
           </select>
-        </div>
+        </label>
 
-        {/* City */}
-        <div>
-          <label
-            htmlFor="city"
-            className="block text-sm font-semibold text-slate-900 mb-2"
+        <label className="block text-sm font-semibold text-slate-900">
+          State
+          <input
+            name="state"
+            defaultValue={filters.state}
+            placeholder="e.g. Karnataka"
+            className="input mt-2"
+          />
+        </label>
+
+        <label className="block text-sm font-semibold text-slate-900">
+          City
+          <input
+            name="city"
+            defaultValue={filters.city}
+            placeholder="e.g. Bengaluru"
+            className="input mt-2"
+          />
+        </label>
+
+        <label className="block text-sm font-semibold text-slate-900">
+          Verification
+          <select
+            name="verified"
+            defaultValue={booleanValue(filters.verified)}
+            className="input mt-2"
           >
-            City
-          </label>
-          <div className="relative">
-            <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-              />
-            </svg>
-            <input
-              id="city"
-              type="text"
-              value={city}
-              onChange={(e) => setCity(e.target.value)}
-              placeholder="e.g., Mumbai"
-              className="input pl-10"
-            />
-          </div>
+            <option value="">Any status</option>
+            <option value="true">Verified only</option>
+            <option value="false">Unverified only</option>
+          </select>
+        </label>
+
+        <label className="block text-sm font-semibold text-slate-900">
+          80G eligibility
+          <select
+            name="has80g"
+            defaultValue={booleanValue(filters.has80g)}
+            className="input mt-2"
+          >
+            <option value="">Any</option>
+            <option value="true">Eligible only</option>
+            <option value="false">Not marked eligible</option>
+          </select>
+        </label>
+
+        <label className="block text-sm font-semibold text-slate-900">
+          Volunteering
+          <select
+            name="volunteering"
+            defaultValue={booleanValue(filters.volunteering)}
+            className="input mt-2"
+          >
+            <option value="">Any</option>
+            <option value="true">Accepting volunteers</option>
+            <option value="false">Not accepting volunteers</option>
+          </select>
+        </label>
+
+        <label className="block text-sm font-semibold text-slate-900">
+          CSR partnerships
+          <select
+            name="csr"
+            defaultValue={booleanValue(filters.csr)}
+            className="input mt-2"
+          >
+            <option value="">Any</option>
+            <option value="true">CSR available</option>
+            <option value="false">CSR unavailable</option>
+          </select>
+        </label>
+
+        <label className="block text-sm font-semibold text-slate-900">
+          Distance
+          <select
+            name="distanceKm"
+            defaultValue={filters.distanceKm ?? ""}
+            className="input mt-2"
+          >
+            <option value="">Anywhere</option>
+            <option value="10">Within 10 km</option>
+            <option value="25">Within 25 km</option>
+            <option value="50">Within 50 km</option>
+            <option value="100">Within 100 km</option>
+          </select>
+        </label>
+
+        <label className="block text-sm font-semibold text-slate-900">
+          Sort by
+          <select
+            name="sort"
+            defaultValue={filters.sort}
+            className="input mt-2"
+          >
+            <option value="newest">Newest profiles</option>
+            <option value="rating">Highest rated</option>
+            <option value="name">Name</option>
+            <option value="distance">Nearest first</option>
+          </select>
+        </label>
+
+        <div className="flex items-end">
+          <button
+            type="button"
+            onClick={useCurrentLocation}
+            className="btn btn-secondary w-full"
+          >
+            <LocateFixed className="h-4 w-4" /> Use my location
+          </button>
         </div>
 
-        {/* Reset Button */}
-        <div className="flex items-end">
-          <button onClick={handleReset} className="btn btn-secondary w-full">
-            Reset Filters
+        <div className="flex items-end gap-2">
+          <Link
+            href="/ngos"
+            className="btn btn-secondary"
+            aria-label="Reset filters"
+          >
+            <RotateCcw className="h-4 w-4" />
+          </Link>
+          <button type="submit" className="btn btn-primary flex-1">
+            Apply filters
           </button>
         </div>
       </div>
-    </div>
+      {locationStatus && (
+        <p aria-live="polite" className="mt-3 text-xs text-slate-600">
+          {locationStatus}
+        </p>
+      )}
+    </form>
   );
 }

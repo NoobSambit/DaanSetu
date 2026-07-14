@@ -1,59 +1,41 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 
+import { requireAdmin } from "@/lib/auth/require-admin";
 import { createClient } from "@/lib/supabase/server";
 
+const reviewSchema = z.object({
+  verificationId: z.string().uuid(),
+  decision: z.enum(["changes_requested", "verified", "rejected"]),
+  notes: z.string().trim().max(1_000),
+});
+
 export async function reviewNgoVerificationAction(formData: FormData) {
-  const verificationId = String(formData.get("verificationId") ?? "");
-  const decision = String(formData.get("decision") ?? "");
-  const notes = String(formData.get("notes") ?? "").trim();
-  if (!verificationId || !["verified", "rejected"].includes(decision)) return;
-
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return;
-  const { data: profile } = await supabase
-    .from("users")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-  if (profile?.role !== "admin") return;
-
-  const { data: verification } = await supabase
-    .from("ngo_verifications")
-    .select("ngo_id, verification_status")
-    .eq("id", verificationId)
-    .single();
-  if (!verification || verification.verification_status !== "pending") return;
-
-  if (decision === "verified") {
-    const { count } = await supabase
-      .from("ngo_verification_documents")
-      .select("id", { count: "exact", head: true })
-      .eq("verification_id", verificationId);
-    if (!count) return;
+  const values = reviewSchema.parse({
+    verificationId: formData.get("verificationId"),
+    decision: formData.get("decision"),
+    notes: formData.get("notes"),
+  });
+  if (values.decision !== "verified" && values.notes.length < 10) {
+    throw new Error("Provide a clear review note for this decision");
   }
 
-  const { error } = await supabase
-    .from("ngo_verifications")
-    .update({
-      verification_status: decision,
-      verified_by: user.id,
-      verification_date: new Date().toISOString(),
-      reviewed_at: new Date().toISOString(),
-      verification_notes: notes || null,
-      documents_verified: decision === "verified",
-    })
-    .eq("id", verificationId);
-  if (error) return;
+  await requireAdmin("/admin/ngo-verifications");
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("review_ngo_verification", {
+    verification_uuid: values.verificationId,
+    next_status: values.decision,
+    decision_note: values.notes,
+  });
 
-  await supabase
-    .from("ngos")
-    .update({ is_verified: decision === "verified" })
-    .eq("id", verification.ngo_id);
+  if (error || !data) {
+    throw new Error("The verification decision could not be recorded");
+  }
+
   revalidatePath("/admin/ngo-verifications");
-  revalidatePath(`/ngos/${verification.ngo_id}`);
+  revalidatePath(`/ngos/${data.ngo_id}`);
+  revalidatePath("/ngo/profile");
+  revalidatePath("/ngo/dashboard");
 }

@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 
 const decisionSchema = z.object({
   campaignId: z.string().uuid(),
-  decision: z.enum(["changes_requested", "rejected", "approved"]),
+  decision: z.enum(["changes_requested", "rejected", "approved", "active"]),
   note: z.string().trim().min(10).max(1000),
 });
 
@@ -36,4 +36,12 @@ export async function reviewFundraiserAction(input: unknown) {
 
   if (error) throw new Error("The fundraiser decision could not be saved");
   revalidatePath("/admin/fundraisers");
+}
+
+export async function reviewFundraiserFormAction(formData: FormData) {
+  return reviewFundraiserAction({
+    campaignId: formData.get("campaignId"),
+    decision: formData.get("decision"),
+    note: formData.get("note"),
+  });
 }

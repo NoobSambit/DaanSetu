@@ -19,6 +19,7 @@ const notices: Record<string, string> = {
   "password-updated":
     "Your password was updated. Sign in with your new password.",
   "signed-out": "You have been signed out.",
+  "sessions-revoked": "You have been signed out on every device.",
 };
 
 const errors: Record<string, string> = {

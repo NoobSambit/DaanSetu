@@ -6,6 +6,9 @@ import type { DonationCause } from "@/lib/types/database.types";
 export interface CreateDonationParams {
   campaignId: string;
   amountPaise: number;
+  cause: DonationCause;
+  isAnonymous: boolean;
+  csrInitiativeId?: string | null;
 }
 
 export async function createDonation(params: CreateDonationParams) {
@@ -21,6 +24,29 @@ export async function createDonation(params: CreateDonationParams) {
   };
   if (!response.ok || !result.orderId) {
     throw new Error(result.error ?? "PayPal order could not be created");
+  }
+  return result;
+}
+
+export async function createRecurringDonation(params: {
+  campaignId: string;
+  amountPaise: number;
+  cause: DonationCause;
+  isAnonymous: boolean;
+  interval: "monthly" | "quarterly" | "yearly";
+}) {
+  const response = await fetch("/api/payment/subscriptions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "create", ...params }),
+  });
+  const result = (await response.json()) as {
+    subscriptionId?: string;
+    approvalUrl?: string | null;
+    error?: string;
+  };
+  if (!response.ok || !result.subscriptionId) {
+    throw new Error(result.error ?? "PayPal subscription could not be created");
   }
   return result;
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
+import { paiseToSettlementMinor } from "@/lib/domain/payment-money";
 import { rateLimit, RATE_LIMITS } from "@/lib/middleware/rate-limit";
 import {
   changePayPalSubscription,
@@ -15,6 +16,8 @@ const createSchema = z.object({
   campaignId: z.string().uuid(),
   amountPaise: z.number().int().min(100),
   interval: z.enum(["monthly", "quarterly", "yearly"]),
+  cause: z.enum(["education", "hunger", "healthcare", "disaster", "general"]),
+  isAnonymous: z.boolean(),
 });
 const changeSchema = z.object({
   action: z.enum(["pause", "resume", "cancel"]),
@@ -43,13 +46,58 @@ async function handler(request: NextRequest) {
   const admin = createAdminClient();
 
   if (createInput.success) {
-    const planId =
-      process.env[`PAYPAL_PLAN_${createInput.data.interval.toUpperCase()}`];
-    if (!planId)
+    if (process.env.ENABLE_SUBSCRIPTIONS !== "true") {
       return NextResponse.json(
-        { error: "That giving interval is unavailable" },
+        { error: "Recurring giving is currently disabled" },
         { status: 503 },
       );
+    }
+    const intervalKey = createInput.data.interval.toUpperCase();
+    const planId = process.env[`PAYPAL_PLAN_${intervalKey}`];
+    const configuredAmountPaise = Number(
+      process.env[`PAYPAL_PLAN_${intervalKey}_AMOUNT_PAISE`],
+    );
+    if (
+      !planId ||
+      !Number.isSafeInteger(configuredAmountPaise) ||
+      configuredAmountPaise < 100 ||
+      configuredAmountPaise !== createInput.data.amountPaise
+    ) {
+      return NextResponse.json(
+        { error: "That recurring amount and interval are unavailable" },
+        { status: 503 },
+      );
+    }
+    const { data: campaign } = await supabase
+      .from("campaigns")
+      .select("id, status, deadline, payout_accounts(status)")
+      .eq("id", createInput.data.campaignId)
+      .maybeSingle();
+    const payout = campaign?.payout_accounts as unknown as {
+      status: string;
+    } | null;
+    if (
+      !campaign ||
+      campaign.status !== "active" ||
+      payout?.status !== "active" ||
+      new Date(campaign.deadline).getTime() <= Date.now()
+    ) {
+      return NextResponse.json(
+        { error: "This campaign cannot accept recurring donations" },
+        { status: 409 },
+      );
+    }
+    const inrPerUsd = Number(process.env.PAYPAL_INR_PER_USD);
+    if (!Number.isFinite(inrPerUsd) || inrPerUsd <= 0) {
+      return NextResponse.json(
+        { error: "PayPal conversion rate is unavailable" },
+        { status: 503 },
+      );
+    }
+    const settlementAmountMinor = paiseToSettlementMinor(
+      createInput.data.amountPaise,
+      inrPerUsd,
+    );
     const internalId = crypto.randomUUID();
     const paypal = await createPayPalSubscription({
       planId,
@@ -64,6 +112,12 @@ async function handler(request: NextRequest) {
       gateway_plan_id: planId,
       gateway_subscription_id: paypal.id,
       status: "created",
+      provider: "paypal",
+      settlement_currency: "USD",
+      settlement_amount_minor: settlementAmountMinor,
+      exchange_rate: inrPerUsd,
+      cause: createInput.data.cause,
+      is_anonymous: createInput.data.isAnonymous,
     });
     if (error)
       return NextResponse.json(

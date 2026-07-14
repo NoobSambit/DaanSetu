@@ -17,7 +17,7 @@ export default async function NotificationsPage() {
   }
 
   // Get user notifications
-  const notifications = await getUserNotifications(user.id);
+  const notifications = await getUserNotifications(user.id, 50, supabase);
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">

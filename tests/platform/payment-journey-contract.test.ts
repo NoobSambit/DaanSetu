@@ -49,6 +49,8 @@ test("demo payments are isolated, gated, and excluded from real totals", () => {
   assert.match(demoRoute, /ENABLE_DEMO_PAYMENTS/);
   assert.match(demoRoute, /NODE_ENV/);
   assert.match(demoRoute, /isDemo|is_demo/);
+  assert.match(demoRoute, /payout_accounts\(status\)/);
+  assert.match(demoRoute, /payout\?\.status !== "active"/);
   assert.match(migration, /is_demo/);
   assert.match(migration, /WHERE[\s\S]+is_demo\s*=\s*FALSE/i);
 });

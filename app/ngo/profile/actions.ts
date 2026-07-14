@@ -150,12 +150,12 @@ async function saveVerificationSection(
 
   if (
     latestSubmission &&
-    ["pending", "verified"].includes(latestSubmission.verification_status)
+    ["submitted", "verified"].includes(latestSubmission.verification_status)
   ) {
     return {
       status: "success",
       message:
-        latestSubmission.verification_status === "pending"
+        latestSubmission.verification_status === "submitted"
           ? "Verification is awaiting admin review."
           : "This organization is verified.",
       verificationId: latestSubmission.id,
@@ -195,7 +195,7 @@ async function saveVerificationSection(
     .from("ngo_verifications")
     .select("id, verification_status")
     .eq("ngo_id", ngoId)
-    .in("verification_status", ["draft", "rejected"])
+    .in("verification_status", ["draft", "changes_requested", "rejected"])
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -212,7 +212,7 @@ async function saveVerificationSection(
     has_12a: checked(formData, "has12a"),
     has_80g: checked(formData, "has80g"),
     has_fcra: checked(formData, "hasFcra"),
-    verification_status: "draft",
+    verification_status: existing?.verification_status ?? "draft",
     updated_at: new Date().toISOString(),
   };
 
@@ -251,14 +251,9 @@ async function saveVerificationSection(
       };
     }
 
-    const { error } = await supabase
-      .from("ngo_verifications")
-      .update({
-        verification_status: "pending",
-        submitted_at: new Date().toISOString(),
-        verification_notes: null,
-      })
-      .eq("id", result.data.id);
+    const { error } = await supabase.rpc("submit_ngo_verification", {
+      verification_uuid: result.data.id,
+    });
 
     if (error)
       return {

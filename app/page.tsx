@@ -9,8 +9,21 @@ import ImpactDashboard from "@/components/landing/ImpactDashboard";
 import StorySection from "@/components/landing/StorySection";
 import CommunityCTA from "@/components/landing/CommunityCTA";
 import Footer from "@/components/landing/Footer";
+import { getLandingData } from "@/lib/landing/repository";
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
+  const landingData = await getLandingData();
+  const featuredNgo = landingData.featuredNgos[0] ?? null;
+  const featuredCampaign = featuredNgo
+    ? (landingData.activeCampaigns.find(
+        (campaign) => campaign.ngoId === featuredNgo.id,
+      ) ??
+      landingData.activeCampaigns[0] ??
+      null)
+    : (landingData.activeCampaigns[0] ?? null);
+
   return (
     <>
       <Navbar />
@@ -18,11 +31,21 @@ export default function Home() {
         <HeroSection />
         <FeatureCards />
         <HowItWorks />
-        <CausesSection />
-        <TrustSection />
+        <CausesSection
+          campaigns={landingData.activeCampaigns}
+          ngos={landingData.featuredNgos}
+        />
+        <TrustSection
+          ngo={featuredNgo}
+          campaign={featuredCampaign}
+          review={landingData.approvedReviews[0] ?? null}
+        />
         <ImpactWays />
-        <ImpactDashboard />
-        <StorySection />
+        <ImpactDashboard
+          metrics={landingData.metrics}
+          causeAmounts={landingData.causeAmounts}
+        />
+        <StorySection story={landingData.featuredStory} />
       </main>
 
       {/* Footer Area with Monument & Wave Background Image */}

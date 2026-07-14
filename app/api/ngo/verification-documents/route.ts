@@ -4,6 +4,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { validateVerificationDocument } from "@/lib/ngo/profile";
 import { rateLimit, RATE_LIMITS } from "@/lib/middleware/rate-limit";
+import { hasValidRequestOrigin } from "@/lib/security/origin";
+import { encryptSensitiveBytes } from "@/lib/security/encryption";
+import { validatePrivateDocument } from "@/lib/storage/file-validation";
 import { createClient } from "@/lib/supabase/server";
 
 const documentTypes = new Set([
@@ -14,13 +17,13 @@ const documentTypes = new Set([
   "fcra",
   "supporting",
 ]);
-const extensions: Record<string, string> = {
-  "application/pdf": "pdf",
-  "image/jpeg": "jpg",
-  "image/png": "png",
-};
-
 async function handler(request: NextRequest) {
+  if (!hasValidRequestOrigin(request)) {
+    return NextResponse.json(
+      { error: "Invalid request origin" },
+      { status: 403 },
+    );
+  }
   const supabase = await createClient();
   const {
     data: { user },
@@ -51,6 +54,14 @@ async function handler(request: NextRequest) {
   const validationError = validateVerificationDocument(file);
   if (validationError)
     return NextResponse.json({ error: validationError }, { status: 400 });
+  try {
+    await validatePrivateDocument(file);
+  } catch {
+    return NextResponse.json(
+      { error: "Document content does not match its declared file type." },
+      { status: 400 },
+    );
+  }
 
   const { data: verification } = await supabase
     .from("ngo_verifications")
@@ -70,11 +81,16 @@ async function handler(request: NextRequest) {
     );
   }
 
-  const path = `${verification.ngo_id}/${verification.id}/${randomUUID()}.${extensions[file.type]}`;
+  const documentId = randomUUID();
+  const path = `${verification.ngo_id}/${verification.id}/${documentId}.encrypted`;
+  const encryptedBytes = encryptSensitiveBytes(
+    new Uint8Array(await file.arrayBuffer()),
+    `ngo-verification-document:${documentId}`,
+  );
   const { error: uploadError } = await supabase.storage
     .from("ngo-verification")
-    .upload(path, await file.arrayBuffer(), {
-      contentType: file.type,
+    .upload(path, encryptedBytes, {
+      contentType: "application/octet-stream",
       upsert: false,
     });
   if (uploadError)
@@ -86,6 +102,7 @@ async function handler(request: NextRequest) {
   const { data: document, error: insertError } = await supabase
     .from("ngo_verification_documents")
     .insert({
+      id: documentId,
       verification_id: verification.id,
       ngo_id: verification.ngo_id,
       document_type: documentType,
@@ -94,6 +111,8 @@ async function handler(request: NextRequest) {
       mime_type: file.type,
       size_bytes: file.size,
       uploaded_by: user.id,
+      encryption_version: 1,
+      encrypted_at: new Date().toISOString(),
     })
     .select("id, document_type, original_name, size_bytes, created_at")
     .single();
@@ -111,6 +130,12 @@ async function handler(request: NextRequest) {
 export const POST = rateLimit(RATE_LIMITS.UPLOAD)(handler);
 
 export async function DELETE(request: NextRequest) {
+  if (!hasValidRequestOrigin(request)) {
+    return NextResponse.json(
+      { error: "Invalid request origin" },
+      { status: 403 },
+    );
+  }
   const supabase = await createClient();
   const {
     data: { user },

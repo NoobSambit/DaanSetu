@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { reviewRefundAction } from "./actions";
 
 export default async function AdminRefundsPage() {
   const supabase = await createClient();
@@ -35,6 +36,43 @@ export default async function AdminRefundsPage() {
                   {refund.status}
                 </p>
                 <p className="mt-2 text-slate-600">{refund.reason}</p>
+                {refund.status === "submitted" && (
+                  <form action={reviewRefundAction} className="mt-4 space-y-3">
+                    <input
+                      type="hidden"
+                      name="refundRequestId"
+                      value={refund.id}
+                    />
+                    <label className="block text-sm font-semibold text-slate-800">
+                      Review note
+                      <textarea
+                        name="note"
+                        required
+                        minLength={10}
+                        maxLength={1000}
+                        className="input mt-2 min-h-24"
+                      />
+                    </label>
+                    <div className="flex gap-3">
+                      <button
+                        type="submit"
+                        name="decision"
+                        value="approve"
+                        className="btn btn-primary"
+                      >
+                        Approve and refund
+                      </button>
+                      <button
+                        type="submit"
+                        name="decision"
+                        value="reject"
+                        className="btn btn-secondary"
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  </form>
+                )}
               </article>
             ))
           ) : (

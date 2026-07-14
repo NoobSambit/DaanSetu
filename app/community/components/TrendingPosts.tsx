@@ -1,8 +1,10 @@
 import { getTrendingPosts } from "@/lib/services/posts";
+import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 
 export default async function TrendingPosts() {
-  const trendingPosts = await getTrendingPosts(5);
+  const supabase = await createClient();
+  const trendingPosts = await getTrendingPosts(5, supabase);
 
   if (trendingPosts.length === 0) {
     return null;
@@ -19,7 +21,7 @@ export default async function TrendingPosts() {
         {trendingPosts.map((post, index) => (
           <Link
             key={post.id}
-            href={`/community/posts/${post.id}`}
+            href={`/community/${post.id}`}
             className="block p-3 bg-white rounded-lg hover:shadow-md transition-shadow"
           >
             <div className="flex items-start gap-3">

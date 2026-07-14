@@ -54,7 +54,7 @@ export default async function LeaderboardPage() {
             entries={volunteers.map((v) => ({
               rank: v.rank,
               name: v.user_name,
-              subtitle: `${v.accepted_count} opportunities completed`,
+              subtitle: `${v.approved_hours.toLocaleString("en-IN")} approved hours`,
               badge: null,
             }))}
             emptyMessage="No volunteers yet. Be the first to volunteer!"

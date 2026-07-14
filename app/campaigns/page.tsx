@@ -1,242 +1,252 @@
-"use client";
-
-import { useState, useEffect } from "react";
+/* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
-import {
-  getAllCampaigns,
-  type CampaignWithNGO,
-} from "@/lib/services/campaigns";
-import type { CampaignCategory } from "@/lib/types/database.types";
-import AICampaignSuggestions from "./components/AICampaignSuggestions";
-import { LogoLoader } from "@/components/ui/LogoLoader";
 
-export default function CampaignsPage() {
-  const [campaigns, setCampaigns] = useState<CampaignWithNGO[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<
-    CampaignCategory | undefined
-  >();
-  const [sortBy, setSortBy] = useState<
-    "deadline" | "created_at" | "current_amount"
-  >("created_at");
+import AICampaignSuggestions from "@/app/campaigns/components/AICampaignSuggestions";
+import { discoverCampaigns } from "@/lib/discovery/campaigns";
+import { parseCampaignDiscoveryParams } from "@/lib/discovery/filters";
 
-  useEffect(() => {
-    loadCampaigns();
-  }, [selectedCategory, sortBy]);
+export const dynamic = "force-dynamic";
 
-  const loadCampaigns = async () => {
-    try {
-      setLoading(true);
-      const data = await getAllCampaigns({
-        category: selectedCategory,
-        sortBy,
-        status: "active",
-      });
-      setCampaigns(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load campaigns");
-    } finally {
-      setLoading(false);
-    }
-  };
+type SearchParams = Record<string, string | string[] | undefined>;
 
-  const categoryEmojis: Record<CampaignCategory, string> = {
-    education: "📚",
-    food: "🍲",
-    health: "🏥",
-    women: "👩",
-    animals: "🐾",
-    disaster: "🆘",
-  };
+const categoryOptions = [
+  ["", "All categories"],
+  ["education", "Education"],
+  ["food", "Food security"],
+  ["health", "Healthcare"],
+  ["women", "Women empowerment"],
+  ["animals", "Animal welfare"],
+  ["disaster", "Disaster relief"],
+] as const;
 
-  const categories: { value: CampaignCategory; label: string }[] = [
-    { value: "education", label: "Education" },
-    { value: "food", label: "Food" },
-    { value: "health", label: "Health" },
-    { value: "women", label: "Women" },
-    { value: "animals", label: "Animals" },
-    { value: "disaster", label: "Disaster" },
-  ];
+const categoryEmoji: Record<string, string> = {
+  education: "📚",
+  food: "🍲",
+  health: "🏥",
+  women: "👩",
+  animals: "🐾",
+  disaster: "🆘",
+};
 
-  const getProgressPercentage = (current: number, goal: number) => {
-    return Math.min((current / goal) * 100, 100);
-  };
+function pageUrl(params: SearchParams, page: number) {
+  const url = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    const scalar = Array.isArray(value) ? value[0] : value;
+    if (scalar && key !== "page") url.set(key, scalar);
+  }
+  url.set("page", String(page));
+  return `/campaigns?${url.toString()}`;
+}
 
-  const getDaysRemaining = (deadline: string) => {
-    const today = new Date();
-    const endDate = new Date(deadline);
-    const diffTime = endDate.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
-  };
+function money(amountPaise: number) {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  }).format(amountPaise / 100);
+}
+
+export default async function CampaignsPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
+  const params = await searchParams;
+  const filters = parseCampaignDiscoveryParams(params);
+  const result = await discoverCampaigns(filters);
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+    <main className="min-h-[calc(100vh-4rem)] bg-slate-50">
+      <div className="mx-auto max-w-7xl px-4 py-8">
+        <header className="mb-8">
+          <h1 className="mb-2 text-4xl font-bold text-slate-950">
             Active Campaigns
           </h1>
-          <p className="text-gray-600">
-            Support NGO campaigns and make a difference
+          <p className="text-slate-600">
+            Only approved, active fundraisers with enabled collection appear
+            here.
           </p>
-        </div>
+        </header>
 
-        {/* AI Campaign Suggestions */}
         <AICampaignSuggestions />
 
-        {/* Filters */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-          <div className="grid md:grid-cols-2 gap-6">
-            {/* Category Filter */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-3">
-                Filter by Category
-              </label>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => setSelectedCategory(undefined)}
-                  className={`px-4 py-2 rounded-lg border-2 font-medium transition ${
-                    selectedCategory === undefined
-                      ? "border-blue-600 bg-blue-50 text-blue-700"
-                      : "border-gray-300 bg-white text-gray-700 hover:border-gray-400"
-                  }`}
-                >
-                  All
-                </button>
-                {categories.map((cat) => (
-                  <button
-                    key={cat.value}
-                    onClick={() => setSelectedCategory(cat.value)}
-                    className={`px-4 py-2 rounded-lg border-2 font-medium transition ${
-                      selectedCategory === cat.value
-                        ? "border-blue-600 bg-blue-50 text-blue-700"
-                        : "border-gray-300 bg-white text-gray-700 hover:border-gray-400"
-                    }`}
-                  >
-                    {categoryEmojis[cat.value]} {cat.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Sort Filter */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-3">
-                Sort By
-              </label>
+        <form
+          action="/campaigns"
+          method="get"
+          className="mb-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
+        >
+          <div className="grid gap-4 md:grid-cols-4">
+            <label className="text-sm font-semibold text-slate-900">
+              Search
+              <input
+                type="search"
+                name="search"
+                defaultValue={filters.search}
+                placeholder="Campaign or cause"
+                className="input mt-2"
+              />
+            </label>
+            <label className="text-sm font-semibold text-slate-900">
+              Category
               <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as any)}
-                className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-600 focus:outline-none"
+                name="category"
+                defaultValue={filters.category ?? ""}
+                className="input mt-2"
               >
-                <option value="created_at">Newly Launched</option>
-                <option value="deadline">Ending Soon</option>
-                <option value="current_amount">Highest Funded</option>
+                {categoryOptions.map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
               </select>
+            </label>
+            <label className="text-sm font-semibold text-slate-900">
+              Sort by
+              <select
+                name="sort"
+                defaultValue={filters.sort}
+                className="input mt-2"
+              >
+                <option value="newest">Newest</option>
+                <option value="ending-soon">Ending soon</option>
+                <option value="most-funded">Most funded</option>
+                <option value="progress">Highest progress</option>
+              </select>
+            </label>
+            <div className="flex items-end gap-2">
+              <Link href="/campaigns" className="btn btn-secondary">
+                Reset
+              </Link>
+              <button type="submit" className="btn btn-primary flex-1">
+                Apply filters
+              </button>
             </div>
           </div>
-        </div>
+        </form>
 
-        {/* Campaign Grid */}
-        {loading ? (
-          <div className="py-20">
-            <LogoLoader size="lg" />
+        {result.error ? (
+          <div
+            role="alert"
+            className="rounded-xl border border-red-200 bg-red-50 p-10 text-center"
+          >
+            <h2 className="font-semibold text-red-900">
+              Campaign discovery is temporarily unavailable
+            </h2>
+            <p className="mt-2 text-sm text-red-700">
+              Please retry shortly. No campaign records were substituted.
+            </p>
           </div>
-        ) : error ? (
-          <div className="text-center py-12">
-            <p className="text-red-600">{error}</p>
-          </div>
-        ) : campaigns.length === 0 ? (
-          <div className="text-center py-12 bg-white rounded-lg">
-            <p className="text-lg text-gray-600">No active campaigns found</p>
+        ) : result.campaigns.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-slate-300 bg-white p-12 text-center">
+            <h2 className="text-xl font-semibold text-slate-900">
+              No active campaigns match these filters
+            </h2>
+            <p className="mt-2 text-slate-600">
+              Try another category or clear the search query.
+            </p>
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {campaigns.map((campaign) => {
-              const progress = getProgressPercentage(
-                campaign.current_amount,
-                campaign.goal_amount,
-              );
-              const daysRemaining = getDaysRemaining(campaign.deadline);
-
-              return (
-                <Link
-                  key={campaign.id}
-                  href={`/campaigns/${campaign.id}`}
-                  className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition"
-                >
-                  {/* Campaign Image */}
-                  <div className="relative h-48 bg-gray-200">
-                    {campaign.image_url ? (
-                      <img
-                        src={campaign.image_url}
-                        alt={campaign.title}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-400">
-                        <span className="text-6xl">
-                          {categoryEmojis[campaign.category]}
+          <>
+            <p className="mb-4 text-sm text-slate-600">
+              {result.total.toLocaleString("en-IN")} active campaigns · page{" "}
+              {result.page} of {result.totalPages}
+            </p>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {result.campaigns.map((campaign) => {
+                const progress = Math.min(
+                  100,
+                  Math.round(
+                    (campaign.raisedPaise / campaign.targetPaise) * 100,
+                  ),
+                );
+                const deadlineLabel = new Intl.DateTimeFormat("en-IN", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                }).format(new Date(campaign.deadline));
+                return (
+                  <Link
+                    key={campaign.id}
+                    href={`/campaigns/${campaign.id}`}
+                    className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                  >
+                    <div className="relative flex h-48 items-center justify-center bg-slate-100">
+                      {campaign.imageUrl ? (
+                        <img
+                          src={campaign.imageUrl}
+                          alt=""
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-6xl" aria-hidden="true">
+                          {categoryEmoji[campaign.category]}
                         </span>
-                      </div>
-                    )}
-                    {/* Category Badge */}
-                    <div className="absolute top-3 right-3 bg-white px-3 py-1 rounded-full text-sm font-semibold">
-                      {categoryEmojis[campaign.category]} {campaign.category}
-                    </div>
-                  </div>
-
-                  {/* Campaign Info */}
-                  <div className="p-6">
-                    <h3 className="text-xl font-bold text-gray-900 mb-2 line-clamp-2">
-                      {campaign.title}
-                    </h3>
-                    <p className="text-sm text-gray-600 mb-4 line-clamp-2">
-                      {campaign.short_description}
-                    </p>
-
-                    {/* NGO Name */}
-                    <p className="text-sm text-blue-600 mb-4">
-                      by {campaign.ngos.name}
-                    </p>
-
-                    {/* Progress Bar */}
-                    <div className="mb-3">
-                      <div className="flex justify-between text-sm mb-1">
-                        <span className="font-semibold text-gray-900">
-                          ₹{campaign.current_amount.toLocaleString("en-IN")}
-                        </span>
-                        <span className="text-gray-600">
-                          of ₹{campaign.goal_amount.toLocaleString("en-IN")}
-                        </span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-blue-600 h-2 rounded-full transition-all"
-                          style={{ width: `${progress}%` }}
-                        ></div>
-                      </div>
-                    </div>
-
-                    {/* Stats */}
-                    <div className="flex justify-between text-sm text-gray-600">
-                      <span>{progress.toFixed(0)}% funded</span>
-                      <span>
-                        {daysRemaining > 0
-                          ? `${daysRemaining} days left`
-                          : "Ended"}
+                      )}
+                      <span className="absolute right-3 top-3 rounded-full bg-white px-3 py-1 text-xs font-semibold capitalize shadow-sm">
+                        {campaign.category}
                       </span>
                     </div>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
+                    <div className="p-6">
+                      <h2 className="line-clamp-2 text-xl font-bold text-slate-950">
+                        {campaign.title}
+                      </h2>
+                      <p className="mt-2 line-clamp-2 min-h-10 text-sm text-slate-600">
+                        {campaign.shortDescription}
+                      </p>
+                      <p className="mt-4 text-sm font-semibold text-blue-700">
+                        by {campaign.ngoName}
+                      </p>
+                      <div className="mt-4">
+                        <div className="flex justify-between text-xs">
+                          <span className="font-semibold text-slate-900">
+                            {money(campaign.raisedPaise)}
+                          </span>
+                          <span className="text-slate-500">
+                            of {money(campaign.targetPaise)}
+                          </span>
+                        </div>
+                        <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200">
+                          <div
+                            className="h-full rounded-full bg-blue-600"
+                            style={{ width: `${progress}%` }}
+                          />
+                        </div>
+                        <div className="mt-2 flex justify-between text-xs text-slate-500">
+                          <span>{progress}% funded</span>
+                          <span>Ends {deadlineLabel}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+            {result.totalPages > 1 && (
+              <nav
+                aria-label="Campaign result pages"
+                className="mt-8 flex justify-center gap-3"
+              >
+                {result.page > 1 && (
+                  <Link
+                    href={pageUrl(params, result.page - 1)}
+                    className="btn btn-secondary"
+                  >
+                    Previous
+                  </Link>
+                )}
+                {result.page < result.totalPages && (
+                  <Link
+                    href={pageUrl(params, result.page + 1)}
+                    className="btn btn-primary"
+                  >
+                    Next
+                  </Link>
+                )}
+              </nav>
+            )}
+          </>
         )}
       </div>
-    </div>
+    </main>
   );
 }

@@ -38,6 +38,26 @@ test("abuse-prone protocol routes enforce origin checks and rate limits", () => 
   }
 });
 
+test("abuse-prone server actions use a shared PostgreSQL rate limit", () => {
+  const migration = read(
+    "supabase/migrations/037_community_media_and_action_limits.sql",
+  );
+  const limiter = read("lib/security/action-rate-limit.ts");
+  const actions = [
+    read("app/community/actions.ts"),
+    read("app/campaigns/actions.ts"),
+    read("app/volunteer/actions.ts"),
+    read("app/corporate/actions.ts"),
+    read("app/ngos/[id]/reviews/actions.ts"),
+  ].join("\n");
+
+  assert.match(migration, /action_rate_limits/);
+  assert.match(migration, /consume_action_rate_limit/);
+  assert.match(limiter, /server-only/);
+  assert.match(limiter, /consume_action_rate_limit/);
+  assert.match(actions, /enforceActionRateLimit/);
+});
+
 test("deterministic recommendations are authoritative and Gemini is optional", () => {
   const recommendations = read("lib/domain/recommendations.ts");
   const gemini = read("lib/services/gemini.ts");

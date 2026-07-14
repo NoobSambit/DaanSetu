@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getNGOAnalytics } from "@/lib/services/analytics";
 import DownloadReportButton from "./components/DownloadReportButton";
 import DonationsChart from "./components/DonationsChart";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 
@@ -31,7 +32,7 @@ export default async function NGOAnalyticsPage() {
   }
 
   // Get analytics data
-  const analytics = await getNGOAnalytics(ngo.id, supabase);
+  const analytics = await getNGOAnalytics(ngo.id, createAdminClient());
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-gray-50">
@@ -44,7 +45,7 @@ export default async function NGOAnalyticsPage() {
             </h1>
             <p className="text-gray-600">{ngo.name}</p>
           </div>
-          <DownloadReportButton ngoId={ngo.id} ngoName={ngo.name} />
+          <DownloadReportButton ngoName={ngo.name} />
         </div>
 
         {/* Stats Cards */}
@@ -84,7 +85,7 @@ export default async function NGOAnalyticsPage() {
                   Active Campaigns
                 </p>
                 <p className="text-3xl font-bold text-blue-600">
-                  {analytics.campaigns.length}
+                  {analytics.activeCampaigns}
                 </p>
               </div>
               <div className="bg-blue-100 p-4 rounded-full">
@@ -155,9 +156,9 @@ export default async function NGOAnalyticsPage() {
           </h2>
           {analytics.campaigns.length > 0 ? (
             <div className="space-y-4">
-              {analytics.campaigns.map((campaign: any) => {
+              {analytics.campaigns.map((campaign) => {
                 const progress = Math.min(
-                  (campaign.current_amount / campaign.goal_amount) * 100,
+                  (campaign.raised_paise / campaign.target_paise) * 100,
                   100,
                 );
                 return (
@@ -184,10 +185,16 @@ export default async function NGOAnalyticsPage() {
                     <div className="mb-2">
                       <div className="flex justify-between text-sm mb-1">
                         <span className="font-semibold text-gray-900">
-                          ₹{campaign.current_amount.toLocaleString("en-IN")}
+                          ₹
+                          {(campaign.raised_paise / 100).toLocaleString(
+                            "en-IN",
+                          )}
                         </span>
                         <span className="text-gray-600">
-                          of ₹{campaign.goal_amount.toLocaleString("en-IN")}
+                          of ₹
+                          {(campaign.target_paise / 100).toLocaleString(
+                            "en-IN",
+                          )}
                         </span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">

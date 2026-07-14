@@ -1,310 +1,389 @@
-"use client";
+import Link from "next/link";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
-import {
-  getVolunteerOpportunities,
-  getOpportunityCities,
-  applyToOpportunity,
-  hasApplied,
-  type OpportunityWithNGO,
-} from "@/lib/services/volunteer-opportunities";
-import { VOLUNTEER_SKILLS } from "@/lib/services/volunteers";
+import { submitVolunteerApplicationFormAction } from "@/app/volunteer/actions";
+import { scoreVolunteerOpportunity } from "@/lib/domain/volunteer-matching";
+import { createClient } from "@/lib/supabase/server";
 
-export default function VolunteerOpportunitiesPage() {
-  const router = useRouter();
-  const [opportunities, setOpportunities] = useState<OpportunityWithNGO[]>([]);
-  const [filteredOpportunities, setFilteredOpportunities] = useState<
-    OpportunityWithNGO[]
-  >([]);
-  const [cities, setCities] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [appliedOpportunities, setAppliedOpportunities] = useState<Set<string>>(
-    new Set(),
+export const dynamic = "force-dynamic";
+
+const skills = [
+  "Teaching",
+  "Medical",
+  "Event Support",
+  "Fundraising",
+  "Logistics",
+  "Technical",
+  "Other",
+] as const;
+const availabilityOptions = ["Weekdays", "Weekends", "Flexible"] as const;
+const pageSize = 12;
+
+type SearchParams = Record<string, string | string[] | undefined>;
+
+function scalar(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function safeSearch(value: string | undefined) {
+  const normalized = value?.trim().slice(0, 80) ?? "";
+  return /^[\p{L}\p{N}\s'-]*$/u.test(normalized) ? normalized : "";
+}
+
+function pageHref(params: SearchParams, page: number) {
+  const query = new URLSearchParams();
+  for (const [key, rawValue] of Object.entries(params)) {
+    const value = scalar(rawValue);
+    if (value && key !== "page") query.set(key, value);
+  }
+  query.set("page", String(page));
+  return `/volunteer/opportunities?${query.toString()}`;
+}
+
+export default async function VolunteerOpportunitiesPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
+  const params = await searchParams;
+  const search = safeSearch(scalar(params.search));
+  const selectedSkill = skills.includes(
+    scalar(params.skill) as (typeof skills)[number],
+  )
+    ? scalar(params.skill)!
+    : "";
+  const selectedAvailability = availabilityOptions.includes(
+    scalar(params.availability) as (typeof availabilityOptions)[number],
+  )
+    ? scalar(params.availability)!
+    : "";
+  const selectedCity = (scalar(params.city) ?? "").trim().slice(0, 100);
+  const requestedPage = Number.parseInt(scalar(params.page) ?? "1", 10);
+  const page = Number.isFinite(requestedPage)
+    ? Math.max(1, Math.min(requestedPage, 10_000))
+    : 1;
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const [{ data: profile }, { data: cityRows }] = await Promise.all([
+    user
+      ? supabase
+          .from("volunteer_profiles")
+          .select("city, skills, availability")
+          .eq("user_id", user.id)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+    supabase
+      .from("volunteer_opportunities")
+      .select("city")
+      .eq("status", "active")
+      .gte("date", new Date().toISOString()),
+  ]);
+
+  let query = supabase
+    .from("volunteer_opportunities")
+    .select(
+      "id, ngo_id, title, description, city, required_skills, availability, date, total_needed, status, created_at, ngo:ngos!inner(id, name, display_name, profile_status)",
+      { count: "exact" },
+    )
+    .eq("status", "active")
+    .eq("ngo.profile_status", "published")
+    .gte("date", new Date().toISOString());
+
+  if (search) query = query.ilike("title", `%${search}%`);
+  if (selectedSkill) query = query.contains("required_skills", [selectedSkill]);
+  if (selectedAvailability) {
+    query = query.contains("availability", [selectedAvailability]);
+  }
+  if (selectedCity) query = query.eq("city", selectedCity);
+
+  const offset = (page - 1) * pageSize;
+  const { data, count, error } = await query
+    .order("date", { ascending: true })
+    .range(offset, offset + pageSize - 1);
+  const opportunities = (data ?? []).map((opportunity) => ({
+    ...opportunity,
+    matchScore: profile
+      ? scoreVolunteerOpportunity({
+          profile: {
+            city: profile.city,
+            skills: profile.skills,
+            availability: profile.availability,
+          },
+          opportunity: {
+            city: opportunity.city,
+            requiredSkills: opportunity.required_skills,
+            availability: opportunity.availability,
+          },
+        })
+      : null,
+  }));
+  const total = count ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const applicationRows = user
+    ? await supabase
+        .from("volunteer_applications")
+        .select("opportunity_id, status")
+        .eq("user_id", user.id)
+    : { data: [] };
+  const applications = new Map(
+    (applicationRows.data ?? []).map((application) => [
+      application.opportunity_id,
+      application.status,
+    ]),
   );
-
-  // Filters
-  const [selectedSkill, setSelectedSkill] = useState<string>("");
-  const [selectedCity, setSelectedCity] = useState<string>("");
-
-  useEffect(() => {
-    checkAuth();
-    loadOpportunities();
-    loadCities();
-  }, []);
-
-  useEffect(() => {
-    applyFilters();
-  }, [opportunities, selectedSkill, selectedCity]);
-
-  async function checkAuth() {
-    const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    setIsAuthenticated(!!user);
-
-    if (user) {
-      // Check which opportunities the user has already applied to
-      const applied = new Set<string>();
-      for (const opp of opportunities) {
-        const hasAppliedToThis = await hasApplied(opp.id);
-        if (hasAppliedToThis) {
-          applied.add(opp.id);
-        }
-      }
-      setAppliedOpportunities(applied);
-    }
-  }
-
-  async function loadOpportunities() {
-    try {
-      const data = await getVolunteerOpportunities();
-      setOpportunities(data);
-      setFilteredOpportunities(data);
-    } catch (error) {
-      console.error("Failed to load opportunities:", error);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function loadCities() {
-    const citiesList = await getOpportunityCities();
-    setCities(citiesList);
-  }
-
-  function applyFilters() {
-    let filtered = [...opportunities];
-
-    if (selectedSkill) {
-      filtered = filtered.filter((opp) =>
-        opp.required_skills.includes(selectedSkill),
-      );
-    }
-
-    if (selectedCity) {
-      filtered = filtered.filter((opp) => opp.city === selectedCity);
-    }
-
-    setFilteredOpportunities(filtered);
-  }
-
-  async function handleApply(opportunityId: string) {
-    if (!isAuthenticated) {
-      router.push("/sign-in");
-      return;
-    }
-
-    try {
-      await applyToOpportunity(opportunityId);
-      setAppliedOpportunities((prev) => new Set(prev).add(opportunityId));
-      alert("Application submitted successfully!");
-    } catch (error) {
-      alert(error instanceof Error ? error.message : "Failed to apply");
-    }
-  }
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-600">Loading opportunities...</div>
-      </div>
-    );
-  }
+  const cities = [...new Set((cityRows ?? []).map((row) => row.city))].sort();
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
-      <div className="max-w-7xl mx-auto px-4">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            Volunteer Opportunities
-          </h1>
-          <p className="text-gray-600">
-            Find opportunities to make a difference in your community
-          </p>
-        </div>
-
-        {/* Filters */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Filters</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Skill Filter */}
-            <div>
-              <label
-                htmlFor="skill"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Skill
-              </label>
-              <select
-                id="skill"
-                value={selectedSkill}
-                onChange={(e) => setSelectedSkill(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="">All Skills</option>
-                {VOLUNTEER_SKILLS.map((skill) => (
-                  <option key={skill} value={skill}>
-                    {skill}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* City Filter */}
-            <div>
-              <label
-                htmlFor="city"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                City
-              </label>
-              <select
-                id="city"
-                value={selectedCity}
-                onChange={(e) => setSelectedCity(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="">All Cities</option>
-                {cities.map((city) => (
-                  <option key={city} value={city}>
-                    {city}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Clear Filters */}
-            <div className="flex items-end">
-              <button
-                onClick={() => {
-                  setSelectedSkill("");
-                  setSelectedCity("");
-                }}
-                className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                Clear Filters
-              </button>
-            </div>
+    <main className="min-h-screen bg-slate-50 py-12">
+      <section className="mx-auto max-w-7xl px-4">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="text-sm font-bold uppercase tracking-wider text-blue-700">
+              Skill-based volunteering
+            </p>
+            <h1 className="mt-2 text-4xl font-bold text-slate-950">
+              Volunteer opportunities
+            </h1>
+            <p className="mt-2 text-slate-600">
+              Search real, active opportunities published by NGOs.
+            </p>
+          </div>
+          <div className="flex gap-3">
+            <Link href="/volunteer/profile" className="btn btn-secondary">
+              Volunteer profile
+            </Link>
+            <Link href="/volunteer/dashboard" className="btn btn-primary">
+              My participation
+            </Link>
           </div>
         </div>
 
-        {/* Results Count */}
-        <div className="mb-4">
-          <p className="text-gray-600">
-            Showing {filteredOpportunities.length}{" "}
-            {filteredOpportunities.length === 1
-              ? "opportunity"
-              : "opportunities"}
-          </p>
-        </div>
-
-        {/* Opportunities Grid */}
-        {filteredOpportunities.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-            <p className="text-gray-600 mb-4">
-              No opportunities found matching your filters
-            </p>
-            <button
-              onClick={() => {
-                setSelectedSkill("");
-                setSelectedCity("");
-              }}
-              className="text-blue-600 hover:text-blue-700 font-medium"
+        <form
+          action="/volunteer/opportunities"
+          className="mt-8 grid gap-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:grid-cols-5"
+        >
+          <label className="text-sm font-semibold text-slate-800">
+            Search
+            <input
+              name="search"
+              type="search"
+              defaultValue={search}
+              className="input mt-2"
+              placeholder="Opportunity title"
+            />
+          </label>
+          <label className="text-sm font-semibold text-slate-800">
+            Skill
+            <select
+              name="skill"
+              defaultValue={selectedSkill}
+              className="input mt-2"
             >
-              Clear all filters
-            </button>
+              <option value="">All skills</option>
+              {skills.map((skill) => (
+                <option key={skill}>{skill}</option>
+              ))}
+            </select>
+          </label>
+          <label className="text-sm font-semibold text-slate-800">
+            City
+            <select
+              name="city"
+              defaultValue={selectedCity}
+              className="input mt-2"
+            >
+              <option value="">All cities</option>
+              {cities.map((city) => (
+                <option key={city}>{city}</option>
+              ))}
+            </select>
+          </label>
+          <label className="text-sm font-semibold text-slate-800">
+            Availability
+            <select
+              name="availability"
+              defaultValue={selectedAvailability}
+              className="input mt-2"
+            >
+              <option value="">Any availability</option>
+              {availabilityOptions.map((availability) => (
+                <option key={availability}>{availability}</option>
+              ))}
+            </select>
+          </label>
+          <div className="flex items-end gap-2">
+            <Link href="/volunteer/opportunities" className="btn btn-secondary">
+              Reset
+            </Link>
+            <button className="btn btn-primary flex-1">Search</button>
+          </div>
+        </form>
+
+        {error ? (
+          <div
+            role="alert"
+            className="mt-8 rounded-2xl border border-red-200 bg-red-50 p-10 text-center text-red-800"
+          >
+            Opportunity discovery is temporarily unavailable. Please retry.
+          </div>
+        ) : opportunities.length === 0 ? (
+          <div className="mt-8 rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center">
+            <h2 className="text-xl font-bold text-slate-900">
+              No matching opportunities
+            </h2>
+            <p className="mt-2 text-slate-600">
+              Clear a filter or check again later.
+            </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredOpportunities.map((opportunity) => (
-              <div
-                key={opportunity.id}
-                className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden"
-              >
-                <div className="p-6">
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                    {opportunity.title}
-                  </h3>
-
-                  <p className="text-sm text-blue-600 mb-3">
-                    {opportunity.ngo.name}
-                  </p>
-
-                  <p className="text-gray-600 text-sm mb-4 line-clamp-3">
-                    {opportunity.description}
-                  </p>
-
-                  {/* Skills */}
-                  <div className="mb-4">
-                    <div className="flex flex-wrap gap-2">
-                      {opportunity.required_skills.slice(0, 3).map((skill) => (
+          <>
+            <p className="mt-8 text-sm text-slate-600">
+              {total.toLocaleString("en-IN")} opportunities · page {page} of{" "}
+              {totalPages}
+            </p>
+            <div className="mt-4 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+              {opportunities.map((opportunity) => {
+                const ngo = opportunity.ngo as unknown as {
+                  id: string;
+                  name: string;
+                  display_name: string | null;
+                };
+                const status = applications.get(opportunity.id);
+                return (
+                  <article
+                    key={opportunity.id}
+                    className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h2 className="text-xl font-bold text-slate-950">
+                          {opportunity.title}
+                        </h2>
+                        <Link
+                          href={`/ngos/${ngo.id}`}
+                          className="mt-1 block text-sm font-semibold text-blue-700"
+                        >
+                          {ngo.display_name ?? ngo.name}
+                        </Link>
+                      </div>
+                      {opportunity.matchScore !== null && (
+                        <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-800">
+                          {opportunity.matchScore}% match
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-4 line-clamp-3 text-sm leading-6 text-slate-600">
+                      {opportunity.description}
+                    </p>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {opportunity.required_skills.map((skill: string) => (
                         <span
                           key={skill}
-                          className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-full"
+                          className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-800"
                         >
                           {skill}
                         </span>
                       ))}
-                      {opportunity.required_skills.length > 3 && (
-                        <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
-                          +{opportunity.required_skills.length - 3} more
-                        </span>
-                      )}
                     </div>
-                  </div>
-
-                  {/* Details */}
-                  <div className="space-y-2 mb-4 text-sm text-gray-600">
-                    <div className="flex items-center gap-2">
-                      <span>📍</span>
-                      <span>{opportunity.city}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span>📅</span>
-                      <span>{formatDate(opportunity.date)}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span>👥</span>
-                      <span>{opportunity.total_needed} volunteers needed</span>
-                    </div>
-                  </div>
-
-                  {/* Apply Button */}
-                  {appliedOpportunities.has(opportunity.id) ? (
-                    <button
-                      disabled
-                      className="w-full bg-gray-300 text-gray-600 px-4 py-2 rounded-lg cursor-not-allowed"
-                    >
-                      Already Applied
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => handleApply(opportunity.id)}
-                      className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                      Apply Now
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
+                    <dl className="mt-5 space-y-2 text-sm text-slate-600">
+                      <div className="flex justify-between gap-3">
+                        <dt>Location</dt>
+                        <dd className="font-semibold text-slate-900">
+                          {opportunity.city}
+                        </dd>
+                      </div>
+                      <div className="flex justify-between gap-3">
+                        <dt>Date</dt>
+                        <dd className="font-semibold text-slate-900">
+                          {new Date(opportunity.date).toLocaleDateString(
+                            "en-IN",
+                          )}
+                        </dd>
+                      </div>
+                      <div className="flex justify-between gap-3">
+                        <dt>Availability</dt>
+                        <dd className="text-right font-semibold text-slate-900">
+                          {opportunity.availability.join(", ")}
+                        </dd>
+                      </div>
+                    </dl>
+                    {status ? (
+                      <p className="mt-5 rounded-lg bg-slate-100 p-3 text-sm font-semibold capitalize text-slate-700">
+                        Application: {status}
+                      </p>
+                    ) : !user ? (
+                      <Link
+                        href={`/sign-in?next=${encodeURIComponent("/volunteer/opportunities")}`}
+                        className="btn btn-primary mt-5 w-full"
+                      >
+                        Sign in to apply
+                      </Link>
+                    ) : !profile ? (
+                      <Link
+                        href="/volunteer/profile"
+                        className="btn btn-primary mt-5 w-full"
+                      >
+                        Complete profile to apply
+                      </Link>
+                    ) : (
+                      <form
+                        action={submitVolunteerApplicationFormAction}
+                        className="mt-5 space-y-3"
+                      >
+                        <input
+                          type="hidden"
+                          name="opportunityId"
+                          value={opportunity.id}
+                        />
+                        <label className="block text-sm font-semibold text-slate-800">
+                          Why are you a good fit?
+                          <textarea
+                            name="message"
+                            required
+                            minLength={20}
+                            maxLength={1500}
+                            rows={3}
+                            className="input mt-2"
+                          />
+                        </label>
+                        <button className="btn btn-primary w-full">
+                          Submit application
+                        </button>
+                      </form>
+                    )}
+                  </article>
+                );
+              })}
+            </div>
+          </>
         )}
-      </div>
-    </div>
+
+        {totalPages > 1 && (
+          <nav
+            aria-label="Opportunity result pages"
+            className="mt-8 flex justify-center gap-3"
+          >
+            {page > 1 && (
+              <Link
+                className="btn btn-secondary"
+                href={pageHref(params, page - 1)}
+              >
+                Previous
+              </Link>
+            )}
+            {page < totalPages && (
+              <Link
+                className="btn btn-secondary"
+                href={pageHref(params, page + 1)}
+              >
+                Next
+              </Link>
+            )}
+          </nav>
+        )}
+      </section>
+    </main>
   );
 }

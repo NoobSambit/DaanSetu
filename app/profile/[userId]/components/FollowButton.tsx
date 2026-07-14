@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { toggleFollowAction } from "@/app/follows/actions";
 
 interface FollowButtonProps {
   currentUserId: string;
@@ -35,19 +36,11 @@ export default function FollowButton({
   const handleFollow = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("/api/follows/toggle", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          targetId: targetUserId,
-          targetType: targetType,
-        }),
+      const result = await toggleFollowAction({
+        targetId: targetUserId,
+        targetType,
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        setIsFollowing(data.isFollowing);
-      }
+      setIsFollowing(result.isFollowing);
     } catch (error) {
       console.error("Error toggling follow:", error);
     } finally {

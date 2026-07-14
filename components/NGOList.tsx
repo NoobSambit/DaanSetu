@@ -3,10 +3,12 @@ import Link from "next/link";
 import { BadgeCheck, MapPin } from "lucide-react";
 
 import { NGO_CAUSE_LABELS } from "@/lib/ngo/profile";
-import type { NGO } from "@/lib/types/database.types";
+import type { PublicNgo } from "@/lib/discovery/filters";
 
 interface NGOListProps {
-  ngos: NGO[];
+  ngos: PublicNgo[];
+  selectedNgoId?: string | null;
+  onSelectNgo?: (ngoId: string) => void;
 }
 
 function assetUrl(path: string | null) {
@@ -16,7 +18,11 @@ function assetUrl(path: string | null) {
     : null;
 }
 
-export default function NGOList({ ngos }: NGOListProps) {
+export default function NGOList({
+  ngos,
+  selectedNgoId,
+  onSelectNgo,
+}: NGOListProps) {
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       {ngos.map((ngo) => {
@@ -25,7 +31,14 @@ export default function NGOList({ ngos }: NGOListProps) {
           <Link
             key={ngo.id}
             href={`/ngos/${ngo.id}`}
-            className="group overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+            onFocus={() => onSelectNgo?.(ngo.id)}
+            onMouseEnter={() => onSelectNgo?.(ngo.id)}
+            aria-current={selectedNgoId === ngo.id ? "true" : undefined}
+            className={`group overflow-hidden rounded-xl border bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
+              selectedNgoId === ngo.id
+                ? "border-blue-500 ring-2 ring-blue-100"
+                : "border-slate-200"
+            }`}
           >
             <div className="h-28 bg-gradient-to-br from-blue-50 to-indigo-100">
               {assetUrl(ngo.cover_image_path) && (
@@ -46,11 +59,13 @@ export default function NGOList({ ngos }: NGOListProps) {
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    ngo.name.slice(0, 1)
+                    (ngo.name ?? "N").slice(0, 1)
                   )}
                 </div>
                 <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-800">
-                  {NGO_CAUSE_LABELS[ngo.category] ?? ngo.category}
+                  {ngo.category
+                    ? (NGO_CAUSE_LABELS[ngo.category] ?? ngo.category)
+                    : "Multiple causes"}
                 </span>
               </div>
               <h2 className="flex items-center gap-1.5 text-lg font-bold text-slate-950 group-hover:text-blue-700">
@@ -66,8 +81,15 @@ export default function NGOList({ ngos }: NGOListProps) {
                 {ngo.tagline ?? ngo.description}
               </p>
               <p className="mt-4 flex items-center gap-1.5 text-sm text-slate-500">
-                <MapPin className="h-4 w-4" /> {ngo.city}, {ngo.state}
+                <MapPin className="h-4 w-4" />
+                {[ngo.city, ngo.state].filter(Boolean).join(", ") ||
+                  "Service location not published"}
               </p>
+              {ngo.distanceKm !== undefined && (
+                <p className="mt-2 text-xs font-semibold text-blue-700">
+                  {ngo.distanceKm.toFixed(1)} km away
+                </p>
+              )}
             </div>
           </Link>
         );

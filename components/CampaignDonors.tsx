@@ -1,16 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getCampaignDonors } from "@/lib/services/campaigns";
-
 interface Donor {
   id: string;
-  amount: number;
+  amountPaise: number;
   is_anonymous: boolean;
-  created_at: string;
-  users: {
-    name: string;
-  } | null;
+  capturedAt: string;
+  name: string;
 }
 
 export default function CampaignDonors({ campaignId }: { campaignId: string }) {
@@ -23,10 +19,14 @@ export default function CampaignDonors({ campaignId }: { campaignId: string }) {
 
   const loadDonors = async () => {
     try {
-      const data = await getCampaignDonors(campaignId);
-      setDonors(data as any);
-    } catch (error) {
-      console.error("Failed to load donors:", error);
+      const response = await fetch(`/api/campaigns/${campaignId}/supporters`, {
+        cache: "no-store",
+      });
+      if (!response.ok) throw new Error("Supporters could not be loaded");
+      const data = (await response.json()) as { donors: Donor[] };
+      setDonors(data.donors);
+    } catch {
+      setDonors([]);
     } finally {
       setLoading(false);
     }
@@ -81,12 +81,10 @@ export default function CampaignDonors({ campaignId }: { campaignId: string }) {
                 </div>
                 <div>
                   <p className="font-semibold text-slate-900">
-                    {donor.is_anonymous
-                      ? "Anonymous"
-                      : donor.users?.name || "Anonymous"}
+                    {donor.is_anonymous ? "Anonymous" : donor.name}
                   </p>
                   <p className="text-xs text-slate-500">
-                    {new Date(donor.created_at).toLocaleDateString("en-IN", {
+                    {new Date(donor.capturedAt).toLocaleDateString("en-IN", {
                       day: "numeric",
                       month: "short",
                       year: "numeric",
@@ -95,7 +93,7 @@ export default function CampaignDonors({ campaignId }: { campaignId: string }) {
                 </div>
               </div>
               <p className="text-lg font-bold text-green-600">
-                ₹{donor.amount.toLocaleString("en-IN")}
+                ₹{(donor.amountPaise / 100).toLocaleString("en-IN")}
               </p>
             </div>
           ))}

@@ -3,14 +3,17 @@
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import { Icon } from "leaflet";
 import "leaflet/dist/leaflet.css";
-import type { NGO, NGOCategory } from "@/lib/types/database.types";
+import type { PublicNgo } from "@/lib/discovery/filters";
+import type { NGOCategory } from "@/lib/types/database.types";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
 interface NGOMapProps {
-  ngos: NGO[];
+  ngos: PublicNgo[];
   center?: [number, number];
   zoom?: number;
+  selectedNgoId?: string | null;
+  onSelectNgo?: (ngoId: string) => void;
 }
 
 // Fix for default marker icons in Next.js
@@ -47,7 +50,13 @@ const createCustomIcon = (category: NGOCategory) => {
   });
 };
 
-export default function NGOMap({ ngos, center, zoom = 6 }: NGOMapProps) {
+export default function NGOMap({
+  ngos,
+  center,
+  zoom = 6,
+  selectedNgoId,
+  onSelectNgo,
+}: NGOMapProps) {
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -121,13 +130,18 @@ export default function NGOMap({ ngos, center, zoom = 6 }: NGOMapProps) {
       {ngos
         .filter(
           (ngo) =>
-            Number.isFinite(ngo.latitude) && Number.isFinite(ngo.longitude),
+            ngo.latitude !== null &&
+            ngo.longitude !== null &&
+            Number.isFinite(ngo.latitude) &&
+            Number.isFinite(ngo.longitude),
         )
         .map((ngo) => (
           <Marker
             key={ngo.id}
-            position={[ngo.latitude, ngo.longitude]}
-            icon={createCustomIcon(ngo.category)}
+            position={[ngo.latitude!, ngo.longitude!]}
+            icon={createCustomIcon(ngo.category ?? "other")}
+            opacity={selectedNgoId && selectedNgoId !== ngo.id ? 0.55 : 1}
+            eventHandlers={{ click: () => onSelectNgo?.(ngo.id) }}
           >
             <Popup>
               <div className="p-3 min-w-[220px]">
@@ -136,14 +150,14 @@ export default function NGOMap({ ngos, center, zoom = 6 }: NGOMapProps) {
                     {ngo.name}
                   </h3>
                   <span className="text-xl ml-2">
-                    {categoryEmojis[ngo.category]}
+                    {categoryEmojis[ngo.category ?? "other"]}
                   </span>
                 </div>
                 <p className="text-sm text-slate-600 mb-3 line-clamp-2 leading-relaxed">
                   {ngo.description}
                 </p>
                 <div className="text-xs text-slate-500 mb-3 font-medium">
-                  📍 {ngo.city}, {ngo.state}
+                  📍 {[ngo.city, ngo.state].filter(Boolean).join(", ")}
                 </div>
                 <Link
                   href={`/ngos/${ngo.id}`}

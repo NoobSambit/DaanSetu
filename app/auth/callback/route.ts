@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
 
   const role = await getUserRole(supabase, data.user.id);
   if (!role) {
-    await supabase.auth.signOut();
+    await supabase.auth.signOut({ scope: "global" });
     return NextResponse.redirect(
       new URL("/sign-in?error=profile-missing", request.url),
     );

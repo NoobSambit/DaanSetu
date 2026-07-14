@@ -28,7 +28,7 @@ export default async function UserProfilePage({ params }: Props) {
   // Get user data
   const { data: userData, error: userError } = await supabase
     .from("users")
-    .select("*")
+    .select("id, name, role")
     .eq("id", userId)
     .single();
 
@@ -37,16 +37,20 @@ export default async function UserProfilePage({ params }: Props) {
   }
 
   // Get profile (may not exist)
-  const profile = await getUserProfile(userId);
+  const profile = await getUserProfile(userId, supabase);
 
   // Get stats
-  const stats = await getUserStats(userId);
+  const stats = await getUserStats(userId, supabase);
 
   // Get badges
-  const badges = await getUserBadges(userId);
+  const badges = await getUserBadges(userId, supabase);
 
   // Get user's posts
-  const userPosts = await getPostsFiltered(currentUser.id, { limit: 10 });
+  const userPosts = await getPostsFiltered(
+    currentUser.id,
+    { limit: 10 },
+    supabase,
+  );
   const filteredPosts = userPosts.filter((p) => p.author_id === userId);
 
   const isOwnProfile = currentUser.id === userId;

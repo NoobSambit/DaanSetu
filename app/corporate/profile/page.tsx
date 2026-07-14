@@ -2,11 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { saveCorporateProfileAction } from "@/app/corporate/actions";
 import { createClient } from "@/lib/supabase/client";
 import {
-  createCorporateProfile,
   getCorporateProfile,
-  updateCorporateProfile,
   INDUSTRIES,
   COMPANY_SIZES,
 } from "@/lib/services/corporate";
@@ -80,25 +79,14 @@ export default function CorporateProfilePage() {
         throw new Error("Please select company size");
       }
 
-      if (isEdit) {
-        await updateCorporateProfile({
-          companyName: formData.companyName,
-          industry: formData.industry,
-          companySize: formData.companySize,
-          description: formData.description,
-          website: formData.website,
-          logoUrl: formData.logoUrl,
-        });
-      } else {
-        await createCorporateProfile({
-          companyName: formData.companyName,
-          industry: formData.industry,
-          companySize: formData.companySize,
-          description: formData.description,
-          website: formData.website,
-          logoUrl: formData.logoUrl,
-        });
-      }
+      await saveCorporateProfileAction({
+        companyName: formData.companyName,
+        industry: formData.industry,
+        companySize: formData.companySize,
+        description: formData.description,
+        website: formData.website,
+        logoUrl: formData.logoUrl,
+      });
 
       router.push("/corporate/dashboard");
     } catch (err: any) {

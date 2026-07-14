@@ -1,13 +1,21 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import {
   analyzeAndFlagNGO,
   analyzeAndFlagCampaign,
 } from "@/lib/services/ai-flags";
 import { NextRequest, NextResponse } from "next/server";
 import { rateLimit, RATE_LIMITS } from "@/lib/middleware/rate-limit";
+import { hasValidRequestOrigin } from "@/lib/security/origin";
 
 async function handler(request: NextRequest) {
   try {
+    if (!hasValidRequestOrigin(request)) {
+      return NextResponse.json(
+        { error: "Invalid request origin" },
+        { status: 403 },
+      );
+    }
     const { entityType, entityId } = await request.json();
 
     if (!entityType || !entityId) {
@@ -59,7 +67,12 @@ async function handler(request: NextRequest) {
         return NextResponse.json({ error: "NGO not found" }, { status: 404 });
       }
 
-      analysis = await analyzeAndFlagNGO(ngo.id, ngo.name, ngo.description);
+      analysis = await analyzeAndFlagNGO(
+        ngo.id,
+        ngo.name,
+        ngo.description,
+        createAdminClient(),
+      );
     } else {
       // Fetch campaign details
       const { data: campaign } = await supabase
@@ -79,6 +92,7 @@ async function handler(request: NextRequest) {
         campaign.id,
         campaign.title,
         campaign.description,
+        createAdminClient(),
       );
     }
 

@@ -5,6 +5,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUserRole } from "@/lib/auth/profile";
 import { rateLimit, RATE_LIMITS } from "@/lib/middleware/rate-limit";
 import { createClient } from "@/lib/supabase/server";
+import { hasValidRequestOrigin } from "@/lib/security/origin";
+import { validatePublicImage } from "@/lib/storage/file-validation";
 
 const allowedTypes = new Map([
   ["image/jpeg", "jpg"],
@@ -42,6 +44,12 @@ function storageErrorResponse(
 }
 
 async function handler(request: NextRequest) {
+  if (!hasValidRequestOrigin(request)) {
+    return NextResponse.json(
+      { error: "Invalid request origin" },
+      { status: 403 },
+    );
+  }
   const supabase = await createClient();
   const {
     data: { user },
@@ -75,9 +83,11 @@ async function handler(request: NextRequest) {
       { status: 400 },
     );
   }
-  if (file.size > 5 * 1024 * 1024) {
+  try {
+    await validatePublicImage(file);
+  } catch {
     return NextResponse.json(
-      { error: "Image size must not exceed 5 MB." },
+      { error: "The image is invalid." },
       { status: 400 },
     );
   }
@@ -97,7 +107,13 @@ async function handler(request: NextRequest) {
 
 export const POST = rateLimit(RATE_LIMITS.UPLOAD)(handler);
 
-export async function DELETE(request: NextRequest) {
+async function deleteHandler(request: NextRequest) {
+  if (!hasValidRequestOrigin(request)) {
+    return NextResponse.json(
+      { error: "Invalid request origin" },
+      { status: 403 },
+    );
+  }
   const supabase = await createClient();
   const {
     data: { user },
@@ -113,3 +129,5 @@ export async function DELETE(request: NextRequest) {
   if (error) return storageErrorResponse("delete", error);
   return NextResponse.json({ success: true });
 }
+
+export const DELETE = rateLimit(RATE_LIMITS.UPLOAD)(deleteHandler);

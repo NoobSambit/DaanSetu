@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getAdminAnalytics } from "@/lib/services/analytics";
 import AnalyticsCharts from "./AnalyticsCharts";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 
@@ -31,7 +32,7 @@ export default async function AdminAnalyticsPage() {
   }
 
   // Get admin analytics
-  const analytics = await getAdminAnalytics(supabase);
+  const analytics = await getAdminAnalytics(createAdminClient());
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-gray-50">

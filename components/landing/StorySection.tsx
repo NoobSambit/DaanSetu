@@ -1,180 +1,136 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { ArrowRight, CalendarDays, Quote, ShieldCheck } from "lucide-react";
 import Image from "next/image";
-import { ArrowRight, Users, UserCheck, GraduationCap } from "lucide-react";
+import Link from "next/link";
 
-export default function StorySection() {
+import type { LandingStory } from "@/lib/landing/repository";
+
+export default function StorySection({
+  story,
+}: {
+  story: LandingStory | null;
+}) {
   return (
-    <section className="py-20 bg-white">
+    <section className="bg-white py-20">
       <div className="container-custom">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Column 1: Text Card */}
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="bg-white border border-slate-200 rounded-[24px] p-6 shadow-sm flex flex-col justify-between"
+            className="flex flex-col justify-between rounded-[24px] border border-slate-200 bg-white p-6 shadow-sm"
           >
             <div>
-              <h2 className="text-2xl font-serif font-bold text-[#1e293b] mb-6 leading-tight">
+              <h2 className="mb-6 font-serif text-2xl font-bold leading-tight text-[#1e293b]">
                 Every Contribution
                 <br />
                 <span className="text-[#2563eb]">
                   Becomes a Story of Change
                 </span>
               </h2>
-
-              <h3 className="text-[15px] font-bold text-[#1e293b] mb-1">
-                From a Struggle to a Future
-              </h3>
-              <p className="text-[11px] text-slate-500 mb-3">
-                Meena&apos;s journey with education
-              </p>
-
-              <p className="text-[13px] text-slate-600 leading-relaxed mb-6">
-                Meena, from a small village in Bihar, had to walk 5 km daily to
-                attend school. With support from a DaanSetu funded education
-                program, her village now has a learning center.
-              </p>
-
-              <div className="flex justify-between items-center mb-6 px-1">
-                <div className="flex flex-col items-center gap-1.5">
-                  <Users className="w-5 h-5 text-[#b45309]" />
-                  <div className="text-center">
-                    <span className="font-bold text-[13px] text-[#1e293b] block">
-                      150
-                    </span>
-                    <span className="text-[9px] text-slate-500 leading-tight block">
-                      Children
-                      <br />
-                      Educated
-                    </span>
-                  </div>
+              {story ? (
+                <>
+                  <h3 className="mb-2 text-[15px] font-bold text-[#1e293b]">
+                    {story.title}
+                  </h3>
+                  <p className="line-clamp-6 text-[13px] leading-relaxed text-slate-600">
+                    {story.content}
+                  </p>
+                </>
+              ) : (
+                <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5">
+                  <ShieldCheck className="h-6 w-6 text-blue-600" />
+                  <p className="mt-3 text-[13px] font-semibold text-slate-700">
+                    No approved impact stories are featured yet.
+                  </p>
+                  <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
+                    Stories appear here only after moderation and explicit
+                    approval.
+                  </p>
                 </div>
-                <div className="flex flex-col items-center gap-1.5">
-                  <UserCheck className="w-5 h-5 text-[#b45309]" />
-                  <div className="text-center">
-                    <span className="font-bold text-[13px] text-[#1e293b] block">
-                      12
-                    </span>
-                    <span className="text-[9px] text-slate-500 leading-tight block">
-                      Teachers
-                      <br />
-                      Trained
-                    </span>
-                  </div>
-                </div>
-                <div className="flex flex-col items-center gap-1.5">
-                  <GraduationCap className="w-5 h-5 text-[#b45309]" />
-                  <div className="text-center">
-                    <span className="font-bold text-[13px] text-[#1e293b] block">
-                      98%
-                    </span>
-                    <span className="text-[9px] text-slate-500 leading-tight block">
-                      School
-                      <br />
-                      Attendance
-                    </span>
-                  </div>
-                </div>
-              </div>
+              )}
             </div>
-
-            <button className="w-full border border-slate-200 rounded-xl py-3 px-4 text-[13px] font-semibold text-[#2563eb] flex items-center justify-center gap-2 hover:bg-slate-50 transition-colors">
-              Read Impact Stories <ArrowRight className="w-4 h-4" />
-            </button>
+            <Link
+              href="/impact-stories"
+              className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-3 text-[13px] font-semibold text-[#2563eb] transition-colors hover:bg-slate-50"
+            >
+              Read Impact Stories <ArrowRight className="h-4 w-4" />
+            </Link>
           </motion.div>
 
-          {/* Column 2: Before Image */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-            className="flex flex-col h-full"
+            className="flex h-full flex-col"
           >
-            <div className="relative w-full aspect-square rounded-[24px] overflow-hidden mb-4">
-              <Image
-                src="/landing_page_images/before_image.png"
-                alt="Before support"
-                fill
-                className="object-cover"
-              />
-              <div className="absolute top-4 left-4 bg-[#1e293b]/80 backdrop-blur-sm text-white text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-widest shadow-sm">
-                Before
+            <div className="relative mb-4 aspect-square w-full overflow-hidden rounded-[24px] bg-slate-100">
+              {story?.imageUrl ? (
+                <Image
+                  src={story.imageUrl}
+                  alt=""
+                  fill
+                  sizes="(min-width: 1024px) 25vw, 50vw"
+                  className="object-cover"
+                />
+              ) : (
+                <div className="flex h-full items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+                  <Quote className="h-14 w-14 text-blue-300" />
+                </div>
+              )}
+              <div className="absolute left-4 top-4 rounded-full bg-[#1e293b]/80 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-white shadow-sm backdrop-blur-sm">
+                Verified story
               </div>
             </div>
-            <p className="text-[13px] text-slate-600 font-medium px-2">
-              Limited access to education
+            <p className="px-2 text-[13px] font-medium text-slate-600">
+              Community evidence, reviewed before publication
             </p>
           </motion.div>
 
-          {/* Column 3: After Image */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
-            className="flex flex-col h-full"
+            className="flex h-full flex-col justify-between rounded-[24px] border border-slate-200 bg-slate-50 p-8"
           >
-            <div className="relative w-full aspect-square rounded-[24px] overflow-hidden mb-4">
-              <Image
-                src="/landing_page_images/after_image.png"
-                alt="After support"
-                fill
-                className="object-cover"
-              />
-              <div className="absolute top-4 left-4 bg-[#16a34a] text-white text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-widest shadow-sm">
-                After
-              </div>
+            <div>
+              <CalendarDays className="h-8 w-8 text-emerald-600" />
+              <h3 className="mt-6 text-lg font-bold text-slate-900">
+                Publication record
+              </h3>
+              <p className="mt-3 text-sm leading-relaxed text-slate-600">
+                {story
+                  ? `Featured ${new Date(story.createdAt).toLocaleDateString("en-IN", { dateStyle: "long" })}`
+                  : "There is no approved publication record to display."}
+              </p>
             </div>
-            <p className="text-[13px] text-slate-600 font-medium px-2">
-              Confident, learning, and dreaming big
+            <p className="mt-8 text-xs font-semibold uppercase tracking-wide text-emerald-700">
+              Approved content only
             </p>
           </motion.div>
 
-          {/* Column 4: Testimonial Card */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.3 }}
-            className="bg-[#fef9f3] rounded-[24px] p-8 flex flex-col justify-between h-full"
+            className="flex h-full flex-col justify-between rounded-[24px] bg-[#fef9f3] p-8"
           >
             <div>
-              <div className="mb-5 text-[#1e3a8a]">
-                <svg
-                  width="28"
-                  height="28"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M10 11C10 13.2 8.4 15 6 15C3.6 15 2 13.2 2 11C2 8.8 4 6 7 6V8C5.5 8 4.5 9 4.2 10.2C4.7 10 5.3 9.8 6 9.8C8.2 9.8 10 10.4 10 11ZM20 11C20 13.2 18.4 15 16 15C13.6 15 12 13.2 12 11C12 8.8 14 6 17 6V8C15.5 8 14.5 9 14.2 10.2C14.7 10 15.3 9.8 16 9.8C18.2 9.8 20 10.4 20 11Z"
-                    fill="currentColor"
-                  />
-                </svg>
-              </div>
-              <p className="text-[#334155] text-[15px] font-medium leading-relaxed mb-6">
-                &ldquo;Now I dream of becoming a teacher and helping other
-                children like me.&rdquo;
+              <Quote className="h-8 w-8 text-[#1e3a8a]" />
+              <p className="mt-6 text-[15px] font-medium leading-relaxed text-[#334155]">
+                {story
+                  ? `Published by ${story.authorName}`
+                  : "DaanSetu never invents testimonials to fill an empty state."}
               </p>
-              <div>
-                <p className="text-[13px] font-bold text-[#1e3a8a] mb-0.5">
-                  — Meena Kumari
-                </p>
-                <p className="text-[11px] text-[#64748b]">Class 8 Student</p>
-              </div>
             </div>
-
-            <div className="flex gap-2 mt-8">
-              <div className="w-1.5 h-1.5 bg-slate-300 rounded-full" />
-              <div className="w-1.5 h-1.5 bg-slate-300 rounded-full" />
-              <div className="w-1.5 h-1.5 bg-[#1e3a8a] rounded-full" />
-              <div className="w-1.5 h-1.5 bg-slate-300 rounded-full" />
-            </div>
+            <p className="mt-8 text-[11px] text-[#64748b]">
+              Platform-tracked and organization-reported impact remain separate.
+            </p>
           </motion.div>
         </div>
       </div>

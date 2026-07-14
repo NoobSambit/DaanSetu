@@ -30,7 +30,7 @@ export default async function CommunityPage() {
   const canCreatePost = Boolean(user.email_confirmed_at);
 
   // Get all posts
-  const posts = await getPosts(user.id);
+  const posts = await getPosts(user.id, supabase);
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -57,7 +57,7 @@ export default async function CommunityPage() {
             )}
 
             {/* Post Feed with Filters */}
-            <EnhancedPostFeed initialPosts={posts} userId={user.id} />
+            <EnhancedPostFeed initialPosts={posts} />
           </div>
 
           {/* Sidebar Column */}

@@ -43,6 +43,30 @@ export default async function CampaignDetailPage({
     notFound();
   }
 
+  const { data: payoutAccount } = campaign.payout_account_id
+    ? await supabase
+        .from("payout_accounts")
+        .select("status")
+        .eq("id", campaign.payout_account_id)
+        .maybeSingle()
+    : { data: null };
+
+  const ngo = campaign.ngos as {
+    id: string;
+    name: string;
+    city: string;
+    state: string;
+    category: string;
+  } | null;
+  const beneficiary = campaign.beneficiary as {
+    name?: string;
+  } | null;
+  const beneficiaryName = ngo?.name ?? beneficiary?.name ?? "Community cause";
+  const canDonate =
+    campaign.status === "active" &&
+    payoutAccount?.status === "active" &&
+    new Date(campaign.deadline).getTime() > new Date().getTime();
+
   const categoryEmojis: Record<string, string> = {
     education: "📚",
     food: "🍲",
@@ -62,7 +86,7 @@ export default async function CampaignDetailPage({
 
   const daysRemaining = getDaysRemaining(campaign.deadline);
   const progress = Math.min(
-    (campaign.current_amount / campaign.goal_amount) * 100,
+    (campaign.raised_paise / campaign.target_paise) * 100,
     100,
   );
 
@@ -77,6 +101,14 @@ export default async function CampaignDetailPage({
           >
             ← Back to Campaigns
           </Link>
+          {campaign.creator_id === user?.id && (
+            <Link
+              href={`/campaigns/${campaign.id}/manage`}
+              className="ml-4 text-sm font-semibold text-blue-700 hover:text-blue-800"
+            >
+              Manage campaign
+            </Link>
+          )}
         </div>
 
         {/* Campaign Header */}
@@ -108,13 +140,18 @@ export default async function CampaignDetailPage({
             </h1>
 
             {/* NGO Info */}
-            <Link
-              href={`/ngos/${campaign.ngos.id}`}
-              className="text-blue-600 hover:text-blue-700 font-medium mb-6 inline-block"
-            >
-              by {campaign.ngos.name} • {campaign.ngos.city},{" "}
-              {campaign.ngos.state}
-            </Link>
+            {ngo ? (
+              <Link
+                href={`/ngos/${ngo.id}`}
+                className="text-blue-600 hover:text-blue-700 font-medium mb-6 inline-block"
+              >
+                by {ngo.name} • {ngo.city}, {ngo.state}
+              </Link>
+            ) : (
+              <p className="mb-6 font-medium text-blue-700">
+                Supporter-led fundraiser for {beneficiaryName}
+              </p>
+            )}
 
             {/* Short Description */}
             <p className="text-xl text-gray-700 mb-6">
@@ -123,21 +160,28 @@ export default async function CampaignDetailPage({
 
             {/* Progress Section */}
             <CampaignProgress
-              currentAmount={campaign.current_amount}
-              goalAmount={campaign.goal_amount}
+              currentAmount={campaign.raised_paise / 100}
+              goalAmount={campaign.target_paise / 100}
               progress={progress}
               daysRemaining={daysRemaining}
             />
 
             {/* Donate Button */}
             <div className="mt-6">
-              <DonateButton
-                ngoId={campaign.ngo_id}
-                ngoName={campaign.ngos.name}
-                isAuthenticated={!!user}
-                campaignId={campaign.id}
-                campaignTitle={campaign.title}
-              />
+              {canDonate ? (
+                <DonateButton
+                  ngoId={campaign.ngo_id}
+                  ngoName={beneficiaryName}
+                  isAuthenticated={!!user}
+                  campaignId={campaign.id}
+                  campaignTitle={campaign.title}
+                />
+              ) : (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                  Donations are unavailable until this fundraiser is approved,
+                  active, and connected to an active payout recipient.
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -160,7 +204,10 @@ export default async function CampaignDetailPage({
           <CampaignDonors campaignId={campaign.id} />
 
           {/* Campaign Updates */}
-          <CampaignUpdates campaignId={campaign.id} ngoId={campaign.ngo_id} />
+          <CampaignUpdates
+            campaignId={campaign.id}
+            canPost={campaign.creator_id === user?.id}
+          />
         </div>
       </div>
     </div>

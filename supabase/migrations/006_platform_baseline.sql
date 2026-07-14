@@ -112,6 +112,8 @@ CREATE TABLE IF NOT EXISTS public.volunteer_applications (
   status TEXT NOT NULL DEFAULT 'pending'
     CHECK (status IN ('pending', 'accepted', 'rejected')),
   applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE (opportunity_id, user_id)
 );
 

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+import { enforceActionRateLimit } from "@/lib/security/action-rate-limit";
 import { createClient } from "@/lib/supabase/server";
 
 const applicationSchema = z.object({
@@ -18,6 +19,11 @@ export async function submitVolunteerApplicationAction(input: unknown) {
   } = await supabase.auth.getUser();
   if (!user || !user.email_confirmed_at)
     throw new Error("A verified account is required");
+  await enforceActionRateLimit({
+    action: "volunteer.apply",
+    maximumHits: 20,
+    windowSeconds: 3_600,
+  });
   const { data: profile } = await supabase
     .from("volunteer_profiles")
     .select("id")
@@ -34,6 +40,14 @@ export async function submitVolunteerApplicationAction(input: unknown) {
     throw new Error("You already applied for this opportunity");
   if (error) throw new Error("Application could not be submitted");
   revalidatePath("/volunteer/opportunities");
+  revalidatePath("/volunteer/dashboard");
+}
+
+export async function submitVolunteerApplicationFormAction(formData: FormData) {
+  return submitVolunteerApplicationAction({
+    opportunityId: formData.get("opportunityId"),
+    message: formData.get("message"),
+  });
 }
 
 export async function withdrawVolunteerApplicationAction(
@@ -44,7 +58,8 @@ export async function withdrawVolunteerApplicationAction(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) throw new Error("Authentication required");
+  if (!user || !user.email_confirmed_at)
+    throw new Error("A verified account is required");
   const { error } = await supabase
     .from("volunteer_applications")
     .update({ status: "withdrawn" })
@@ -52,13 +67,22 @@ export async function withdrawVolunteerApplicationAction(
     .eq("user_id", user.id)
     .in("status", ["submitted", "shortlisted"]);
   if (error) throw new Error("Application could not be withdrawn");
+  revalidatePath("/volunteer/dashboard");
+  revalidatePath("/volunteer/opportunities");
+}
+
+export async function withdrawVolunteerApplicationFormAction(
+  formData: FormData,
+) {
+  return withdrawVolunteerApplicationAction(
+    z.string().uuid().parse(formData.get("applicationId")),
+  );
 }
 
 export async function submitVolunteerHoursAction(input: unknown) {
   const values = z
     .object({
       opportunityId: z.string().uuid(),
-      ngoId: z.string().uuid(),
       hours: z.number().positive().max(24),
       date: z.string().date(),
       description: z.string().trim().min(10).max(1000),
@@ -68,23 +92,44 @@ export async function submitVolunteerHoursAction(input: unknown) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) throw new Error("Authentication required");
+  if (!user || !user.email_confirmed_at)
+    throw new Error("A verified account is required");
+  await enforceActionRateLimit({
+    action: "volunteer.hours.submit",
+    maximumHits: 20,
+    windowSeconds: 3_600,
+  });
   const { data: accepted } = await supabase
     .from("volunteer_applications")
-    .select("id")
+    .select("id, volunteer_opportunities(ngo_id)")
     .eq("user_id", user.id)
     .eq("opportunity_id", values.opportunityId)
     .eq("status", "accepted")
     .maybeSingle();
   if (!accepted) throw new Error("Only accepted volunteers may submit hours");
+  const opportunity = accepted.volunteer_opportunities as {
+    ngo_id?: string;
+  } | null;
+  if (!opportunity?.ngo_id) throw new Error("Opportunity is unavailable");
   const { error } = await supabase.from("volunteer_hours").insert({
     user_id: user.id,
     opportunity_id: values.opportunityId,
-    ngo_id: values.ngoId,
+    ngo_id: opportunity.ngo_id,
     hours: values.hours,
     date: values.date,
     description: values.description,
     status: "pending",
   });
   if (error) throw new Error("Volunteer hours could not be submitted");
+  revalidatePath("/volunteer/dashboard");
+  revalidatePath("/ngo/dashboard/volunteers");
+}
+
+export async function submitVolunteerHoursFormAction(formData: FormData) {
+  return submitVolunteerHoursAction({
+    opportunityId: formData.get("opportunityId"),
+    hours: Number(formData.get("hours")),
+    date: formData.get("date"),
+    description: formData.get("description"),
+  });
 }

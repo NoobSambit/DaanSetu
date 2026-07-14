@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { createDonation } from "@/lib/services/donations";
+import { useEffect, useState } from "react";
+import {
+  createDonation,
+  createRecurringDonation,
+} from "@/lib/services/donations";
 import type { DonationCause } from "@/lib/types/database.types";
 
 interface DonationModalProps {
-  ngoId: string;
   ngoName: string;
   campaignId?: string;
   campaignTitle?: string;
@@ -24,8 +26,13 @@ const CAUSES: { value: DonationCause; label: string; emoji: string }[] = [
   { value: "general", label: "General", emoji: "💝" },
 ];
 
+type CsrInitiative = {
+  id: string;
+  title: string;
+  match_percent: number;
+};
+
 export default function DonationModal({
-  ngoId,
   ngoName,
   campaignId,
   campaignTitle,
@@ -37,8 +44,32 @@ export default function DonationModal({
   const [customAmount, setCustomAmount] = useState<string>("");
   const [cause, setCause] = useState<DonationCause>("general");
   const [isAnonymous, setIsAnonymous] = useState(false);
+  const [givingMode, setGivingMode] = useState<"once" | "recurring">("once");
+  const [interval, setInterval] = useState<"monthly" | "quarterly" | "yearly">(
+    "monthly",
+  );
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [csrInitiatives, setCsrInitiatives] = useState<CsrInitiative[]>([]);
+  const [csrInitiativeId, setCsrInitiativeId] = useState("");
+
+  useEffect(() => {
+    if (!isOpen || !campaignId) {
+      setCsrInitiatives([]);
+      setCsrInitiativeId("");
+      return;
+    }
+    const controller = new AbortController();
+    fetch(`/api/csr/initiatives?campaignId=${encodeURIComponent(campaignId)}`, {
+      signal: controller.signal,
+    })
+      .then((response) => response.json())
+      .then((payload: { initiatives?: CsrInitiative[] }) => {
+        setCsrInitiatives(payload.initiatives ?? []);
+      })
+      .catch(() => setCsrInitiatives([]));
+    return () => controller.abort();
+  }, [campaignId, isOpen]);
 
   if (!isOpen) return null;
 
@@ -75,10 +106,18 @@ export default function DonationModal({
         throw new Error("Choose an active fundraiser before donating");
       }
 
-      const order = await createDonation({
+      const donation = {
         campaignId,
         amountPaise: Math.round(donationAmount * 100),
-      });
+        cause,
+        isAnonymous,
+        csrInitiativeId:
+          givingMode === "once" && csrInitiativeId ? csrInitiativeId : null,
+      };
+      const order =
+        givingMode === "recurring"
+          ? await createRecurringDonation({ ...donation, interval })
+          : await createDonation(donation);
 
       if (!order.approvalUrl) {
         throw new Error("PayPal approval is unavailable for this order");
@@ -99,6 +138,9 @@ export default function DonationModal({
     setCustomAmount("");
     setCause("general");
     setIsAnonymous(false);
+    setGivingMode("once");
+    setInterval("monthly");
+    setCsrInitiativeId("");
     setError(null);
   };
 
@@ -149,6 +191,54 @@ export default function DonationModal({
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          <fieldset>
+            <legend className="mb-3 block text-sm font-semibold text-slate-900">
+              Giving frequency
+            </legend>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setGivingMode("once")}
+                className={`rounded-lg border-2 px-3 py-2.5 text-sm font-semibold ${
+                  givingMode === "once"
+                    ? "border-blue-600 bg-blue-50 text-blue-700"
+                    : "border-slate-300 text-slate-700"
+                }`}
+              >
+                One time
+              </button>
+              <button
+                type="button"
+                onClick={() => setGivingMode("recurring")}
+                className={`rounded-lg border-2 px-3 py-2.5 text-sm font-semibold ${
+                  givingMode === "recurring"
+                    ? "border-blue-600 bg-blue-50 text-blue-700"
+                    : "border-slate-300 text-slate-700"
+                }`}
+              >
+                Recurring
+              </button>
+            </div>
+            {givingMode === "recurring" && (
+              <label className="mt-3 block text-sm font-semibold text-slate-800">
+                Billing interval
+                <select
+                  value={interval}
+                  onChange={(event) =>
+                    setInterval(
+                      event.target.value as "monthly" | "quarterly" | "yearly",
+                    )
+                  }
+                  className="input mt-2"
+                >
+                  <option value="monthly">Monthly</option>
+                  <option value="quarterly">Quarterly</option>
+                  <option value="yearly">Yearly</option>
+                </select>
+              </label>
+            )}
+          </fieldset>
+
           {/* Amount Selection */}
           <div>
             <label className="block text-sm font-semibold text-slate-900 mb-3">
@@ -210,6 +300,29 @@ export default function DonationModal({
               ))}
             </div>
           </div>
+
+          {/* Optional employee match */}
+          {givingMode === "once" && csrInitiatives.length > 0 && (
+            <label className="block text-sm font-semibold text-slate-900">
+              Employee matching (optional)
+              <select
+                className="input mt-2"
+                disabled={isProcessing}
+                onChange={(event) => setCsrInitiativeId(event.target.value)}
+                value={csrInitiativeId}
+              >
+                <option value="">Do not request an employer match</option>
+                {csrInitiatives.map((initiative) => (
+                  <option key={initiative.id} value={initiative.id}>
+                    {initiative.title} · {initiative.match_percent}% match
+                  </option>
+                ))}
+              </select>
+              <span className="mt-1 block text-xs font-normal text-slate-500">
+                A pledge is created only after PayPal confirms your donation.
+              </span>
+            </label>
+          )}
 
           {/* Anonymous Toggle */}
           <div className="flex items-center p-3 rounded-lg bg-slate-50 border border-slate-200">
@@ -275,6 +388,8 @@ export default function DonationModal({
                   </svg>
                   Processing...
                 </>
+              ) : givingMode === "recurring" ? (
+                `Continue recurring gift of ₹${amount || 0}`
               ) : (
                 `Donate ₹${amount || 0}`
               )}

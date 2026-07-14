@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { redirect } from "next/navigation";
 
+import { acceptCorporateInvitationFormAction } from "@/app/corporate/invitations/actions";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -51,10 +52,18 @@ export default async function CorporateInvitationPage({
             Sign in with the invited email address to accept this invitation.
           </p>
         ) : (
-          <p className="mt-5 text-slate-700">
-            This invitation is valid and ready to accept for your verified
-            account.
-          </p>
+          <>
+            <p className="mt-5 text-slate-700">
+              This invitation is valid and ready to accept for your verified
+              account.
+            </p>
+            <form action={acceptCorporateInvitationFormAction} className="mt-6">
+              <input name="token" type="hidden" value={token} />
+              <button className="btn btn-primary" type="submit">
+                Accept invitation
+              </button>
+            </form>
+          </>
         )}
       </section>
     </main>

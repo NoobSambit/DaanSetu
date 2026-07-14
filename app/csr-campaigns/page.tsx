@@ -3,10 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { getCorporateCampaigns } from "@/lib/services/corporate-campaigns";
-import {
-  createPartnershipRequest,
-  hasAppliedForPartnership,
-} from "@/lib/services/partnerships";
+import { hasAppliedForPartnership } from "@/lib/services/partnerships";
+import { createPartnershipRequestAction } from "@/app/corporate/actions";
 import { createClient } from "@/lib/supabase/client";
 import type { CorporateCampaignWithProfile } from "@/lib/services/corporate-campaigns";
 import type { CorporateCampaignCause } from "@/lib/types/database.types";
@@ -84,9 +82,8 @@ export default function CSRCampaignsPage() {
 
     setApplyingTo(campaignId);
     try {
-      await createPartnershipRequest({
-        corporateCampaignId: campaignId,
-        ngoId: userNgoId,
+      await createPartnershipRequestAction({
+        campaignId,
         message: message || undefined,
       });
 
@@ -102,8 +99,16 @@ export default function CSRCampaignsPage() {
   function getProgress(campaign: CorporateCampaignWithProfile) {
     return Math.min(
       100,
-      (Number(campaign.current_amount) / Number(campaign.goal_amount)) * 100,
+      (Number(campaign.raised_paise) / Number(campaign.goal_paise)) * 100,
     );
+  }
+
+  function formatPaise(amountPaise: number) {
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 2,
+    }).format(amountPaise / 100);
   }
 
   function getDaysRemaining(deadline: string) {
@@ -227,16 +232,13 @@ export default function CSRCampaignsPage() {
                     <div>
                       <p className="text-gray-600">Raised</p>
                       <p className="font-semibold text-gray-900">
-                        ₹
-                        {Number(campaign.current_amount).toLocaleString(
-                          "en-IN",
-                        )}
+                        {formatPaise(Number(campaign.raised_paise))}
                       </p>
                     </div>
                     <div className="text-right">
                       <p className="text-gray-600">Goal</p>
                       <p className="font-semibold text-gray-900">
-                        ₹{Number(campaign.goal_amount).toLocaleString("en-IN")}
+                        {formatPaise(Number(campaign.goal_paise))}
                       </p>
                     </div>
                   </div>

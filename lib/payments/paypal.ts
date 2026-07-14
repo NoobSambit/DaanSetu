@@ -19,6 +19,22 @@ export type PayPalOrder = {
   }>;
 };
 
+export type PayPalRefund = {
+  id: string;
+  status: "COMPLETED" | "PENDING" | "CANCELLED" | "FAILED" | string;
+  amount?: { currency_code: string; value: string };
+};
+
+export type PayPalPayout = {
+  batch_header?: {
+    payout_batch_id?: string;
+    batch_status?: string;
+    sender_batch_header?: {
+      sender_batch_id?: string;
+    };
+  };
+};
+
 type PayPalWebhookHeaders = {
   authAlgorithm: string;
   certUrl: string;
@@ -76,6 +92,8 @@ export async function createPayPalOrder(input: {
   internalOrderId: string;
   campaignId: string;
   amountUsdCents: number;
+  returnUrl?: string;
+  cancelUrl?: string;
 }): Promise<PayPalOrder> {
   return paypalRequest<PayPalOrder>("/v2/checkout/orders", {
     method: "POST",
@@ -91,6 +109,19 @@ export async function createPayPalOrder(input: {
           },
         },
       ],
+      ...(input.returnUrl && input.cancelUrl
+        ? {
+            payment_source: {
+              paypal: {
+                experience_context: {
+                  user_action: "PAY_NOW",
+                  return_url: input.returnUrl,
+                  cancel_url: input.cancelUrl,
+                },
+              },
+            },
+          }
+        : {}),
     }),
   });
 }
@@ -105,6 +136,62 @@ export async function capturePayPalOrder(
       body: "{}",
     },
   );
+}
+
+export async function refundPayPalCapture(input: {
+  captureId: string;
+  amountUsdCents: number;
+  requestId: string;
+}): Promise<PayPalRefund> {
+  return paypalRequest<PayPalRefund>(
+    `/v2/payments/captures/${encodeURIComponent(input.captureId)}/refund`,
+    {
+      method: "POST",
+      headers: { "PayPal-Request-Id": input.requestId },
+      body: JSON.stringify({
+        amount: {
+          currency_code: "USD",
+          value: (input.amountUsdCents / 100).toFixed(2),
+        },
+        note_to_payer: "Approved DaanSetu refund",
+      }),
+    },
+  );
+}
+
+export async function createPayPalPayout(input: {
+  senderBatchId: string;
+  senderItemId: string;
+  recipientEmail: string;
+  amountUsdCents: number;
+}): Promise<PayPalPayout> {
+  return paypalRequest<PayPalPayout>("/v1/payments/payouts", {
+    method: "POST",
+    headers: { "PayPal-Request-Id": input.senderBatchId },
+    body: JSON.stringify({
+      sender_batch_header: {
+        sender_batch_id: input.senderBatchId,
+        recipient_type: "EMAIL",
+        email_subject: "Your DaanSetu payout",
+        email_message:
+          "A verified donation payout has been sent through DaanSetu.",
+      },
+      items: [
+        {
+          recipient_type: "EMAIL",
+          recipient_wallet: "PAYPAL",
+          receiver: input.recipientEmail,
+          sender_item_id: input.senderItemId,
+          amount: {
+            currency: "USD",
+            value: (input.amountUsdCents / 100).toFixed(2),
+          },
+          note: "DaanSetu donation payout",
+          purpose: "GOODS",
+        },
+      ],
+    }),
+  });
 }
 
 export async function verifyPayPalWebhook(

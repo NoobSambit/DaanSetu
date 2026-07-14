@@ -16,3 +16,7 @@ test("allows Google-hosted font stylesheets and font files in CSP", () => {
   assert.match(proxySource, /style-src[^"]*https:\/\/fonts\.googleapis\.com/);
   assert.match(proxySource, /font-src[^"]*https:\/\/fonts\.gstatic\.com/);
 });
+
+test("payment CSP contains no obsolete Razorpay origins", () => {
+  assert.doesNotMatch(proxySource, /razorpay/i);
+});

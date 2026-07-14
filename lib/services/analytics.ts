@@ -1,12 +1,20 @@
-import { getBrowserClient } from "@/lib/supabase";
+import "server-only";
+
 import type { SupabaseClient } from "@supabase/supabase-js";
+
+type FinancialDonation = {
+  amount_paise: number;
+  refunded_paise: number;
+};
+
+function netDonationPaise(donation: FinancialDonation): number {
+  return Math.max(0, donation.amount_paise - donation.refunded_paise);
+}
 
 /**
  * Get platform-wide statistics
  */
-export async function getPlatformStats(supabaseClient?: SupabaseClient) {
-  const supabase = supabaseClient || getBrowserClient();
-
+export async function getPlatformStats(supabase: SupabaseClient) {
   const [ngosResult, campaignsResult, donationsResult, volunteersResult] =
     await Promise.all([
       supabase.from("ngos").select("id", { count: "exact", head: true }),
@@ -28,13 +36,13 @@ export async function getPlatformStats(supabaseClient?: SupabaseClient) {
 /**
  * Get donations over time (for charts)
  */
-export async function getDonationsOverTime(supabaseClient?: SupabaseClient) {
-  const supabase = supabaseClient || getBrowserClient();
-
+export async function getDonationsOverTime(supabase: SupabaseClient) {
   const { data, error } = await supabase
     .from("donations")
-    .select("amount, created_at")
-    .order("created_at", { ascending: true });
+    .select("amount_paise, refunded_paise, captured_at")
+    .in("status", ["captured", "partially_refunded", "refunded"])
+    .eq("is_demo", false)
+    .order("captured_at", { ascending: true });
 
   if (error) throw error;
 
@@ -42,11 +50,13 @@ export async function getDonationsOverTime(supabaseClient?: SupabaseClient) {
   const groupedByDate: Record<string, number> = {};
 
   data?.forEach((donation) => {
-    const date = new Date(donation.created_at).toISOString().split("T")[0];
+    const netPaise = netDonationPaise(donation);
+    if (!donation.captured_at || netPaise === 0) return;
+    const date = donation.captured_at.slice(0, 10);
     if (!groupedByDate[date]) {
       groupedByDate[date] = 0;
     }
-    groupedByDate[date] += donation.amount;
+    groupedByDate[date] += netPaise / 100;
   });
 
   return Object.entries(groupedByDate).map(([date, amount]) => ({
@@ -58,9 +68,7 @@ export async function getDonationsOverTime(supabaseClient?: SupabaseClient) {
 /**
  * Get campaigns created over time
  */
-export async function getCampaignsOverTime(supabaseClient?: SupabaseClient) {
-  const supabase = supabaseClient || getBrowserClient();
-
+export async function getCampaignsOverTime(supabase: SupabaseClient) {
   const { data, error } = await supabase
     .from("campaigns")
     .select("created_at")
@@ -88,9 +96,7 @@ export async function getCampaignsOverTime(supabaseClient?: SupabaseClient) {
 /**
  * Get volunteer growth over time
  */
-export async function getVolunteerGrowth(supabaseClient?: SupabaseClient) {
-  const supabase = supabaseClient || getBrowserClient();
-
+export async function getVolunteerGrowth(supabase: SupabaseClient) {
   const { data, error } = await supabase
     .from("volunteer_profiles")
     .select("created_at")
@@ -117,41 +123,42 @@ export async function getVolunteerGrowth(supabaseClient?: SupabaseClient) {
 /**
  * Get NGO-specific analytics
  */
-export async function getNGOAnalytics(
-  ngoId: string,
-  supabaseClient?: SupabaseClient,
-) {
-  const supabase = supabaseClient || getBrowserClient();
-
+export async function getNGOAnalytics(ngoId: string, supabase: SupabaseClient) {
   // Get total funds received
   const { data: donations } = await supabase
     .from("donations")
-    .select("amount, created_at")
-    .eq("ngo_id", ngoId);
+    .select("amount_paise, refunded_paise, captured_at")
+    .eq("ngo_id", ngoId)
+    .in("status", ["captured", "partially_refunded", "refunded"])
+    .eq("is_demo", false);
 
-  const totalFunds = donations?.reduce((sum, d) => sum + d.amount, 0) || 0;
+  const totalFundsPaise =
+    donations?.reduce((sum, donation) => sum + netDonationPaise(donation), 0) ??
+    0;
 
   // Get donations over time for this NGO
   const donationsOverTime: Record<string, number> = {};
   donations?.forEach((donation) => {
-    const date = new Date(donation.created_at).toISOString().split("T")[0];
+    const netPaise = netDonationPaise(donation);
+    if (!donation.captured_at || netPaise === 0) return;
+    const date = donation.captured_at.slice(0, 10);
     if (!donationsOverTime[date]) {
       donationsOverTime[date] = 0;
     }
-    donationsOverTime[date] += donation.amount;
+    donationsOverTime[date] += netPaise;
   });
 
   const donationsTimeSeries = Object.entries(donationsOverTime).map(
     ([date, amount]) => ({
       date,
-      amount,
+      amount: amount / 100,
     }),
   );
 
   // Get campaigns performance
   const { data: campaigns } = await supabase
     .from("campaigns")
-    .select("id, title, goal_amount, current_amount, status")
+    .select("id, title, target_paise, raised_paise, status")
     .eq("ngo_id", ngoId);
 
   // Get volunteer applications
@@ -173,9 +180,11 @@ export async function getNGOAnalytics(
   }
 
   return {
-    totalFunds,
+    totalFunds: totalFundsPaise / 100,
     donationsTimeSeries,
     campaigns: campaigns || [],
+    activeCampaigns:
+      campaigns?.filter((campaign) => campaign.status === "active").length ?? 0,
     volunteerApplications,
   };
 }
@@ -183,53 +192,60 @@ export async function getNGOAnalytics(
 /**
  * Get user impact analytics
  */
-export async function getUserImpact(
-  userId: string,
-  supabaseClient?: SupabaseClient,
-) {
-  const supabase = supabaseClient || getBrowserClient();
-
+export async function getUserImpact(userId: string, supabase: SupabaseClient) {
   // Get user donations
   const { data: donations } = await supabase
     .from("donations")
-    .select("amount, cause, created_at, campaign_id")
-    .eq("user_id", userId);
+    .select("amount_paise, refunded_paise, cause, captured_at, campaign_id")
+    .eq("user_id", userId)
+    .in("status", ["captured", "partially_refunded", "refunded"])
+    .eq("is_demo", false)
+    .eq("is_csr_match", false);
 
-  const totalDonated = donations?.reduce((sum, d) => sum + d.amount, 0) || 0;
+  const totalDonatedPaise =
+    donations?.reduce((sum, donation) => sum + netDonationPaise(donation), 0) ??
+    0;
   const campaignsSupported = new Set(
-    donations?.map((d) => d.campaign_id).filter(Boolean),
+    donations
+      ?.filter((donation) => netDonationPaise(donation) > 0)
+      .map((donation) => donation.campaign_id)
+      .filter(Boolean),
   ).size;
 
   // Donations by cause
   const donationsByCause: Record<string, number> = {};
   donations?.forEach((donation) => {
+    const netPaise = netDonationPaise(donation);
+    if (netPaise === 0) return;
     if (!donationsByCause[donation.cause]) {
       donationsByCause[donation.cause] = 0;
     }
-    donationsByCause[donation.cause] += donation.amount;
+    donationsByCause[donation.cause] += netPaise;
   });
 
   const causeBreakdown = Object.entries(donationsByCause).map(
     ([cause, amount]) => ({
       cause,
-      amount,
+      amount: amount / 100,
     }),
   );
 
   // Donation history over time
   const donationsOverTime: Record<string, number> = {};
   donations?.forEach((donation) => {
-    const date = new Date(donation.created_at).toISOString().split("T")[0];
+    const netPaise = netDonationPaise(donation);
+    if (!donation.captured_at || netPaise === 0) return;
+    const date = donation.captured_at.slice(0, 10);
     if (!donationsOverTime[date]) {
       donationsOverTime[date] = 0;
     }
-    donationsOverTime[date] += donation.amount;
+    donationsOverTime[date] += netPaise;
   });
 
   const donationsTimeSeries = Object.entries(donationsOverTime).map(
     ([date, amount]) => ({
       date,
-      amount,
+      amount: amount / 100,
     }),
   );
 
@@ -240,7 +256,7 @@ export async function getUserImpact(
     .eq("user_id", userId);
 
   return {
-    totalDonated,
+    totalDonated: totalDonatedPaise / 100,
     campaignsSupported,
     volunteerApplications: volunteerApplications || 0,
     causeBreakdown,
@@ -251,14 +267,19 @@ export async function getUserImpact(
 /**
  * Get admin analytics
  */
-export async function getAdminAnalytics(supabaseClient?: SupabaseClient) {
-  const supabase = supabaseClient || getBrowserClient();
-
+export async function getAdminAnalytics(supabase: SupabaseClient) {
   // Donations by region (NGO city/state)
-  const { data: donationsWithNGO } = await supabase.from("donations").select(`
-      amount,
+  const { data: donationsWithNGO } = await supabase
+    .from("donations")
+    .select(
+      `
+      amount_paise,
+      refunded_paise,
       ngos (city, state)
-    `);
+    `,
+    )
+    .in("status", ["captured", "partially_refunded", "refunded"])
+    .eq("is_demo", false);
 
   const donationsByRegion: Record<string, number> = {};
   donationsWithNGO?.forEach((donation: any) => {
@@ -266,7 +287,7 @@ export async function getAdminAnalytics(supabaseClient?: SupabaseClient) {
     if (!donationsByRegion[region]) {
       donationsByRegion[region] = 0;
     }
-    donationsByRegion[region] += donation.amount;
+    donationsByRegion[region] += netDonationPaise(donation) / 100;
   });
 
   const regionData = Object.entries(donationsByRegion)
@@ -295,11 +316,18 @@ export async function getAdminAnalytics(supabaseClient?: SupabaseClient) {
   );
 
   // Top NGOs by donations
-  const { data: topNGOsByDonations } = await supabase.from("donations").select(`
-      amount,
+  const { data: topNGOsByDonations } = await supabase
+    .from("donations")
+    .select(
+      `
+      amount_paise,
+      refunded_paise,
       ngo_id,
       ngos (name)
-    `);
+    `,
+    )
+    .in("status", ["captured", "partially_refunded", "refunded"])
+    .eq("is_demo", false);
 
   const ngoTotals: Record<string, { name: string; total: number }> = {};
   topNGOsByDonations?.forEach((donation: any) => {
@@ -308,7 +336,7 @@ export async function getAdminAnalytics(supabaseClient?: SupabaseClient) {
     if (!ngoTotals[ngoId]) {
       ngoTotals[ngoId] = { name: ngoName, total: 0 };
     }
-    ngoTotals[ngoId].total += donation.amount;
+    ngoTotals[ngoId].total += netDonationPaise(donation) / 100;
   });
 
   const topNGOs = Object.entries(ngoTotals)
@@ -340,15 +368,10 @@ export async function getAdminAnalytics(supabaseClient?: SupabaseClient) {
 /**
  * Export NGO impact report as CSV data
  */
-export async function exportNGOReport(
-  ngoId: string,
-  supabaseClient?: SupabaseClient,
-) {
-  const supabase = supabaseClient || getBrowserClient();
-
+export async function exportNGOReport(ngoId: string, supabase: SupabaseClient) {
   const { data: campaigns } = await supabase
     .from("campaigns")
-    .select("title, goal_amount, current_amount, created_at, deadline")
+    .select("title, target_paise, raised_paise, created_at, deadline")
     .eq("ngo_id", ngoId);
 
   const { data: opportunities } = await supabase
@@ -362,8 +385,8 @@ export async function exportNGOReport(
     reportData.push({
       type: "Campaign",
       title: campaign.title,
-      goal: campaign.goal_amount,
-      raised: campaign.current_amount,
+      goal: campaign.target_paise / 100,
+      raised: campaign.raised_paise / 100,
       created: new Date(campaign.created_at).toLocaleDateString(),
       deadline: new Date(campaign.deadline).toLocaleDateString(),
     });

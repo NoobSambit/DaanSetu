@@ -1,10 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import type { Notification } from "@/lib/types/database.types";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
+import {
+  deleteNotificationAction,
+  markAllNotificationsReadAction,
+  markNotificationReadAction,
+} from "@/app/notifications/actions";
 
 interface NotificationListProps {
   initialNotifications: Notification[];
@@ -13,25 +17,19 @@ interface NotificationListProps {
 export default function NotificationList({
   initialNotifications,
 }: NotificationListProps) {
-  const router = useRouter();
   const [notifications, setNotifications] = useState(initialNotifications);
   const [isMarkingAllRead, setIsMarkingAllRead] = useState(false);
 
   const handleMarkAsRead = async (notificationId: string) => {
     try {
-      const response = await fetch("/api/notifications/mark-read", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ notificationId }),
-      });
-
-      if (response.ok) {
-        setNotifications(
-          notifications.map((n) =>
-            n.id === notificationId ? { ...n, is_read: true } : n,
-          ),
-        );
-      }
+      await markNotificationReadAction(notificationId);
+      setNotifications(
+        notifications.map((notification) =>
+          notification.id === notificationId
+            ? { ...notification, is_read: true }
+            : notification,
+        ),
+      );
     } catch (error) {
       console.error("Error marking notification as read:", error);
     }
@@ -40,13 +38,13 @@ export default function NotificationList({
   const handleMarkAllAsRead = async () => {
     setIsMarkingAllRead(true);
     try {
-      const response = await fetch("/api/notifications/mark-all-read", {
-        method: "POST",
-      });
-
-      if (response.ok) {
-        setNotifications(notifications.map((n) => ({ ...n, is_read: true })));
-      }
+      await markAllNotificationsReadAction();
+      setNotifications(
+        notifications.map((notification) => ({
+          ...notification,
+          is_read: true,
+        })),
+      );
     } catch (error) {
       console.error("Error marking all notifications as read:", error);
     } finally {
@@ -56,15 +54,12 @@ export default function NotificationList({
 
   const handleDelete = async (notificationId: string) => {
     try {
-      const response = await fetch("/api/notifications/delete", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ notificationId }),
-      });
-
-      if (response.ok) {
-        setNotifications(notifications.filter((n) => n.id !== notificationId));
-      }
+      await deleteNotificationAction(notificationId);
+      setNotifications(
+        notifications.filter(
+          (notification) => notification.id !== notificationId,
+        ),
+      );
     } catch (error) {
       console.error("Error deleting notification:", error);
     }

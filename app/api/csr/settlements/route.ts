@@ -28,7 +28,7 @@ async function handler(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user)
+  if (!user || !user.email_confirmed_at)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { data: corporate } = await supabase
     .from("corporate_profiles")
@@ -69,10 +69,19 @@ async function handler(request: NextRequest) {
       { status: 503 },
     );
   const settlementId = crypto.randomUUID();
+  const appUrl = process.env.APP_URL ?? process.env.NEXT_PUBLIC_APP_URL;
+  if (!appUrl)
+    return NextResponse.json(
+      { error: "Application URL unavailable" },
+      { status: 503 },
+    );
+  const providerAmountCents = Math.max(1, Math.round(amountPaise / inrPerUsd));
   const paypal = await createPayPalOrder({
     internalOrderId: settlementId,
     campaignId: `csr:${corporate.id}`,
-    amountUsdCents: Math.max(1, Math.round(amountPaise / inrPerUsd)),
+    amountUsdCents: providerAmountCents,
+    returnUrl: `${appUrl}/corporate/settlements/paypal-return`,
+    cancelUrl: `${appUrl}/corporate/settlements/paypal-cancel`,
   });
 
   const { error } = await admin.rpc("create_csr_settlement_batch", {
@@ -80,6 +89,7 @@ async function handler(request: NextRequest) {
     corporate_uuid: corporate.id,
     pledge_uuids: owned.map((pledge) => pledge.id),
     total_amount_paise: amountPaise,
+    provider_amount_cents: providerAmountCents,
     provider_order_id: paypal.id,
   });
   if (error)

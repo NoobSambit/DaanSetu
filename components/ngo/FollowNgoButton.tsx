@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Heart } from "lucide-react";
+import { toggleFollowAction } from "@/app/follows/actions";
 
 interface FollowNgoButtonProps {
   ngoId: string;
@@ -52,23 +53,14 @@ export default function FollowNgoButton({
 
     setIsLoading(true);
     try {
-      const response = await fetch("/api/follows/toggle", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          targetId: ngoId,
-          targetType: "ngo",
-        }),
+      const result = await toggleFollowAction({
+        targetId: ngoId,
+        targetType: "ngo",
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        const newFollowingState = data.isFollowing;
-        setIsFollowing(newFollowingState);
-        setFollowerCount((prev) =>
-          newFollowingState ? prev + 1 : Math.max(0, prev - 1),
-        );
-      }
+      setIsFollowing(result.isFollowing);
+      setFollowerCount((previous) =>
+        result.isFollowing ? previous + 1 : Math.max(0, previous - 1),
+      );
     } catch (error) {
       console.error("Error toggling follow:", error);
     } finally {

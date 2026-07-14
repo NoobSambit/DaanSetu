@@ -11,8 +11,12 @@ const refundSchema = z.object({
   reason: z.string().trim().min(20).max(1000),
 });
 
-export async function requestRefundAction(input: unknown) {
-  const values = refundSchema.parse(input);
+export async function requestRefundAction(formData: FormData) {
+  const values = refundSchema.parse({
+    donationId: formData.get("donationId"),
+    amountPaise: Number(formData.get("amountPaise")),
+    reason: formData.get("reason"),
+  });
   const supabase = await createClient();
   const {
     data: { user },

@@ -21,7 +21,7 @@ export default async function ActivityTimelinePage() {
     redirect("/sign-in");
   }
 
-  const activities = await getUserActivityTimeline(user.id, 100);
+  const activities = await getUserActivityTimeline(user.id, 100, supabase);
 
   // Group activities by date
   const groupedActivities = activities.reduce<Record<string, ActivityLog[]>>(
@@ -113,7 +113,8 @@ export default async function ActivityTimelinePage() {
                                   )}
                                 </p>
                               )}
-                              {activity.metadata.badge_type && (
+                              {typeof activity.metadata.badge_type ===
+                                "string" && (
                                 <p className="capitalize">
                                   {activity.metadata.badge_type.replace(
                                     "_",
@@ -127,20 +128,21 @@ export default async function ActivityTimelinePage() {
                             {new Date(activity.created_at).toLocaleTimeString()}
                           </div>
                         </div>
-                        {activity.entity_id && activity.entity_type && (
-                          <Link
-                            href={
-                              activity.entity_type === "post"
-                                ? `/community/posts/${activity.entity_id}`
-                                : activity.entity_type === "campaign"
-                                  ? `/campaigns/${activity.entity_id}`
-                                  : "#"
-                            }
-                            className="text-blue-600 hover:underline text-sm"
-                          >
-                            View →
-                          </Link>
-                        )}
+                        {activity.entity_id &&
+                          ["post", "campaign"].includes(
+                            activity.entity_type ?? "",
+                          ) && (
+                            <Link
+                              href={
+                                activity.entity_type === "post"
+                                  ? `/community/${activity.entity_id}`
+                                  : `/campaigns/${activity.entity_id}`
+                              }
+                              className="text-blue-600 hover:underline text-sm"
+                            >
+                              View →
+                            </Link>
+                          )}
                       </div>
                     </div>
                   ))}

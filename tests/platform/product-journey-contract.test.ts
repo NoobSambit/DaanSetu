@@ -26,11 +26,15 @@ test("campaign owners and admins have complete management destinations", () => {
 test("review eligibility, reporting, and moderation destinations exist", () => {
   const reviewActions = read("app/ngos/[id]/reviews/actions.ts");
   const moderation = read("app/admin/moderation/actions.ts");
+  const moderationMigration = read(
+    "supabase/migrations/036_atomic_admin_decisions.sql",
+  );
 
   assert.match(reviewActions, /donation|volunteer/i);
   assert.match(reviewActions, /captured|approved/i);
-  assert.match(moderation, /hidden_at|hiddenAt/);
-  assert.match(moderation, /audit/i);
+  assert.match(moderation, /moderate_reported_content/);
+  assert.match(moderationMigration, /hidden_at/);
+  assert.match(moderationMigration, /audit_logs/);
 });
 
 test("volunteer applications and hours expose complete role workflows", () => {

@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (!user) {
+    if (!user || !user.email_confirmed_at) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Missing post ID" }, { status: 400 });
     }
 
-    const bookmarked = await hasBookmarked(user.id, postId);
+    const bookmarked = await hasBookmarked(user.id, postId, supabase);
 
     return NextResponse.json({ isBookmarked: bookmarked });
   } catch (error) {
