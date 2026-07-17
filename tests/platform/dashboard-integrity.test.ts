@@ -10,6 +10,8 @@ function source(path: string): string {
 
 test("dashboard financial aggregates use net non-demo transactions", () => {
   const analytics = source("lib/services/analytics.ts");
+  const dashboardDomain = source("lib/domain/supporter-dashboard.ts");
+  const dashboardService = source("lib/services/supporter-dashboard.ts");
   const supporter = source("app/dashboard/page.tsx");
 
   assert.match(analytics, /server-only/);
@@ -17,8 +19,12 @@ test("dashboard financial aggregates use net non-demo transactions", () => {
   assert.match(analytics, /refunded_paise/);
   assert.match(analytics, /partially_refunded/);
   assert.match(analytics, /is_demo/);
-  assert.match(supporter, /refunded_paise/);
-  assert.match(supporter, /partially_refunded/);
+  assert.match(dashboardDomain, /refunded_paise/);
+  assert.match(dashboardDomain, /partially_refunded/);
+  assert.match(dashboardService, /\.eq\("is_demo", false\)/);
+  assert.match(dashboardService, /dashboard_fixture/);
+  assert.match(supporter, /getSupporterDashboard/);
+  assert.match(supporter, /Preview data/);
 });
 
 test("NGO impact report download is an authenticated server boundary", () => {
