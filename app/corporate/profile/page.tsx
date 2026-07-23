@@ -1,13 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import Link from "next/link";
+import { Building2, Save } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+
 import { saveCorporateProfileAction } from "@/app/corporate/actions";
+import { PageHeader } from "@/components/ui/PagePrimitives";
 import { createClient } from "@/lib/supabase/client";
 import {
+  COMPANY_SIZES,
   getCorporateProfile,
   INDUSTRIES,
-  COMPANY_SIZES,
 } from "@/lib/services/corporate";
 import type { CorporateSize } from "@/lib/types/database.types";
 
@@ -16,8 +20,7 @@ export default function CorporateProfilePage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
-  const [error, setError] = useState("");
-
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     companyName: "",
     industry: "",
@@ -28,69 +31,67 @@ export default function CorporateProfilePage() {
   });
 
   useEffect(() => {
-    checkAuth();
+    void checkAuth();
   }, []);
 
   async function checkAuth() {
-    const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    try {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-    if (!user) {
-      router.push("/sign-in");
-      return;
+      if (!user) {
+        router.push("/sign-in?next=/corporate/profile");
+        return;
+      }
+
+      const { data: userData } = await supabase
+        .from("users")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+
+      if (userData?.role !== "corporate") {
+        router.push("/dashboard");
+        return;
+      }
+
+      const profile = await getCorporateProfile();
+      if (profile) {
+        setIsEdit(true);
+        setFormData({
+          companyName: profile.company_name,
+          industry: profile.industry,
+          companySize: profile.company_size,
+          description: profile.description || "",
+          website: profile.website || "",
+          logoUrl: profile.logo_url || "",
+        });
+      }
+    } catch (caught) {
+      console.error("Error checking corporate profile access:", caught);
+      setError("We could not load your corporate profile. Please try again.");
+    } finally {
+      setLoading(false);
     }
-
-    const { data: userData } = await supabase
-      .from("users")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    if (userData?.role !== "corporate") {
-      router.push("/dashboard");
-      return;
-    }
-
-    const profile = await getCorporateProfile();
-    if (profile) {
-      setIsEdit(true);
-      setFormData({
-        companyName: profile.company_name,
-        industry: profile.industry,
-        companySize: profile.company_size,
-        description: profile.description || "",
-        website: profile.website || "",
-        logoUrl: profile.logo_url || "",
-      });
-    }
-
-    setLoading(false);
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError("");
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(null);
     setSubmitting(true);
 
     try {
-      if (!formData.companySize) {
-        throw new Error("Please select company size");
-      }
-
-      await saveCorporateProfileAction({
-        companyName: formData.companyName,
-        industry: formData.industry,
-        companySize: formData.companySize,
-        description: formData.description,
-        website: formData.website,
-        logoUrl: formData.logoUrl,
-      });
-
+      if (!formData.companySize) throw new Error("Choose your company size.");
+      await saveCorporateProfileAction(formData);
       router.push("/corporate/dashboard");
-    } catch (err: any) {
-      setError(err.message);
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "The corporate profile could not be saved. Please try again.",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -98,67 +99,73 @@ export default function CorporateProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-600">Loading...</div>
-      </div>
+      <main className="page-frame flex items-center justify-center">
+        <p className="text-sm font-medium text-slate-600" role="status">
+          Loading corporate profile…
+        </p>
+      </main>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4">
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-white rounded-lg shadow-sm p-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            {isEdit ? "Edit Corporate Profile" : "Create Corporate Profile"}
-          </h1>
-          <p className="text-gray-600 mb-8">
-            {isEdit
-              ? "Update your company information"
-              : "Set up your company profile to get started with CSR campaigns"}
-          </p>
+    <main className="page-frame">
+      <div className="page-content max-w-4xl">
+        <PageHeader
+          eyebrow="Corporate workspace"
+          title={isEdit ? "Corporate profile" : "Set up your corporate profile"}
+          description={
+            isEdit
+              ? "Keep your company details current so NGO partners and employees know who is behind each initiative."
+              : "Add the core company details required to launch CSR campaigns and invite employees."
+          }
+        />
 
+        <form className="panel p-5 sm:p-8" onSubmit={handleSubmit}>
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600">
+            <div
+              aria-live="polite"
+              className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700"
+            >
               {error}
             </div>
           )}
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label
-                htmlFor="companyName"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Company Name *
-              </label>
-              <input
-                type="text"
-                id="companyName"
-                required
-                value={formData.companyName}
-                onChange={(e) =>
-                  setFormData({ ...formData, companyName: e.target.value })
-                }
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Enter company name"
-              />
+          <div className="mb-7 flex items-center gap-4 rounded-xl border border-blue-100 bg-blue-50 p-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-blue-700 shadow-sm">
+              <Building2 aria-hidden="true" className="h-5 w-5" />
             </div>
+            <p className="text-sm text-blue-900">
+              These details power the corporate identity shown across your
+              campaigns and matching initiatives.
+            </p>
+          </div>
 
-            <div>
-              <label
-                htmlFor="industry"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Industry *
-              </label>
+          <div className="grid gap-6 sm:grid-cols-2">
+            <label className="block sm:col-span-2">
+              <span className="mb-2 block text-sm font-bold text-slate-800">
+                Company name <span aria-hidden="true">*</span>
+              </span>
+              <input
+                className="input"
+                onChange={(event) =>
+                  setFormData({ ...formData, companyName: event.target.value })
+                }
+                placeholder="Company name"
+                required
+                type="text"
+                value={formData.companyName}
+              />
+            </label>
+            <label className="block">
+              <span className="mb-2 block text-sm font-bold text-slate-800">
+                Industry <span aria-hidden="true">*</span>
+              </span>
               <select
-                id="industry"
+                className="input"
+                onChange={(event) =>
+                  setFormData({ ...formData, industry: event.target.value })
+                }
                 required
                 value={formData.industry}
-                onChange={(e) =>
-                  setFormData({ ...formData, industry: e.target.value })
-                }
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="">Select industry</option>
                 {INDUSTRIES.map((industry) => (
@@ -167,26 +174,21 @@ export default function CorporateProfilePage() {
                   </option>
                 ))}
               </select>
-            </div>
-
-            <div>
-              <label
-                htmlFor="companySize"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Company Size *
-              </label>
+            </label>
+            <label className="block">
+              <span className="mb-2 block text-sm font-bold text-slate-800">
+                Company size <span aria-hidden="true">*</span>
+              </span>
               <select
-                id="companySize"
-                required
-                value={formData.companySize}
-                onChange={(e) =>
+                className="input"
+                onChange={(event) =>
                   setFormData({
                     ...formData,
-                    companySize: e.target.value as CorporateSize,
+                    companySize: event.target.value as CorporateSize,
                   })
                 }
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                required
+                value={formData.companySize}
               >
                 <option value="">Select company size</option>
                 {COMPANY_SIZES.map((size) => (
@@ -195,90 +197,72 @@ export default function CorporateProfilePage() {
                   </option>
                 ))}
               </select>
-            </div>
-
-            <div>
-              <label
-                htmlFor="description"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Description
-              </label>
+            </label>
+            <label className="block sm:col-span-2">
+              <span className="mb-2 block text-sm font-bold text-slate-800">
+                Company description
+              </span>
               <textarea
-                id="description"
+                className="input min-h-32 resize-y"
+                onChange={(event) =>
+                  setFormData({ ...formData, description: event.target.value })
+                }
+                placeholder="A short description of your company and its social impact commitments."
                 rows={4}
                 value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Brief description of your company"
               />
-            </div>
-
-            <div>
-              <label
-                htmlFor="website"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
+            </label>
+            <label className="block">
+              <span className="mb-2 block text-sm font-bold text-slate-800">
                 Website
-              </label>
+              </span>
               <input
-                type="url"
-                id="website"
-                value={formData.website}
-                onChange={(e) =>
-                  setFormData({ ...formData, website: e.target.value })
+                className="input"
+                onChange={(event) =>
+                  setFormData({ ...formData, website: event.target.value })
                 }
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="https://example.com"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="logoUrl"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Logo URL
-              </label>
-              <input
                 type="url"
-                id="logoUrl"
-                value={formData.logoUrl}
-                onChange={(e) =>
-                  setFormData({ ...formData, logoUrl: e.target.value })
-                }
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="https://example.com/logo.png"
+                value={formData.website}
               />
-            </div>
+            </label>
+            <label className="block">
+              <span className="mb-2 block text-sm font-bold text-slate-800">
+                Logo URL
+              </span>
+              <input
+                className="input"
+                onChange={(event) =>
+                  setFormData({ ...formData, logoUrl: event.target.value })
+                }
+                placeholder="https://example.com/logo.png"
+                type="url"
+                value={formData.logoUrl}
+              />
+            </label>
+          </div>
 
-            <div className="flex gap-4">
-              <button
-                type="submit"
-                disabled={submitting}
-                className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {submitting
-                  ? "Saving..."
-                  : isEdit
-                    ? "Update Profile"
-                    : "Create Profile"}
-              </button>
-              {isEdit && (
-                <button
-                  type="button"
-                  onClick={() => router.push("/corporate/dashboard")}
-                  className="px-6 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-              )}
-            </div>
-          </form>
-        </div>
+          <div className="mt-8 flex flex-col-reverse gap-3 border-t border-slate-200 pt-6 sm:flex-row sm:justify-end">
+            {isEdit && (
+              <Link className="btn btn-secondary" href="/corporate/dashboard">
+                Cancel
+              </Link>
+            )}
+            <button
+              className="btn btn-primary"
+              disabled={submitting}
+              type="submit"
+            >
+              <Save aria-hidden="true" className="h-4 w-4" />
+              {submitting
+                ? "Saving…"
+                : isEdit
+                  ? "Save profile"
+                  : "Create profile"}
+            </button>
+          </div>
+        </form>
       </div>
-    </div>
+    </main>
   );
 }

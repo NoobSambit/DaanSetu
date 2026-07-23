@@ -5,6 +5,7 @@ import {
   transitionCsrInitiativeFormAction,
 } from "@/app/corporate/actions";
 import CsrSettlementButton from "@/app/corporate/settlements/CsrSettlementButton";
+import { MetricCard, PageHeader } from "@/components/ui/PagePrimitives";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -66,26 +67,21 @@ export default async function CorporateSettlementsPage({
   );
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-12">
-      <section className="mx-auto max-w-6xl">
-        <p className="text-sm font-semibold uppercase tracking-wider text-blue-600">
-          {corporate.company_name}
-        </p>
-        <h1 className="mt-2 text-3xl font-bold text-[#10214e]">
-          Employee matching and settlement
-        </h1>
-        <p className="mt-2 max-w-3xl text-slate-600">
-          Matching pledges are created only after a verified employee donation.
-          They become allocated donations only after the PayPal batch is
-          captured and reconciled.
-        </p>
+    <main className="page-frame">
+      <section className="page-content">
+        <PageHeader
+          eyebrow={corporate.company_name}
+          title="Employee matching and settlement"
+          description="Matching pledges are created only after a verified employee donation. They become allocated donations only after the PayPal batch is captured and reconciled."
+        />
 
         {payment && (
           <p
-            className={`mt-6 rounded-xl p-4 text-sm ${
+            aria-live="polite"
+            className={`mb-6 rounded-xl border p-4 text-sm font-medium ${
               payment === "success"
-                ? "bg-emerald-50 text-emerald-900"
-                : "bg-amber-50 text-amber-900"
+                ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+                : "border-amber-200 bg-amber-50 text-amber-900"
             }`}
           >
             {payment === "success"
@@ -94,8 +90,8 @@ export default async function CorporateSettlementsPage({
           </p>
         )}
 
-        <div className="mt-8 grid gap-6 lg:grid-cols-2">
-          <section className="rounded-2xl border border-slate-200 bg-white p-6">
+        <div className="grid gap-6 lg:grid-cols-2">
+          <section className="panel p-5 sm:p-6">
             <h2 className="text-xl font-bold text-slate-900">
               Create matching initiative
             </h2>
@@ -104,14 +100,14 @@ export default async function CorporateSettlementsPage({
               className="mt-5 grid gap-4 sm:grid-cols-2"
             >
               <input
-                className="rounded-lg border border-slate-300 px-3 py-2 sm:col-span-2"
+                className="input sm:col-span-2"
                 minLength={5}
                 name="title"
                 placeholder="Initiative title"
                 required
               />
               <textarea
-                className="min-h-28 rounded-lg border border-slate-300 px-3 py-2 sm:col-span-2"
+                className="input min-h-28 resize-y sm:col-span-2"
                 minLength={20}
                 name="description"
                 placeholder="Describe the eligible giving program"
@@ -120,7 +116,7 @@ export default async function CorporateSettlementsPage({
               <label className="text-sm font-semibold text-slate-700">
                 Match percentage
                 <input
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+                  className="input mt-1"
                   defaultValue="100"
                   max="500"
                   min="0"
@@ -132,7 +128,7 @@ export default async function CorporateSettlementsPage({
               <label className="text-sm font-semibold text-slate-700">
                 Per-employee cap (₹)
                 <input
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+                  className="input mt-1"
                   min="0.01"
                   name="perEmployeeCap"
                   step="0.01"
@@ -142,7 +138,7 @@ export default async function CorporateSettlementsPage({
               <label className="text-sm font-semibold text-slate-700">
                 Initiative cap (₹)
                 <input
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+                  className="input mt-1"
                   min="0.01"
                   name="initiativeCap"
                   step="0.01"
@@ -152,7 +148,7 @@ export default async function CorporateSettlementsPage({
               <label className="text-sm font-semibold text-slate-700">
                 Starts on
                 <input
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+                  className="input mt-1"
                   name="startsOn"
                   required
                   type="date"
@@ -161,7 +157,7 @@ export default async function CorporateSettlementsPage({
               <label className="text-sm font-semibold text-slate-700 sm:col-start-2">
                 Ends on
                 <input
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+                  className="input mt-1"
                   name="endsOn"
                   required
                   type="date"
@@ -173,13 +169,16 @@ export default async function CorporateSettlementsPage({
             </form>
           </section>
 
-          <section className="rounded-2xl border border-slate-200 bg-white p-6">
+          <section className="panel p-5 sm:p-6">
             <h2 className="text-xl font-bold text-slate-900">
               Outstanding match pledges
             </h2>
-            <p className="mt-2 text-3xl font-bold text-[#10214e]">
-              {money(outstandingTotal)}
-            </p>
+            <MetricCard
+              className="mt-4 rounded-xl border"
+              label="Outstanding match pledges"
+              value={money(outstandingTotal)}
+              detail="Eligible gifts awaiting the next settlement batch"
+            />
             <div className="mt-5 space-y-3">
               {pledges?.length ? (
                 pledges.map((pledge) => {
@@ -191,7 +190,7 @@ export default async function CorporateSettlementsPage({
                     : pledge.csr_initiatives;
                   return (
                     <article
-                      className="rounded-xl bg-slate-50 p-4"
+                      className="rounded-xl border border-slate-200 bg-slate-50 p-4"
                       key={pledge.id}
                     >
                       <p className="font-semibold text-slate-900">
@@ -217,7 +216,7 @@ export default async function CorporateSettlementsPage({
           </section>
         </div>
 
-        <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6">
+        <section className="panel mt-6 p-5 sm:p-6">
           <h2 className="text-xl font-bold text-slate-900">
             Matching initiatives
           </h2>
@@ -225,7 +224,7 @@ export default async function CorporateSettlementsPage({
             {initiatives?.length ? (
               initiatives.map((initiative) => (
                 <article
-                  className="rounded-xl bg-slate-50 p-4"
+                  className="rounded-xl border border-slate-200 bg-slate-50 p-4"
                   key={initiative.id}
                 >
                   <div className="flex items-start justify-between gap-3">
@@ -247,7 +246,7 @@ export default async function CorporateSettlementsPage({
                           value={initiative.id}
                         />
                         <button
-                          className="text-sm font-semibold text-blue-700"
+                          className="btn btn-secondary min-h-9 px-3 py-1.5 text-xs"
                           name="status"
                           type="submit"
                           value={
@@ -271,7 +270,7 @@ export default async function CorporateSettlementsPage({
           </div>
         </section>
 
-        <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6">
+        <section className="panel mt-6 p-5 sm:p-6">
           <h2 className="text-xl font-bold text-slate-900">
             Settlement history
           </h2>
@@ -279,7 +278,7 @@ export default async function CorporateSettlementsPage({
             {settlements?.length ? (
               settlements.map((settlement) => (
                 <p
-                  className="rounded-xl bg-slate-50 p-4 text-sm"
+                  className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm"
                   key={settlement.id}
                 >
                   <strong>{money(settlement.amount_paise)}</strong> ·{" "}

@@ -47,7 +47,11 @@ export default function CsrSettlementButton({
       >
         {busy ? "Opening PayPal…" : "Settle all with PayPal"}
       </button>
-      {error && <p className="mt-2 text-sm text-red-700">{error}</p>}
+      {error && (
+        <p aria-live="polite" className="mt-2 text-sm font-medium text-red-700">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

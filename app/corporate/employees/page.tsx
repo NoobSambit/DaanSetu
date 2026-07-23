@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { MailPlus, UsersRound } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+
 import { inviteCorporateEmployeeAction } from "@/app/corporate/actions";
+import { EmptyState, PageHeader } from "@/components/ui/PagePrimitives";
 import { createClient } from "@/lib/supabase/client";
 import { getCorporateProfile } from "@/lib/services/corporate";
 import { getEmployeesByCorporate } from "@/lib/services/corporate-employees";
@@ -15,26 +17,25 @@ export default function CorporateEmployeesPage() {
   const [employees, setEmployees] = useState<CorporateEmployee[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
-  const [invitationUrl, setInvitationUrl] = useState("");
-
-  const [formData, setFormData] = useState({
-    email: "",
-  });
+  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [invitationUrl, setInvitationUrl] = useState<string | null>(null);
+  const [email, setEmail] = useState("");
 
   useEffect(() => {
-    loadEmployees();
+    void loadEmployees();
   }, []);
 
   async function loadEmployees() {
     try {
+      setLoadError(null);
       const supabase = createClient();
       const {
         data: { user },
       } = await supabase.auth.getUser();
 
       if (!user) {
-        router.push("/sign-in");
+        router.push("/sign-in?next=/corporate/employees");
         return;
       }
 
@@ -44,29 +45,31 @@ export default function CorporateEmployeesPage() {
         return;
       }
 
-      const employeesData = await getEmployeesByCorporate(profile.id);
-      setEmployees(employeesData);
-    } catch (error) {
-      console.error("Error loading employees:", error);
+      setEmployees(await getEmployeesByCorporate(profile.id));
+    } catch (caught) {
+      console.error("Error loading employees:", caught);
+      setLoadError("Employee records could not be loaded. Please try again.");
     } finally {
       setLoading(false);
     }
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError("");
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(null);
+    setInvitationUrl(null);
     setSubmitting(true);
 
     try {
-      const result = await inviteCorporateEmployeeAction({
-        email: formData.email,
-      });
-
-      setFormData({ email: "" });
+      const result = await inviteCorporateEmployeeAction({ email });
+      setEmail("");
       setInvitationUrl(result.invitationUrl);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "The invitation could not be created. Please try again.",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -74,170 +77,180 @@ export default function CorporateEmployeesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-600">Loading employees...</div>
-      </div>
+      <main className="page-frame flex items-center justify-center">
+        <p className="text-sm font-medium text-slate-600" role="status">
+          Loading employee engagement…
+        </p>
+      </main>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              Employee Engagement
-            </h1>
-            <p className="text-gray-600 mt-1">
-              Manage employees invited to participate in CSR initiatives
-            </p>
-          </div>
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
-          >
-            {showForm ? "Cancel" : "Invite Employee"}
-          </button>
-        </div>
+    <main className="page-frame">
+      <div className="page-content">
+        <PageHeader
+          eyebrow="Corporate workspace"
+          title="Employee engagement"
+          description="Invite employees to participate in eligible giving and keep the company’s match programme connected to its people."
+          actions={
+            <button
+              className="btn btn-primary"
+              onClick={() => setShowForm((visible) => !visible)}
+              type="button"
+            >
+              <MailPlus aria-hidden="true" className="h-4 w-4" />
+              {showForm ? "Close invite" : "Invite employee"}
+            </button>
+          }
+        />
 
         {showForm && (
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
-              Invite an Employee
+          <section
+            className="panel mb-6 max-w-2xl p-5 sm:p-6"
+            aria-labelledby="invite-employee-title"
+          >
+            <h2
+              className="text-xl font-bold text-slate-900"
+              id="invite-employee-title"
+            >
+              Invite an employee
             </h2>
+            <p className="mt-2 text-sm text-slate-600">
+              They will receive a secure invitation link for your corporate
+              workspace.
+            </p>
             {error && (
-              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600">
+              <p
+                aria-live="polite"
+                className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700"
+              >
                 {error}
+              </p>
+            )}
+            {invitationUrl && (
+              <div
+                aria-live="polite"
+                className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900"
+              >
+                <p className="font-bold">Invitation created</p>
+                <p className="mt-1">
+                  In local demo mode, share this link with the invited employee.
+                </p>
+                <p className="mt-3 break-all rounded-md bg-white/70 p-3 font-mono text-xs text-emerald-900">
+                  {invitationUrl}
+                </p>
               </div>
             )}
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Email *
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  required
-                  value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="employee@company.com"
-                />
-              </div>
-
-              {invitationUrl && (
-                <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
-                  Invitation created. In local demo mode, share this link with
-                  the invited employee:
-                  <div className="mt-2 break-all font-mono">
-                    {invitationUrl}
-                  </div>
-                </div>
-              )}
-
+            <form
+              className="mt-5 flex flex-col gap-3 sm:flex-row"
+              onSubmit={handleSubmit}
+            >
+              <label className="sr-only" htmlFor="employee-email">
+                Employee email
+              </label>
+              <input
+                className="input flex-1"
+                id="employee-email"
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="employee@company.com"
+                required
+                type="email"
+                value={email}
+              />
               <button
-                type="submit"
+                className="btn btn-primary shrink-0"
                 disabled={submitting}
-                className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                type="submit"
               >
-                {submitting ? "Creating invitation..." : "Create invitation"}
+                {submitting ? "Creating…" : "Create invitation"}
               </button>
             </form>
-          </div>
+          </section>
         )}
 
-        {employees.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-            <svg
-              className="w-16 h-16 mx-auto text-gray-400 mb-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-              />
-            </svg>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">
-              No employees yet
+        {loadError ? (
+          <section className="panel max-w-2xl p-6" aria-live="polite">
+            <h2 className="text-lg font-bold text-slate-900">
+              We could not load employees
             </h2>
-            <p className="text-gray-600 mb-6">
-              Invite employees to track their engagement in CSR activities
-            </p>
+            <p className="mt-2 text-sm text-slate-600">{loadError}</p>
             <button
-              onClick={() => setShowForm(true)}
-              className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
+              className="btn btn-secondary mt-5"
+              onClick={loadEmployees}
+              type="button"
             >
-              Invite Employee
+              Try again
             </button>
-          </div>
+          </section>
+        ) : employees.length === 0 ? (
+          <EmptyState
+            icon={<UsersRound className="h-5 w-5" />}
+            title="No employees invited yet"
+            description="Start by inviting the people who will take part in company-sponsored giving and matching programmes."
+            action={
+              <button
+                className="btn btn-primary"
+                onClick={() => setShowForm(true)}
+                type="button"
+              >
+                <MailPlus aria-hidden="true" className="h-4 w-4" /> Invite
+                employee
+              </button>
+            }
+          />
         ) : (
-          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Name
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Email
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Designation
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Joined
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {employees.map((employee) => (
-                  <tr key={employee.id}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
-                        {employee.name}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-600">
-                        {employee.email}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-600">
-                        {employee.designation || "-"}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-600">
-                        {new Date(employee.joined_at).toLocaleDateString()}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        <div className="mt-8">
-          <Link
-            href="/corporate/dashboard"
-            className="text-blue-600 hover:text-blue-700 font-medium"
+          <section
+            className="panel overflow-hidden"
+            aria-label="Invited employees"
           >
-            ← Back to Dashboard
-          </Link>
-        </div>
+            <div className="border-b border-slate-200 px-5 py-4 sm:px-6">
+              <h2 className="text-lg font-bold text-slate-900">
+                Invited employees
+              </h2>
+              <p className="mt-1 text-sm text-slate-600">
+                {employees.length} employee{employees.length === 1 ? "" : "s"}{" "}
+                connected to this workspace.
+              </p>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-[650px] w-full text-left text-sm">
+                <thead className="bg-slate-50 text-xs font-bold uppercase tracking-[0.1em] text-slate-500">
+                  <tr>
+                    <th className="px-5 py-3 sm:px-6">Name</th>
+                    <th className="px-5 py-3">Email</th>
+                    <th className="px-5 py-3">Designation</th>
+                    <th className="px-5 py-3 text-right sm:px-6">Joined</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {employees.map((employee) => (
+                    <tr
+                      className="transition-colors hover:bg-slate-50"
+                      key={employee.id}
+                    >
+                      <td className="px-5 py-4 font-bold text-slate-900 sm:px-6">
+                        {employee.name}
+                      </td>
+                      <td className="px-5 py-4 text-slate-600">
+                        {employee.email}
+                      </td>
+                      <td className="px-5 py-4 text-slate-600">
+                        {employee.designation || "—"}
+                      </td>
+                      <td className="px-5 py-4 text-right text-slate-600 sm:px-6">
+                        {new Date(employee.joined_at).toLocaleDateString(
+                          "en-IN",
+                          { day: "numeric", month: "short", year: "numeric" },
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
       </div>
-    </div>
+    </main>
   );
 }

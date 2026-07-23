@@ -1,8 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import Link from "next/link";
+import { ArrowLeft, ImagePlus, Target } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+
 import { createCorporateCampaignAction } from "@/app/corporate/actions";
+import { PageHeader } from "@/components/ui/PagePrimitives";
 import { createClient } from "@/lib/supabase/client";
 import { getCorporateProfile } from "@/lib/services/corporate";
 import { CORPORATE_CAMPAIGN_CAUSES } from "@/lib/services/corporate-campaigns";
@@ -12,8 +16,7 @@ export default function CreateCorporateCampaignPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
-
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -24,7 +27,7 @@ export default function CreateCorporateCampaignPage() {
   });
 
   useEffect(() => {
-    checkAuth();
+    void checkAuth();
   }, []);
 
   async function checkAuth() {
@@ -35,7 +38,7 @@ export default function CreateCorporateCampaignPage() {
       } = await supabase.auth.getUser();
 
       if (!user) {
-        router.push("/sign-in");
+        router.push("/sign-in?next=/corporate/campaigns/create");
         return;
       }
 
@@ -50,31 +53,25 @@ export default function CreateCorporateCampaignPage() {
         return;
       }
 
-      const profile = await getCorporateProfile();
-      if (!profile) {
-        router.push("/corporate/profile");
-        return;
-      }
-    } catch (error) {
-      console.error("Error checking auth:", error);
+      if (!(await getCorporateProfile())) router.push("/corporate/profile");
+    } catch (caught) {
+      console.error("Error checking corporate campaign access:", caught);
+      setError("We could not confirm your workspace access. Please try again.");
     } finally {
       setLoading(false);
     }
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError("");
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(null);
     setSubmitting(true);
 
     try {
-      if (!formData.cause) {
-        throw new Error("Please select a cause");
-      }
-
-      const goalAmount = parseFloat(formData.goalAmount);
-      if (isNaN(goalAmount) || goalAmount <= 0) {
-        throw new Error("Please enter a valid goal amount");
+      if (!formData.cause) throw new Error("Choose the campaign cause.");
+      const goalAmount = Number.parseFloat(formData.goalAmount);
+      if (!Number.isFinite(goalAmount) || goalAmount <= 0) {
+        throw new Error("Enter a valid campaign goal.");
       }
 
       const campaign = await createCorporateCampaignAction({
@@ -85,10 +82,13 @@ export default function CreateCorporateCampaignPage() {
         deadline: formData.deadline,
         imageUrl: formData.imageUrl,
       });
-
       router.push(`/corporate/campaigns/${campaign.id}`);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "The campaign could not be created. Please try again.",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -96,92 +96,91 @@ export default function CreateCorporateCampaignPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-600">Loading...</div>
-      </div>
+      <main className="page-frame flex items-center justify-center">
+        <p className="text-sm font-medium text-slate-600" role="status">
+          Preparing your campaign workspace…
+        </p>
+      </main>
     );
   }
 
   const minDate = new Date().toISOString().split("T")[0];
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4">
-      <div className="max-w-3xl mx-auto">
-        <div className="bg-white rounded-lg shadow-sm p-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Create CSR Campaign
-          </h1>
-          <p className="text-gray-600 mb-8">
-            Launch a new corporate social responsibility campaign to make an
-            impact
-          </p>
+    <main className="page-frame">
+      <div className="page-content max-w-4xl">
+        <Link
+          className="mb-5 inline-flex items-center gap-1.5 text-sm font-bold text-blue-700 hover:text-blue-900"
+          href="/corporate/campaigns"
+        >
+          <ArrowLeft aria-hidden="true" className="h-4 w-4" />
+          Campaigns
+        </Link>
+        <PageHeader
+          eyebrow="Corporate workspace"
+          title="Create a CSR campaign"
+          description="Set a concrete goal and deadline so employees and partner NGOs know what this initiative is working toward."
+        />
 
+        <form className="panel p-5 sm:p-8" onSubmit={handleSubmit}>
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600">
+            <div
+              aria-live="polite"
+              className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700"
+            >
               {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label
-                htmlFor="title"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Campaign Title *
-              </label>
+          <div className="grid gap-6 sm:grid-cols-2">
+            <label className="block sm:col-span-2">
+              <span className="mb-2 block text-sm font-bold text-slate-800">
+                Campaign title <span aria-hidden="true">*</span>
+              </span>
               <input
-                type="text"
-                id="title"
-                required
-                value={formData.title}
-                onChange={(e) =>
-                  setFormData({ ...formData, title: e.target.value })
-                }
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Enter campaign title"
+                className="input"
                 maxLength={100}
+                onChange={(event) =>
+                  setFormData({ ...formData, title: event.target.value })
+                }
+                placeholder="e.g. School access for every learner"
+                required
+                type="text"
+                value={formData.title}
               />
-            </div>
+            </label>
 
-            <div>
-              <label
-                htmlFor="description"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Description *
-              </label>
+            <label className="block sm:col-span-2">
+              <span className="mb-2 block text-sm font-bold text-slate-800">
+                What will this campaign make possible?{" "}
+                <span aria-hidden="true">*</span>
+              </span>
               <textarea
-                id="description"
+                className="input min-h-36 resize-y"
+                onChange={(event) =>
+                  setFormData({ ...formData, description: event.target.value })
+                }
+                placeholder="Describe the intended impact, who is served, and how partners can contribute."
                 required
                 rows={6}
                 value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Describe your CSR campaign and its impact"
               />
-            </div>
+            </label>
 
-            <div>
-              <label
-                htmlFor="cause"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Cause *
-              </label>
+            <label className="block">
+              <span className="mb-2 block text-sm font-bold text-slate-800">
+                Cause <span aria-hidden="true">*</span>
+              </span>
               <select
-                id="cause"
-                required
-                value={formData.cause}
-                onChange={(e) =>
+                className="input"
+                onChange={(event) =>
                   setFormData({
                     ...formData,
-                    cause: e.target.value as CorporateCampaignCause,
+                    cause: event.target.value as CorporateCampaignCause,
                   })
                 }
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                required
+                value={formData.cause}
               >
                 <option value="">Select a cause</option>
                 {CORPORATE_CAMPAIGN_CAUSES.map((cause) => (
@@ -190,98 +189,91 @@ export default function CreateCorporateCampaignPage() {
                   </option>
                 ))}
               </select>
-            </div>
+            </label>
 
-            <div>
-              <label
-                htmlFor="goalAmount"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Goal Amount (₹) *
-              </label>
+            <label className="block">
+              <span className="mb-2 block text-sm font-bold text-slate-800">
+                Goal amount (INR) <span aria-hidden="true">*</span>
+              </span>
               <input
-                type="number"
-                id="goalAmount"
-                required
+                className="input"
                 min="1"
-                step="0.01"
-                value={formData.goalAmount}
-                onChange={(e) =>
-                  setFormData({ ...formData, goalAmount: e.target.value })
+                onChange={(event) =>
+                  setFormData({ ...formData, goalAmount: event.target.value })
                 }
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Enter goal amount"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="deadline"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Campaign Deadline *
-              </label>
-              <input
-                type="date"
-                id="deadline"
+                placeholder="500000"
                 required
-                min={minDate}
-                value={formData.deadline}
-                onChange={(e) =>
-                  setFormData({ ...formData, deadline: e.target.value })
-                }
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                step="0.01"
+                type="number"
+                value={formData.goalAmount}
               />
-            </div>
+            </label>
 
-            <div>
-              <label
-                htmlFor="imageUrl"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Cover Image URL
-              </label>
+            <label className="block">
+              <span className="mb-2 block text-sm font-bold text-slate-800">
+                Campaign deadline <span aria-hidden="true">*</span>
+              </span>
               <input
-                type="url"
-                id="imageUrl"
-                value={formData.imageUrl}
-                onChange={(e) =>
-                  setFormData({ ...formData, imageUrl: e.target.value })
+                className="input"
+                min={minDate}
+                onChange={(event) =>
+                  setFormData({ ...formData, deadline: event.target.value })
                 }
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="https://example.com/image.jpg"
+                required
+                type="date"
+                value={formData.deadline}
               />
-              {formData.imageUrl && (
-                <img
-                  src={formData.imageUrl}
-                  alt="Preview"
-                  className="mt-3 w-full h-48 object-cover rounded-lg"
-                  onError={(e) => {
-                    e.currentTarget.style.display = "none";
-                  }}
-                />
-              )}
-            </div>
+            </label>
 
-            <div className="flex gap-4">
-              <button
-                type="submit"
-                disabled={submitting}
-                className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {submitting ? "Creating..." : "Create Campaign"}
-              </button>
-              <button
-                type="button"
-                onClick={() => router.push("/corporate/campaigns")}
-                className="px-6 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50"
-              >
-                Cancel
-              </button>
+            <label className="block">
+              <span className="mb-2 block text-sm font-bold text-slate-800">
+                Cover image URL{" "}
+                <span className="font-medium text-slate-500">(optional)</span>
+              </span>
+              <input
+                className="input"
+                onChange={(event) =>
+                  setFormData({ ...formData, imageUrl: event.target.value })
+                }
+                placeholder="https://example.com/initiative.jpg"
+                type="url"
+                value={formData.imageUrl}
+              />
+            </label>
+          </div>
+
+          {formData.imageUrl && (
+            <div className="mt-6 overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+              <div className="flex items-center gap-2 border-b border-slate-200 px-4 py-3 text-sm font-bold text-slate-700">
+                <ImagePlus aria-hidden="true" className="h-4 w-4" />
+                Cover preview
+              </div>
+              <img
+                alt="Selected campaign cover preview"
+                className="h-52 w-full object-cover"
+                onError={(event) => {
+                  event.currentTarget.style.display = "none";
+                }}
+                src={formData.imageUrl}
+              />
             </div>
-          </form>
-        </div>
+          )}
+
+          <div className="mt-8 flex flex-col-reverse gap-3 border-t border-slate-200 pt-6 sm:flex-row sm:justify-end">
+            <Link className="btn btn-secondary" href="/corporate/campaigns">
+              Cancel
+            </Link>
+            <button
+              className="btn btn-primary"
+              disabled={submitting}
+              type="submit"
+            >
+              <Target aria-hidden="true" className="h-4 w-4" />
+              {submitting ? "Creating campaign…" : "Create campaign"}
+            </button>
+          </div>
+        </form>
       </div>
-    </div>
+    </main>
   );
 }

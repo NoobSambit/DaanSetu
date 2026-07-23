@@ -38,8 +38,8 @@ export default async function CorporateInvitationPage({
     invitation && invitation.email.toLowerCase() !== user.email?.toLowerCase();
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-16">
-      <section className="mx-auto max-w-xl rounded-2xl border border-slate-200 bg-white p-8 text-center">
+    <main className="page-frame flex items-center justify-center">
+      <section className="panel mx-auto max-w-xl p-6 text-center sm:p-8">
         <h1 className="text-3xl font-bold text-[#10214e]">
           Corporate employee invitation
         </h1>

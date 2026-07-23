@@ -126,6 +126,30 @@ test("corporate overview presents live operational metrics in the shared workspa
   assert.match(dashboard, /page-frame/);
 });
 
+test("corporate operations use responsive workspace primitives and do not hide request failures", () => {
+  for (const path of [
+    "app/corporate/campaigns/page.tsx",
+    "app/corporate/campaigns/create/page.tsx",
+    "app/corporate/campaigns/[id]/page.tsx",
+    "app/corporate/employees/page.tsx",
+    "app/corporate/profile/page.tsx",
+  ]) {
+    const page = source(path);
+    assert.match(page, /PageHeader/);
+    assert.match(page, /page-frame/);
+  }
+
+  const detail = source("app/corporate/campaigns/[id]/page.tsx");
+  assert.match(detail, /Toast/);
+  assert.match(detail, /loadError/);
+  assert.match(detail, /actionFeedback/);
+
+  const settlements = source("app/corporate/settlements/page.tsx");
+  assert.match(settlements, /PageHeader/);
+  assert.match(settlements, /page-frame/);
+  assert.match(settlements, /aria-live/);
+});
+
 test("action feedback uses accessible in-app messaging rather than blocking browser dialogs", () => {
   for (const path of [
     "components/CampaignUpdates.tsx",
