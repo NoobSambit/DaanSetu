@@ -6,6 +6,7 @@ import {
   createCampaignAction,
   createSupporterCampaignAction,
 } from "@/app/campaigns/actions";
+import { PageHeader } from "@/components/ui/PagePrimitives";
 import { createClient } from "@/lib/supabase/client";
 import type { CampaignCategory } from "@/lib/types/database.types";
 
@@ -176,29 +177,25 @@ export default function CreateCampaignPage() {
 
   if (loading) {
     return (
-      <div className="min-h-[calc(100vh-4rem)] bg-gray-50 flex items-center justify-center">
+      <main className="page-frame flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
           <p className="text-gray-600">Loading...</p>
         </div>
-      </div>
+      </main>
     );
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-gray-50">
-      <div className="max-w-3xl mx-auto px-4 py-8">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">
-          Create New Campaign
-        </h1>
-        <p className="text-gray-600 mb-8">
-          Launch a campaign to raise funds for your cause
-        </p>
+    <main className="page-frame">
+      <div className="page-content max-w-4xl">
+        <PageHeader
+          eyebrow="Fundraising"
+          title="Create a campaign"
+          description="Provide a clear goal, a credible plan, and the evidence needed for a safe review process."
+        />
 
-        <form
-          onSubmit={handleSubmit}
-          className="bg-white rounded-lg shadow-sm p-8 space-y-6"
-        >
+        <form onSubmit={handleSubmit} className="panel space-y-6 p-5 sm:p-8">
           <fieldset>
             <legend className="mb-3 block text-sm font-semibold text-gray-900">
               Fundraiser owner
@@ -242,7 +239,7 @@ export default function CreateCampaignPage() {
                   setFormData({ ...formData, ngoId: e.target.value })
                 }
                 required
-                className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-600 focus:outline-none"
+                className="input"
               >
                 {userNGOs.map((ngo) => (
                   <option key={ngo.id} value={ngo.id}>
@@ -269,7 +266,7 @@ export default function CreateCampaignPage() {
                       beneficiaryName: event.target.value,
                     })
                   }
-                  className="mt-2 w-full rounded-lg border-2 border-gray-300 px-4 py-2"
+                  className="input mt-2"
                 />
               </label>
               <label className="block text-sm font-semibold text-gray-900">
@@ -283,7 +280,7 @@ export default function CreateCampaignPage() {
                       beneficiaryRelationship: event.target.value,
                     })
                   }
-                  className="mt-2 w-full rounded-lg border-2 border-gray-300 px-4 py-2"
+                  className="input mt-2"
                 />
               </label>
               <label className="block text-sm font-semibold text-gray-900">
@@ -298,7 +295,7 @@ export default function CreateCampaignPage() {
                       payoutEmail: event.target.value,
                     })
                   }
-                  className="mt-2 w-full rounded-lg border-2 border-gray-300 px-4 py-2"
+                  className="input mt-2"
                 />
               </label>
               <label className="block text-sm font-semibold text-gray-900">
@@ -347,7 +344,7 @@ export default function CreateCampaignPage() {
               placeholder="e.g., Winter Blanket Drive 2024"
               required
               maxLength={100}
-              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-600 focus:outline-none"
+              className="input"
             />
           </div>
 
@@ -365,7 +362,7 @@ export default function CreateCampaignPage() {
               placeholder="One-line summary of your campaign"
               required
               maxLength={200}
-              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-600 focus:outline-none"
+              className="input"
             />
             <p className="text-sm text-gray-500 mt-1">
               {formData.shortDescription.length}/200
@@ -385,7 +382,7 @@ export default function CreateCampaignPage() {
               placeholder="Explain your campaign goals, how funds will be used, and why people should support it..."
               required
               rows={8}
-              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-600 focus:outline-none"
+              className="input min-h-44 resize-y"
             />
           </div>
 
@@ -403,7 +400,7 @@ export default function CreateCampaignPage() {
               placeholder="50000"
               required
               min="100"
-              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-600 focus:outline-none"
+              className="input"
             />
           </div>
 
@@ -420,7 +417,7 @@ export default function CreateCampaignPage() {
               }
               required
               min={new Date().toISOString().split("T")[0]}
-              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-600 focus:outline-none"
+              className="input"
             />
           </div>
 
@@ -461,7 +458,7 @@ export default function CreateCampaignPage() {
                 setFormData({ ...formData, imageUrl: e.target.value })
               }
               placeholder="https://example.com/image.jpg"
-              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-600 focus:outline-none"
+              className="input"
             />
             <p className="text-sm text-gray-500 mt-1">
               Recommended: 1200x600px image
@@ -469,32 +466,35 @@ export default function CreateCampaignPage() {
           </div>
 
           {/* Error Message */}
-          {error && userNGOs.length > 0 && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+          {error && (
+            <div
+              aria-live="polite"
+              className="rounded-lg border border-red-200 bg-red-50 p-4"
+            >
               <p className="text-sm text-red-800">{error}</p>
             </div>
           )}
 
           {/* Submit Button */}
-          <div className="flex gap-4">
+          <div className="flex flex-col-reverse gap-3 border-t border-slate-200 pt-6 sm:flex-row sm:justify-end">
             <button
               type="button"
               onClick={() => router.back()}
               disabled={submitting}
-              className="flex-1 py-3 px-6 border-2 border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50 transition disabled:opacity-50"
+              className="btn btn-secondary"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={submitting}
-              className="flex-1 py-3 px-6 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-50"
+              className="btn btn-primary"
             >
               {submitting ? "Creating Campaign..." : "Create Campaign"}
             </button>
           </div>
         </form>
       </div>
-    </div>
+    </main>
   );
 }

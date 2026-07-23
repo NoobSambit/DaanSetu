@@ -160,3 +160,30 @@ test("action feedback uses accessible in-app messaging rather than blocking brow
     assert.doesNotMatch(component, /\balert\(/);
   }
 });
+
+test("supporter and volunteer operational journeys use responsive shells and recoverable feedback", () => {
+  for (const path of [
+    "app/campaigns/create/page.tsx",
+    "app/campaigns/[id]/page.tsx",
+    "app/campaigns/[id]/manage/page.tsx",
+    "app/campaigns/[id]/updates/page.tsx",
+    "app/volunteer/dashboard/page.tsx",
+    "app/volunteer/profile/page.tsx",
+    "app/notifications/page.tsx",
+  ]) {
+    const page = source(path);
+    assert.match(page, /PageHeader/);
+    assert.match(page, /page-frame/);
+  }
+
+  const notifications = source(
+    "app/notifications/components/NotificationList.tsx",
+  );
+  assert.match(notifications, /Toast/);
+  assert.match(notifications, /EmptyState/);
+  assert.match(notifications, /setNotifications\(\(current\)/);
+
+  const volunteerProfile = source("app/volunteer/profile/page.tsx");
+  assert.match(volunteerProfile, /aria-pressed/);
+  assert.match(volunteerProfile, /Toast/);
+});

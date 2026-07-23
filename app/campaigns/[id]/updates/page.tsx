@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { createCampaignUpdateFormAction } from "@/app/campaigns/actions";
+import { EmptyState, PageHeader } from "@/components/ui/PagePrimitives";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function CampaignUpdatesPage({
@@ -27,21 +28,23 @@ export default async function CampaignUpdatesPage({
     .order("created_at", { ascending: false });
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-12">
-      <section className="mx-auto max-w-3xl">
-        <h1 className="text-3xl font-bold text-[#10214e]">
-          Updates for {campaign.title}
-        </h1>
+    <main className="page-frame">
+      <section className="page-content max-w-3xl">
+        <PageHeader
+          eyebrow="Campaign management"
+          title={`Updates for ${campaign.title}`}
+          description="Publish concise, honest progress notes so supporters understand what changed and what comes next."
+        />
         {user?.id === campaign.creator_id && user?.email_confirmed_at && (
           <form
             action={createCampaignUpdateFormAction}
-            className="mt-8 rounded-2xl border border-blue-200 bg-blue-50 p-6"
+            className="panel mt-8 border-blue-200 bg-blue-50 p-5 sm:p-6"
           >
             <input name="campaignId" type="hidden" value={campaign.id} />
             <label className="block text-sm font-semibold text-blue-950">
               Share progress with supporters
               <textarea
-                className="mt-2 min-h-32 w-full rounded-lg border border-blue-300 bg-white px-3 py-2 text-slate-900"
+                className="input mt-2 min-h-32 resize-y"
                 maxLength={2_000}
                 minLength={10}
                 name="text"
@@ -57,10 +60,7 @@ export default async function CampaignUpdatesPage({
         <div className="mt-8 space-y-4">
           {updates?.length ? (
             updates.map((update) => (
-              <article
-                key={update.id}
-                className="rounded-2xl border border-slate-200 bg-white p-6"
-              >
+              <article key={update.id} className="panel p-5 sm:p-6">
                 <time className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                   {new Date(update.created_at).toLocaleDateString("en-IN", {
                     day: "numeric",
@@ -82,9 +82,10 @@ export default async function CampaignUpdatesPage({
               </article>
             ))
           ) : (
-            <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-slate-600">
-              No campaign updates have been published yet.
-            </p>
+            <EmptyState
+              title="No campaign updates yet"
+              description="Progress updates will appear here as the campaign team shares them."
+            />
           )}
         </div>
       </section>

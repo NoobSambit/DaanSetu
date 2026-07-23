@@ -5,6 +5,7 @@ import DonateButton from "@/components/DonateButton";
 import CampaignProgress from "@/components/CampaignProgress";
 import CampaignDonors from "@/components/CampaignDonors";
 import CampaignUpdates from "@/components/CampaignUpdates";
+import { PageHeader } from "@/components/ui/PagePrimitives";
 
 export const dynamic = "force-dynamic";
 
@@ -91,28 +92,32 @@ export default async function CampaignDetailPage({
   );
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-gray-50">
-      <div className="max-w-5xl mx-auto px-4 py-8">
-        {/* Breadcrumb */}
-        <div className="mb-6">
+    <main className="page-frame">
+      <div className="page-content max-w-5xl">
+        <div className="mb-5 flex flex-wrap items-center gap-3">
           <Link
             href="/campaigns"
-            className="text-blue-600 hover:text-blue-700 text-sm"
+            className="text-sm font-bold text-blue-700 hover:text-blue-900"
           >
-            ← Back to Campaigns
+            ← All campaigns
           </Link>
           {campaign.creator_id === user?.id && (
             <Link
               href={`/campaigns/${campaign.id}/manage`}
-              className="ml-4 text-sm font-semibold text-blue-700 hover:text-blue-800"
+              className="btn btn-secondary min-h-9 px-3 py-1.5 text-xs"
             >
               Manage campaign
             </Link>
           )}
         </div>
+        <PageHeader
+          eyebrow={`${categoryEmojis[campaign.category] ?? "✨"} ${campaign.category}`}
+          title={campaign.title}
+          description={campaign.short_description}
+        />
 
         {/* Campaign Header */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden mb-6">
+        <article className="panel mb-6 overflow-hidden">
           {/* Cover Image */}
           {campaign.image_url && (
             <div className="relative h-96">
@@ -124,7 +129,7 @@ export default async function CampaignDetailPage({
             </div>
           )}
 
-          <div className="p-8">
+          <div className="p-5 sm:p-8">
             {/* Category Badge */}
             <div className="mb-4">
               <span className="inline-block bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-semibold">
@@ -133,11 +138,6 @@ export default async function CampaignDetailPage({
                   campaign.category.slice(1)}
               </span>
             </div>
-
-            {/* Title */}
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
-              {campaign.title}
-            </h1>
 
             {/* NGO Info */}
             {ngo ? (
@@ -152,11 +152,6 @@ export default async function CampaignDetailPage({
                 Supporter-led fundraiser for {beneficiaryName}
               </p>
             )}
-
-            {/* Short Description */}
-            <p className="text-xl text-gray-700 mb-6">
-              {campaign.short_description}
-            </p>
 
             {/* Progress Section */}
             <CampaignProgress
@@ -184,10 +179,10 @@ export default async function CampaignDetailPage({
               )}
             </div>
           </div>
-        </div>
+        </article>
 
         {/* Campaign Description */}
-        <div className="bg-white rounded-lg shadow-sm p-8 mb-6">
+        <section className="panel mb-6 p-5 sm:p-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">
             About This Campaign
           </h2>
@@ -196,7 +191,7 @@ export default async function CampaignDetailPage({
               {campaign.description}
             </p>
           </div>
-        </div>
+        </section>
 
         {/* Two Column Layout */}
         <div className="grid md:grid-cols-2 gap-6">
@@ -210,6 +205,6 @@ export default async function CampaignDetailPage({
           />
         </div>
       </div>
-    </div>
+    </main>
   );
 }

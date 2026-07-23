@@ -5,6 +5,11 @@ import {
   submitVolunteerHoursFormAction,
   withdrawVolunteerApplicationFormAction,
 } from "@/app/volunteer/actions";
+import {
+  EmptyState,
+  MetricCard,
+  PageHeader,
+} from "@/components/ui/PagePrimitives";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -66,50 +71,34 @@ export default async function VolunteerDashboardPage() {
     .reduce((total, entry) => total + Number(entry.hours), 0);
 
   return (
-    <main className="min-h-screen bg-slate-50 py-12">
-      <section className="mx-auto max-w-6xl px-4">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="text-sm font-bold uppercase tracking-wider text-blue-700">
-              Volunteer account
-            </p>
-            <h1 className="mt-2 text-4xl font-bold text-slate-950">
-              My participation
-            </h1>
-            <p className="mt-2 text-slate-600">
-              Applications, approved service, verified skills, and certificates
-              from real records.
-            </p>
-          </div>
-          <div className="flex gap-3">
-            <Link href="/volunteer/profile" className="btn btn-secondary">
-              Edit profile
-            </Link>
-            <Link href="/volunteer/opportunities" className="btn btn-primary">
-              Find opportunities
-            </Link>
-          </div>
-        </div>
+    <main className="page-frame">
+      <section className="page-content">
+        <PageHeader
+          eyebrow="Volunteer workspace"
+          title="My participation"
+          description="Applications, approved service, verified skills, and certificates from your real records."
+          actions={
+            <>
+              <Link href="/volunteer/profile" className="btn btn-secondary">
+                Edit profile
+              </Link>
+              <Link href="/volunteer/opportunities" className="btn btn-primary">
+                Find opportunities
+              </Link>
+            </>
+          }
+        />
 
-        <div className="mt-8 grid gap-4 sm:grid-cols-3">
-          <div className="rounded-2xl border border-slate-200 bg-white p-6">
-            <p className="text-sm text-slate-500">Approved hours</p>
-            <p className="mt-2 text-3xl font-bold text-slate-950">
-              {totalApprovedHours.toLocaleString("en-IN")}
-            </p>
-          </div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-6">
-            <p className="text-sm text-slate-500">Verified skills</p>
-            <p className="mt-2 text-3xl font-bold text-slate-950">
-              {skillVerifications?.length ?? 0}
-            </p>
-          </div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-6">
-            <p className="text-sm text-slate-500">Certificates</p>
-            <p className="mt-2 text-3xl font-bold text-slate-950">
-              {certificates?.length ?? 0}
-            </p>
-          </div>
+        <div className="metric-grid sm:grid-cols-3 xl:grid-cols-3">
+          <MetricCard
+            label="Approved hours"
+            value={totalApprovedHours.toLocaleString("en-IN")}
+          />
+          <MetricCard
+            label="Verified skills"
+            value={skillVerifications?.length ?? 0}
+          />
+          <MetricCard label="Certificates" value={certificates?.length ?? 0} />
         </div>
 
         <h2 className="mt-12 text-2xl font-bold text-slate-950">
@@ -130,10 +119,7 @@ export default async function VolunteerDashboardPage() {
                 (entry) => entry.opportunity_id === opportunity.id,
               );
               return (
-                <article
-                  key={application.id}
-                  className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
-                >
+                <article key={application.id} className="panel p-5 sm:p-6">
                   <div className="flex flex-wrap justify-between gap-4">
                     <div>
                       <h3 className="font-bold text-slate-950">
@@ -230,9 +216,18 @@ export default async function VolunteerDashboardPage() {
               );
             })
           ) : (
-            <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-600">
-              You have not applied to an opportunity yet.
-            </p>
+            <EmptyState
+              title="No opportunity applications yet"
+              description="Browse volunteering opportunities to begin building your service record."
+              action={
+                <Link
+                  className="btn btn-primary"
+                  href="/volunteer/opportunities"
+                >
+                  Find opportunities
+                </Link>
+              }
+            />
           )}
         </div>
 
@@ -248,10 +243,7 @@ export default async function VolunteerDashboardPage() {
                     name: string;
                   } | null;
                   return (
-                    <div
-                      key={verification.id}
-                      className="rounded-xl border border-slate-200 bg-white p-4"
-                    >
+                    <div key={verification.id} className="panel p-4">
                       <p className="font-bold text-slate-900">
                         {verification.skill}
                       </p>
@@ -263,9 +255,11 @@ export default async function VolunteerDashboardPage() {
                   );
                 })
               ) : (
-                <p className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-slate-600">
-                  Approved service will add verified skills here.
-                </p>
+                <EmptyState
+                  className="py-7"
+                  title="No verified skills yet"
+                  description="Approved service and NGO endorsements will appear here."
+                />
               )}
             </div>
           </section>
@@ -282,7 +276,7 @@ export default async function VolunteerDashboardPage() {
                     <a
                       key={certificate.id}
                       href={`/api/volunteer-certificates/${certificate.id}`}
-                      className="block rounded-xl border border-slate-200 bg-white p-4 transition hover:border-blue-300"
+                      className="panel block p-4 transition hover:border-blue-300"
                     >
                       <p className="font-bold text-slate-900">
                         {opportunity.title}
@@ -298,9 +292,11 @@ export default async function VolunteerDashboardPage() {
                   );
                 })
               ) : (
-                <p className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-slate-600">
-                  Certificates appear after an NGO approves submitted hours.
-                </p>
+                <EmptyState
+                  className="py-7"
+                  title="No certificates yet"
+                  description="Certificates appear when an NGO approves your submitted hours."
+                />
               )}
             </div>
           </section>
