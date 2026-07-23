@@ -4,6 +4,7 @@ import {
 } from "@/app/admin/moderation/actions";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { EmptyState, PageHeader } from "@/components/ui/PagePrimitives";
 
 export default async function ModerationQueuePage() {
   await requireAdmin("/admin/moderation");
@@ -29,16 +30,17 @@ export default async function ModerationQueuePage() {
   ]);
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-12">
-      <section className="mx-auto max-w-5xl">
-        <h1 className="text-3xl font-bold text-[#10214e]">Moderation queue</h1>
+    <main className="page-frame">
+      <section className="page-content max-w-5xl">
+        <PageHeader
+          eyebrow="Admin workspace"
+          title="Moderation queue"
+          description="Resolve reported content and curate impact stories with a clear decision trail."
+        />
         <div className="mt-8 space-y-3">
           {reports?.length ? (
             reports.map((report) => (
-              <article
-                key={report.id}
-                className="rounded-xl border border-slate-200 bg-white p-5"
-              >
+              <article key={report.id} className="panel p-5">
                 <p className="font-semibold text-slate-900">
                   {report.entity_type} · {report.status}
                 </p>
@@ -58,7 +60,7 @@ export default async function ModerationQueuePage() {
                   >
                     <input name="reportId" type="hidden" value={report.id} />
                     <textarea
-                      className="min-h-24 rounded-lg border border-slate-300 px-3 py-2"
+                      className="input min-h-24 resize-y"
                       maxLength={1_000}
                       minLength={10}
                       name="reason"
@@ -100,9 +102,10 @@ export default async function ModerationQueuePage() {
               </article>
             ))
           ) : (
-            <p className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center text-slate-600">
-              No reports currently require moderation.
-            </p>
+            <EmptyState
+              title="No reports require moderation"
+              description="Reported community content will appear here when it needs review."
+            />
           )}
         </div>
 
@@ -121,10 +124,7 @@ export default async function ModerationQueuePage() {
                   ? story.author[0]
                   : story.author;
                 return (
-                  <article
-                    className="rounded-xl border border-slate-200 bg-white p-5"
-                    key={story.id}
-                  >
+                  <article className="panel p-5" key={story.id}>
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <h3 className="font-semibold text-slate-950">
@@ -184,9 +184,11 @@ export default async function ModerationQueuePage() {
                 );
               })
             ) : (
-              <p className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center text-slate-600">
-                No community stories are awaiting review.
-              </p>
+              <EmptyState
+                className="py-8"
+                title="No stories await review"
+                description="Published community stories ready for impact curation will appear here."
+              />
             )}
           </div>
         </section>

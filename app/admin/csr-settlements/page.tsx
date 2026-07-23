@@ -1,5 +1,6 @@
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { EmptyState, PageHeader } from "@/components/ui/PagePrimitives";
 
 export default async function CsrSettlementOversightPage() {
   await requireAdmin("/admin/csr-settlements");
@@ -9,18 +10,17 @@ export default async function CsrSettlementOversightPage() {
     .order("created_at", { ascending: false });
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-12">
-      <section className="mx-auto max-w-5xl">
-        <h1 className="text-3xl font-bold text-[#10214e]">
-          CSR settlement oversight
-        </h1>
+    <main className="page-frame">
+      <section className="page-content max-w-5xl">
+        <PageHeader
+          eyebrow="Admin workspace"
+          title="CSR settlement oversight"
+          description="Monitor corporate matching batches and their settlement status."
+        />
         <div className="mt-8 space-y-3">
           {settlements?.length ? (
             settlements.map((settlement) => (
-              <article
-                key={settlement.id}
-                className="rounded-xl border border-slate-200 bg-white p-5"
-              >
+              <article key={settlement.id} className="panel p-5">
                 <p className="font-semibold text-slate-900">
                   ₹{(settlement.amount_paise / 100).toLocaleString("en-IN")} ·{" "}
                   {settlement.status}
@@ -31,9 +31,10 @@ export default async function CsrSettlementOversightPage() {
               </article>
             ))
           ) : (
-            <p className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center text-slate-600">
-              No CSR settlement batches exist yet.
-            </p>
+            <EmptyState
+              title="No CSR settlement batches yet"
+              description="Corporate matching settlements will appear here once they are created."
+            />
           )}
         </div>
       </section>

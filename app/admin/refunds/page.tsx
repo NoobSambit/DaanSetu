@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { reviewRefundAction } from "./actions";
+import { EmptyState, PageHeader } from "@/components/ui/PagePrimitives";
 
 export default async function AdminRefundsPage() {
   const supabase = await createClient();
@@ -21,16 +22,17 @@ export default async function AdminRefundsPage() {
     .select("id, amount_paise, reason, status, created_at")
     .order("created_at", { ascending: true });
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-12">
-      <section className="mx-auto max-w-5xl">
-        <h1 className="text-3xl font-bold text-[#10214e]">Refund review</h1>
+    <main className="page-frame">
+      <section className="page-content max-w-5xl">
+        <PageHeader
+          eyebrow="Admin workspace"
+          title="Refund review"
+          description="Assess supporter refund requests with an auditable decision and note."
+        />
         <div className="mt-8 space-y-3">
           {refunds?.length ? (
             refunds.map((refund) => (
-              <article
-                key={refund.id}
-                className="rounded-xl border border-slate-200 bg-white p-5"
-              >
+              <article key={refund.id} className="panel p-5">
                 <p className="font-semibold">
                   ₹{(refund.amount_paise / 100).toLocaleString("en-IN")} —{" "}
                   {refund.status}
@@ -76,9 +78,10 @@ export default async function AdminRefundsPage() {
               </article>
             ))
           ) : (
-            <p className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center text-slate-600">
-              No refund requests await review.
-            </p>
+            <EmptyState
+              title="No refund requests await review"
+              description="New supporter refund requests will appear here."
+            />
           )}
         </div>
       </section>

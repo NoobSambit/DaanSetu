@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
+import { PageHeader } from "@/components/ui/PagePrimitives";
 
 const operations = [
   ["NGO verification", "/admin/ngo-verifications"],
@@ -26,17 +27,19 @@ export default async function AdminOperationsPage() {
     .single();
   if (profile?.role !== "admin") redirect("/dashboard");
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-12">
-      <section className="mx-auto max-w-5xl">
-        <h1 className="text-3xl font-bold text-[#10214e]">
-          Platform operations
-        </h1>
+    <main className="page-frame">
+      <section className="page-content max-w-5xl">
+        <PageHeader
+          eyebrow="Admin workspace"
+          title="Platform operations"
+          description="Review trust, finance, safety, and audit workflows from one operational control centre."
+        />
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
           {operations.map(([label, href]) => (
             <Link
               key={href}
               href={href}
-              className="rounded-2xl border border-slate-200 bg-white p-6 font-semibold text-slate-900 shadow-sm transition hover:border-blue-300"
+              className="panel p-5 font-semibold text-slate-900 transition hover:border-blue-300 sm:p-6"
             >
               {label}
             </Link>

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { reviewFundraiserFormAction } from "@/app/admin/fundraisers/actions";
+import { EmptyState, PageHeader } from "@/components/ui/PagePrimitives";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function FundraiserReviewPage() {
@@ -26,19 +27,17 @@ export default async function FundraiserReviewPage() {
     .order("created_at", { ascending: true });
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-12">
-      <section className="mx-auto max-w-6xl">
-        <h1 className="text-3xl font-bold text-[#10214e]">Fundraiser review</h1>
-        <p className="mt-2 text-slate-600">
-          Review beneficiary consent, evidence, ownership, and payout readiness.
-        </p>
+    <main className="page-frame">
+      <section className="page-content max-w-6xl">
+        <PageHeader
+          eyebrow="Admin workspace"
+          title="Fundraiser review"
+          description="Review beneficiary consent, evidence, ownership, and payout readiness before a fundraiser can proceed."
+        />
         <div className="mt-8 grid gap-5">
           {campaigns?.length ? (
             campaigns.map((campaign) => (
-              <article
-                key={campaign.id}
-                className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
-              >
+              <article key={campaign.id} className="panel p-5 sm:p-6">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
                     <p className="text-xs font-bold uppercase tracking-wider text-amber-600">
@@ -151,9 +150,10 @@ export default async function FundraiserReviewPage() {
               </article>
             ))
           ) : (
-            <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-600">
-              No fundraisers currently await review.
-            </p>
+            <EmptyState
+              title="No fundraisers await review"
+              description="Fundraisers requiring beneficiary or payout review will appear here."
+            />
           )}
         </div>
       </section>

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
 import { reviewNgoVerificationAction } from "./actions";
+import { EmptyState, PageHeader } from "@/components/ui/PagePrimitives";
 
 export const dynamic = "force-dynamic";
 
@@ -30,33 +31,27 @@ export default async function NgoVerificationsPage() {
   const hydrated = submissions ?? [];
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-8 sm:px-6">
-      <div className="mx-auto max-w-5xl">
-        <div className="mb-8 flex items-end justify-between gap-4">
-          <div>
-            <p className="text-sm font-semibold text-blue-700">Admin</p>
-            <h1 className="text-3xl font-bold text-slate-950">
-              NGO verification review
-            </h1>
-          </div>
-          <Link
-            href="/admin/analytics"
-            className="text-sm font-semibold text-blue-700 hover:underline"
-          >
-            Back to analytics
-          </Link>
-        </div>
+    <main className="page-frame">
+      <div className="page-content max-w-5xl">
+        <PageHeader
+          eyebrow="Admin workspace"
+          title="NGO verification review"
+          description="Review submitted legal information and private documents before approving an NGO profile."
+          actions={
+            <Link href="/admin/analytics" className="btn btn-secondary">
+              Analytics
+            </Link>
+          }
+        />
         <div className="space-y-5">
           {hydrated.length === 0 && (
-            <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-slate-600">
-              No pending verification submissions.
-            </div>
+            <EmptyState
+              title="No pending verification submissions"
+              description="New NGO verification submissions will appear here."
+            />
           )}
           {hydrated.map((submission: any) => (
-            <article
-              key={submission.id}
-              className="rounded-xl border border-slate-200 bg-white p-6"
-            >
+            <article key={submission.id} className="panel p-5 sm:p-6">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
                   <h2 className="text-xl font-bold text-slate-950">

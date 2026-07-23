@@ -187,3 +187,22 @@ test("supporter and volunteer operational journeys use responsive shells and rec
   assert.match(volunteerProfile, /aria-pressed/);
   assert.match(volunteerProfile, /Toast/);
 });
+
+test("admin review queues share the responsive operational shell", () => {
+  for (const path of [
+    "app/admin/ai-flags/page.tsx",
+    "app/admin/analytics/page.tsx",
+    "app/admin/audit/page.tsx",
+    "app/admin/csr-settlements/page.tsx",
+    "app/admin/fundraisers/page.tsx",
+    "app/admin/moderation/page.tsx",
+    "app/admin/ngo-verifications/page.tsx",
+    "app/admin/operations/page.tsx",
+    "app/admin/payouts/page.tsx",
+    "app/admin/refunds/page.tsx",
+  ]) {
+    const page = source(path);
+    assert.match(page, /PageHeader/);
+    assert.match(page, /page-frame/);
+  }
+});

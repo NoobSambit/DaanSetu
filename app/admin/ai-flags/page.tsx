@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { PageHeader } from "@/components/ui/PagePrimitives";
 
 export const dynamic = "force-dynamic";
 
@@ -85,17 +86,13 @@ export default async function AIFlagsPage() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            AI Quality Flags
-          </h1>
-          <p className="text-gray-600">
-            Review content flagged by the AI system for potential quality issues
-          </p>
-        </div>
+    <main className="page-frame">
+      <div className="page-content">
+        <PageHeader
+          eyebrow="Admin workspace"
+          title="AI quality flags"
+          description="Review content flagged by the AI system for potential quality issues."
+        />
 
         {/* Stats */}
         <div className="grid md:grid-cols-3 gap-6 mb-8">
@@ -277,6 +274,6 @@ export default async function AIFlagsPage() {
           )}
         </div>
       </div>
-    </div>
+    </main>
   );
 }

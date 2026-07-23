@@ -1,5 +1,6 @@
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { EmptyState, PageHeader } from "@/components/ui/PagePrimitives";
 
 export default async function AuditLogPage() {
   await requireAdmin("/admin/audit");
@@ -10,12 +11,14 @@ export default async function AuditLogPage() {
     .limit(100);
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-12">
-      <section className="mx-auto max-w-5xl">
-        <h1 className="text-3xl font-bold text-[#10214e]">
-          Security audit log
-        </h1>
-        <div className="mt-8 overflow-hidden rounded-xl border border-slate-200 bg-white">
+    <main className="page-frame">
+      <section className="page-content max-w-5xl">
+        <PageHeader
+          eyebrow="Admin workspace"
+          title="Security audit log"
+          description="The most recent platform actions recorded for traceability and review."
+        />
+        <div className="panel overflow-hidden">
           {entries?.length ? (
             <ul className="divide-y divide-slate-200">
               {entries.map((entry) => (
@@ -28,9 +31,11 @@ export default async function AuditLogPage() {
               ))}
             </ul>
           ) : (
-            <p className="p-8 text-center text-slate-600">
-              No audit entries have been recorded.
-            </p>
+            <EmptyState
+              className="border-0"
+              title="No audit entries yet"
+              description="Recorded platform actions will appear here."
+            />
           )}
         </div>
       </section>

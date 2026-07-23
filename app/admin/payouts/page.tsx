@@ -1,6 +1,7 @@
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { executePayoutAction, reviewPayoutAccountAction } from "./actions";
+import { EmptyState, PageHeader } from "@/components/ui/PagePrimitives";
 
 export default async function PayoutActivationPage() {
   await requireAdmin("/admin/payouts");
@@ -36,22 +37,17 @@ export default async function PayoutActivationPage() {
   );
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-12">
-      <section className="mx-auto max-w-5xl">
-        <h1 className="text-3xl font-bold text-[#10214e]">
-          Payout account oversight
-        </h1>
-        <p className="mt-2 text-sm text-slate-600">
-          Campaign collection remains disabled until its PayPal recipient is
-          active.
-        </p>
+    <main className="page-frame">
+      <section className="page-content max-w-5xl">
+        <PageHeader
+          eyebrow="Admin workspace"
+          title="Payout account oversight"
+          description="Campaign collection remains disabled until its PayPal recipient is active."
+        />
         <div className="mt-8 space-y-3">
           {accounts?.length ? (
             accounts.map((account) => (
-              <article
-                key={account.id}
-                className="rounded-xl border border-slate-200 bg-white p-5"
-              >
+              <article key={account.id} className="panel p-5">
                 <p className="font-semibold text-slate-900">
                   {account.provider} · {account.status}
                 </p>
@@ -106,9 +102,10 @@ export default async function PayoutActivationPage() {
               </article>
             ))
           ) : (
-            <p className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center text-slate-600">
-              No payout accounts have been submitted.
-            </p>
+            <EmptyState
+              title="No payout accounts submitted"
+              description="Pending payout account details will appear here for review."
+            />
           )}
         </div>
 
@@ -120,7 +117,7 @@ export default async function PayoutActivationPage() {
             payableDonations.map((donation) => (
               <article
                 key={donation.id}
-                className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-5 sm:flex-row sm:items-center sm:justify-between"
+                className="panel flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div>
                   <p className="font-semibold text-slate-900">
@@ -141,9 +138,10 @@ export default async function PayoutActivationPage() {
               </article>
             ))
           ) : (
-            <p className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center text-slate-600">
-              No captured donations are waiting for payout.
-            </p>
+            <EmptyState
+              title="No captured donations await payout"
+              description="Eligible captured donations will appear here when they are ready to send."
+            />
           )}
         </div>
 
@@ -153,10 +151,7 @@ export default async function PayoutActivationPage() {
         <div className="mt-5 space-y-3">
           {transfers?.length ? (
             transfers.map((transfer) => (
-              <article
-                key={transfer.id}
-                className="rounded-xl border border-slate-200 bg-white p-5"
-              >
+              <article key={transfer.id} className="panel p-5">
                 <p className="font-semibold text-slate-900">
                   ₹{(transfer.amount_paise / 100).toLocaleString("en-IN")} ·{" "}
                   {transfer.status}
@@ -169,9 +164,10 @@ export default async function PayoutActivationPage() {
               </article>
             ))
           ) : (
-            <p className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center text-slate-600">
-              No payout transfers have been initiated.
-            </p>
+            <EmptyState
+              title="No payout transfers yet"
+              description="Sent and reconciled payout transfers will appear here."
+            />
           )}
         </div>
       </section>

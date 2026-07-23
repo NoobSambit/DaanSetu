@@ -4,6 +4,7 @@ import Link from "next/link";
 import { getAdminAnalytics } from "@/lib/services/analytics";
 import AnalyticsCharts from "./AnalyticsCharts";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { PageHeader } from "@/components/ui/PagePrimitives";
 
 export const dynamic = "force-dynamic";
 
@@ -35,17 +36,13 @@ export default async function AdminAnalyticsPage() {
   const analytics = await getAdminAnalytics(createAdminClient());
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            Admin Analytics Dashboard
-          </h1>
-          <p className="text-gray-600">
-            System-wide insights and performance metrics
-          </p>
-        </div>
+    <main className="page-frame">
+      <div className="page-content">
+        <PageHeader
+          eyebrow="Admin workspace"
+          title="Analytics dashboard"
+          description="System-wide insights and performance metrics for platform operations."
+        />
 
         {/* AI Flags Summary */}
         <div className="grid md:grid-cols-3 gap-6 mb-8">
@@ -241,6 +238,6 @@ export default async function AdminAnalyticsPage() {
           )}
         </div>
       </div>
-    </div>
+    </main>
   );
 }
