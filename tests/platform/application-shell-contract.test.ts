@@ -206,3 +206,23 @@ test("admin review queues share the responsive operational shell", () => {
     assert.match(page, /page-frame/);
   }
 });
+
+test("community, profile, and payment-result surfaces retain accessible shared shells", () => {
+  for (const path of [
+    "app/community/[id]/page.tsx",
+    "app/community/create/page.tsx",
+    "app/profile/[userId]/page.tsx",
+  ]) {
+    const page = source(path);
+    assert.match(page, /PageHeader/);
+    assert.match(page, /page-frame/);
+  }
+
+  const profile = source("app/profile/[userId]/page.tsx");
+  assert.match(profile, /MetricCard/);
+  assert.match(profile, /`\/community\/\$\{post\.id\}`/);
+
+  const donationReturn = source("app/donation/paypal-return/page.tsx");
+  assert.match(donationReturn, /page-frame/);
+  assert.match(donationReturn, /aria-live/);
+});

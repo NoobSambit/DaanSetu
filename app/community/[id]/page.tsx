@@ -7,6 +7,7 @@ import {
   togglePostLikeFormAction,
 } from "@/app/community/actions";
 import { createClient } from "@/lib/supabase/server";
+import { PageHeader } from "@/components/ui/PagePrimitives";
 
 export default async function CommunityPostPage({
   params,
@@ -61,9 +62,13 @@ export default async function CommunityPostPage({
   }>;
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-12">
-      <article className="mx-auto max-w-3xl rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-        <h1 className="text-3xl font-bold text-[#10214e]">{post.title}</h1>
+    <main className="page-frame">
+      <article className="page-content panel max-w-3xl p-5 sm:p-8">
+        <PageHeader
+          eyebrow="Community"
+          title={post.title}
+          description="Join the conversation with respectful, useful contributions."
+        />
         <p className="mt-6 whitespace-pre-wrap text-slate-700">
           {post.content}
         </p>
@@ -106,7 +111,7 @@ export default async function CommunityPostPage({
             >
               <input name="postId" type="hidden" value={post.id} />
               <input
-                className="flex-1 rounded-lg border border-slate-300 px-3 py-2"
+                className="input flex-1"
                 maxLength={2_000}
                 name="content"
                 placeholder="Add a respectful comment"
@@ -142,11 +147,7 @@ export default async function CommunityPostPage({
               className="mt-4 space-y-3 rounded-xl border border-red-200 bg-red-50 p-4"
             >
               <input name="postId" type="hidden" value={post.id} />
-              <select
-                className="w-full rounded-lg border border-red-200 bg-white px-3 py-2"
-                name="reason"
-                required
-              >
+              <select className="input" name="reason" required>
                 <option value="spam">Spam</option>
                 <option value="inappropriate">Inappropriate content</option>
                 <option value="fraud">Fraud or misleading claim</option>
@@ -154,7 +155,7 @@ export default async function CommunityPostPage({
                 <option value="other">Other</option>
               </select>
               <textarea
-                className="min-h-24 w-full rounded-lg border border-red-200 bg-white px-3 py-2"
+                className="input min-h-24 resize-y"
                 maxLength={1_000}
                 minLength={10}
                 name="description"

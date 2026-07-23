@@ -6,6 +6,7 @@ import { getPostsFiltered } from "@/lib/services/posts";
 import Image from "next/image";
 import Link from "next/link";
 import FollowButton from "./components/FollowButton";
+import { MetricCard, PageHeader } from "@/components/ui/PagePrimitives";
 
 export const dynamic = "force-dynamic";
 
@@ -56,11 +57,32 @@ export default async function UserProfilePage({ params }: Props) {
   const isOwnProfile = currentUser.id === userId;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+    <main className="page-frame">
+      <div className="page-content max-w-5xl">
+        <PageHeader
+          eyebrow="Community member"
+          title={userData.name}
+          description={
+            profile?.bio ||
+            "See this member’s giving, volunteering, and community activity."
+          }
+          actions={
+            isOwnProfile ? (
+              <Link href="/dashboard/profile/edit" className="btn btn-primary">
+                Edit profile
+              </Link>
+            ) : (
+              <FollowButton
+                currentUserId={currentUser.id}
+                targetUserId={userId}
+                targetType="user"
+              />
+            )
+          }
+        />
         {/* Profile Header */}
-        <div className="bg-white rounded-lg shadow-sm p-8 mb-6">
-          <div className="flex items-start gap-6">
+        <section className="panel mb-6 p-5 sm:p-8">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-6">
             {/* Avatar */}
             <div className="flex-shrink-0">
               {profile?.avatar_url ? (
@@ -80,26 +102,6 @@ export default async function UserProfilePage({ params }: Props) {
 
             {/* Profile Info */}
             <div className="flex-1">
-              <div className="flex items-center justify-between mb-2">
-                <h1 className="text-3xl font-bold text-gray-900">
-                  {userData.name}
-                </h1>
-                {isOwnProfile ? (
-                  <Link
-                    href="/dashboard/profile/edit"
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    Edit Profile
-                  </Link>
-                ) : (
-                  <FollowButton
-                    currentUserId={currentUser.id}
-                    targetUserId={userId}
-                    targetType="user"
-                  />
-                )}
-              </div>
-
               <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
                 <span className="capitalize bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
                   {userData.role}
@@ -169,46 +171,25 @@ export default async function UserProfilePage({ params }: Props) {
               )}
             </div>
           </div>
-        </div>
+        </section>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-lg shadow-sm p-4">
-            <div className="text-2xl mb-1">💝</div>
-            <div className="text-2xl font-bold text-gray-900">
-              ₹{stats.total_donations.toLocaleString("en-IN")}
-            </div>
-            <div className="text-sm text-gray-600">Donated</div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm p-4">
-            <div className="text-2xl mb-1">🙋</div>
-            <div className="text-2xl font-bold text-gray-900">
-              {stats.volunteer_applications}
-            </div>
-            <div className="text-sm text-gray-600">Volunteer Apps</div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm p-4">
-            <div className="text-2xl mb-1">📝</div>
-            <div className="text-2xl font-bold text-gray-900">
-              {stats.posts_created}
-            </div>
-            <div className="text-sm text-gray-600">Posts</div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm p-4">
-            <div className="text-2xl mb-1">🏆</div>
-            <div className="text-2xl font-bold text-gray-900">
-              {stats.badges_earned}
-            </div>
-            <div className="text-sm text-gray-600">Badges</div>
-          </div>
+        <div className="metric-grid mb-6 sm:grid-cols-2 xl:grid-cols-4">
+          <MetricCard
+            label="Donated"
+            value={`₹${stats.total_donations.toLocaleString("en-IN")}`}
+          />
+          <MetricCard
+            label="Volunteer applications"
+            value={stats.volunteer_applications}
+          />
+          <MetricCard label="Posts" value={stats.posts_created} />
+          <MetricCard label="Badges" value={stats.badges_earned} />
         </div>
 
         {/* Badges */}
         {badges.length > 0 && (
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+          <section className="panel mb-6 p-5 sm:p-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4">
               Badges & Achievements
             </h2>
@@ -240,12 +221,12 @@ export default async function UserProfilePage({ params }: Props) {
                 </div>
               ))}
             </div>
-          </div>
+          </section>
         )}
 
         {/* Recent Posts */}
         {filteredPosts.length > 0 && (
-          <div className="bg-white rounded-lg shadow-sm p-6">
+          <section className="panel p-5 sm:p-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4">
               Recent Posts
             </h2>
@@ -253,8 +234,8 @@ export default async function UserProfilePage({ params }: Props) {
               {filteredPosts.map((post) => (
                 <Link
                   key={post.id}
-                  href={`/community/posts/${post.id}`}
-                  className="block p-4 border border-gray-200 rounded-lg hover:border-blue-500 transition-colors"
+                  href={`/community/${post.id}`}
+                  className="block rounded-lg border border-slate-200 p-4 transition-colors hover:border-blue-500"
                 >
                   <h3 className="font-semibold text-gray-900 mb-2">
                     {post.title}
@@ -269,9 +250,9 @@ export default async function UserProfilePage({ params }: Props) {
                 </Link>
               ))}
             </div>
-          </div>
+          </section>
         )}
       </div>
-    </div>
+    </main>
   );
 }

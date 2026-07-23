@@ -54,7 +54,10 @@ function PayPalReturnContent() {
   }[state];
 
   return (
-    <section className="mx-auto max-w-xl rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+    <section
+      className="panel mx-auto max-w-xl p-6 text-center sm:p-8"
+      aria-live="polite"
+    >
       <h1 className="text-3xl font-bold text-[#10214e]">{copy[0]}</h1>
       <p className="mt-4 text-slate-600">{copy[1]}</p>
       {state !== "capturing" && (
@@ -68,7 +71,7 @@ function PayPalReturnContent() {
 
 export default function PayPalDonationReturnPage() {
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-16">
+    <main className="page-frame flex items-center justify-center">
       <Suspense
         fallback={
           <p className="mx-auto max-w-xl text-center text-slate-600">
