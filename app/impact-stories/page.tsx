@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { Sparkles } from "lucide-react";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { EmptyState, PageHeader } from "@/components/ui/PagePrimitives";
 
 export const dynamic = "force-dynamic";
 
@@ -87,19 +89,13 @@ export default async function ImpactStoriesPage() {
   const otherStories = stories.filter((story) => !story.featured_at);
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-12">
-      <div className="mx-auto max-w-7xl">
-        <header className="mx-auto max-w-3xl text-center">
-          <p className="text-sm font-bold uppercase tracking-widest text-emerald-700">
-            Verified community impact
-          </p>
-          <h1 className="mt-3 text-4xl font-bold text-[#10214e]">
-            Impact stories
-          </h1>
-          <p className="mt-4 text-lg text-slate-600">
-            Approved stories published by supporters, NGOs, and CSR teams.
-          </p>
-        </header>
+    <main className="page-frame">
+      <div className="page-content">
+        <PageHeader
+          eyebrow="Verified community impact"
+          title="Impact stories"
+          description="Approved stories published by supporters, NGOs, and CSR teams."
+        />
 
         {error ? (
           <p
@@ -109,14 +105,12 @@ export default async function ImpactStoriesPage() {
             Impact stories could not be loaded. Please try again shortly.
           </p>
         ) : stories.length === 0 ? (
-          <div className="mx-auto mt-10 max-w-2xl rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center">
-            <h2 className="text-xl font-bold text-slate-900">
-              No approved impact stories yet
-            </h2>
-            <p className="mt-2 text-slate-600">
-              Published community posts appear here only after impact review.
-            </p>
-          </div>
+          <EmptyState
+            className="mx-auto mt-10 max-w-2xl"
+            title="No approved impact stories yet"
+            description="Published community posts appear here only after impact review."
+            icon={<Sparkles className="h-5 w-5" />}
+          />
         ) : (
           <>
             {featuredStories.length > 0 && (

@@ -5,6 +5,7 @@ import {
   getTopCorporates,
 } from "@/lib/services/leaderboard";
 import LeaderboardSection from "./components/LeaderboardSection";
+import { PageHeader } from "@/components/ui/PagePrimitives";
 
 export const dynamic = "force-dynamic";
 
@@ -18,17 +19,13 @@ export default async function LeaderboardPage() {
   ]);
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Community Leaderboard
-          </h1>
-          <p className="text-gray-600">
-            Celebrating our top contributors and impact makers
-          </p>
-        </div>
+    <main className="page-frame">
+      <div className="page-content">
+        <PageHeader
+          eyebrow="Community recognition"
+          title="Community leaderboard"
+          description="Celebrating top contributors and impact makers from real donation, volunteering, NGO, and CSR activity."
+        />
 
         {/* Leaderboards Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -89,6 +86,6 @@ export default async function LeaderboardPage() {
           />
         </div>
       </div>
-    </div>
+    </main>
   );
 }

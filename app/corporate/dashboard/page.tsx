@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { MetricCard, PageHeader } from "@/components/ui/PagePrimitives";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -76,41 +77,32 @@ export default async function CorporateDashboardPage() {
   ] as const;
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-12">
-      <section className="mx-auto max-w-7xl">
-        <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-wider text-blue-600">
-              Corporate CSR dashboard
-            </p>
-            <h1 className="mt-2 text-3xl font-bold text-[#10214e]">
-              {corporate.company_name}
-            </h1>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <Link className="btn btn-secondary" href="/corporate/employees">
-              Employees
-            </Link>
-            <Link className="btn btn-primary" href="/corporate/settlements">
-              Matching & settlements
-            </Link>
-          </div>
-        </div>
+    <main className="page-frame">
+      <section className="page-content">
+        <PageHeader
+          eyebrow="Corporate CSR dashboard"
+          title={corporate.company_name}
+          description="Review matched giving, employee participation, and partnership reach from captured corporate activity."
+          actions={
+            <>
+              <Link className="btn btn-secondary" href="/corporate/employees">
+                Employees
+              </Link>
+              <Link className="btn btn-primary" href="/corporate/settlements">
+                Matching & settlements
+              </Link>
+            </>
+          }
+        />
 
-        <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="metric-grid">
           {stats.map(([label, value]) => (
-            <article
-              className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
-              key={label}
-            >
-              <p className="text-sm font-medium text-slate-600">{label}</p>
-              <p className="mt-2 text-2xl font-bold text-[#10214e]">{value}</p>
-            </article>
+            <MetricCard key={label} label={label} value={value} />
           ))}
         </div>
 
         <div className="mt-8 grid gap-6 lg:grid-cols-2">
-          <section className="rounded-2xl border border-slate-200 bg-white p-6">
+          <section className="panel p-5 sm:p-6">
             <div className="flex items-center justify-between gap-3">
               <h2 className="text-xl font-bold text-slate-900">
                 Matching initiatives
@@ -145,7 +137,7 @@ export default async function CorporateDashboardPage() {
             </div>
           </section>
 
-          <section className="rounded-2xl border border-slate-200 bg-white p-6">
+          <section className="panel p-5 sm:p-6">
             <h2 className="text-xl font-bold text-slate-900">
               Recent allocated matches
             </h2>

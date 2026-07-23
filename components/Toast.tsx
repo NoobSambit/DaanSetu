@@ -88,7 +88,11 @@ export default function Toast({
   }[type];
 
   return (
-    <div className="fixed top-4 right-4 z-50 animate-slide-in">
+    <div
+      className="fixed right-4 top-4 z-50 animate-slide-in"
+      role={type === "error" ? "alert" : "status"}
+      aria-live={type === "error" ? "assertive" : "polite"}
+    >
       <div
         className={`${bgColor} border rounded-xl shadow-lg p-4 max-w-md flex items-start gap-3 backdrop-blur-sm`}
       >

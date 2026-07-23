@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { Compass, UserRoundPlus } from "lucide-react";
 
 import { submitVolunteerApplicationFormAction } from "@/app/volunteer/actions";
+import { EmptyState, PageHeader } from "@/components/ui/PagePrimitives";
 import { scoreVolunteerOpportunity } from "@/lib/domain/volunteer-matching";
 import { createClient } from "@/lib/supabase/server";
 
@@ -136,29 +138,24 @@ export default async function VolunteerOpportunitiesPage({
   const cities = [...new Set((cityRows ?? []).map((row) => row.city))].sort();
 
   return (
-    <main className="min-h-screen bg-slate-50 py-12">
-      <section className="mx-auto max-w-7xl px-4">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="text-sm font-bold uppercase tracking-wider text-blue-700">
-              Skill-based volunteering
-            </p>
-            <h1 className="mt-2 text-4xl font-bold text-slate-950">
-              Volunteer opportunities
-            </h1>
-            <p className="mt-2 text-slate-600">
-              Search real, active opportunities published by NGOs.
-            </p>
-          </div>
-          <div className="flex gap-3">
-            <Link href="/volunteer/profile" className="btn btn-secondary">
-              Volunteer profile
-            </Link>
-            <Link href="/volunteer/dashboard" className="btn btn-primary">
-              My participation
-            </Link>
-          </div>
-        </div>
+    <main className="page-frame">
+      <section className="page-content">
+        <PageHeader
+          eyebrow="Skill-based volunteering"
+          title="Volunteer opportunities"
+          description="Search real, active opportunities published by NGOs and find where your skills can help."
+          actions={
+            <>
+              <Link href="/volunteer/profile" className="btn btn-secondary">
+                <UserRoundPlus className="h-4 w-4" aria-hidden="true" />
+                Volunteer profile
+              </Link>
+              <Link href="/volunteer/dashboard" className="btn btn-primary">
+                My participation
+              </Link>
+            </>
+          }
+        />
 
         <form
           action="/volunteer/opportunities"
@@ -229,14 +226,20 @@ export default async function VolunteerOpportunitiesPage({
             Opportunity discovery is temporarily unavailable. Please retry.
           </div>
         ) : opportunities.length === 0 ? (
-          <div className="mt-8 rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center">
-            <h2 className="text-xl font-bold text-slate-900">
-              No matching opportunities
-            </h2>
-            <p className="mt-2 text-slate-600">
-              Clear a filter or check again later.
-            </p>
-          </div>
+          <EmptyState
+            className="mt-8"
+            title="No matching opportunities"
+            description="Clear a filter or check again later as NGOs publish more opportunities."
+            action={
+              <Link
+                href="/volunteer/opportunities"
+                className="btn btn-secondary"
+              >
+                Reset filters
+              </Link>
+            }
+            icon={<Compass className="h-5 w-5" />}
+          />
         ) : (
           <>
             <p className="mt-8 text-sm text-slate-600">

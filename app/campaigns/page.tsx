@@ -1,7 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
+import { CirclePlus, HeartHandshake } from "lucide-react";
 
 import AICampaignSuggestions from "@/app/campaigns/components/AICampaignSuggestions";
+import { EmptyState, PageHeader } from "@/components/ui/PagePrimitives";
 import { discoverCampaigns } from "@/lib/discovery/campaigns";
 import { parseCampaignDiscoveryParams } from "@/lib/discovery/filters";
 
@@ -56,17 +58,19 @@ export default async function CampaignsPage({
   const result = await discoverCampaigns(filters);
 
   return (
-    <main className="min-h-[calc(100vh-4rem)] bg-slate-50">
-      <div className="mx-auto max-w-7xl px-4 py-8">
-        <header className="mb-8">
-          <h1 className="mb-2 text-4xl font-bold text-slate-950">
-            Active Campaigns
-          </h1>
-          <p className="text-slate-600">
-            Only approved, active fundraisers with enabled collection appear
-            here.
-          </p>
-        </header>
+    <main className="page-frame">
+      <div className="page-content">
+        <PageHeader
+          eyebrow="Fundraising with safeguards"
+          title="Active campaigns"
+          description="Only approved fundraisers with enabled collection appear here, so every amount shown is tied to a real campaign."
+          actions={
+            <Link href="/campaigns/create" className="btn btn-primary">
+              <CirclePlus className="h-4 w-4" aria-hidden="true" />
+              Start a fundraiser
+            </Link>
+          }
+        />
 
         <AICampaignSuggestions />
 
@@ -137,14 +141,16 @@ export default async function CampaignsPage({
             </p>
           </div>
         ) : result.campaigns.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-300 bg-white p-12 text-center">
-            <h2 className="text-xl font-semibold text-slate-900">
-              No active campaigns match these filters
-            </h2>
-            <p className="mt-2 text-slate-600">
-              Try another category or clear the search query.
-            </p>
-          </div>
+          <EmptyState
+            title="No active campaigns match these filters"
+            description="Try another category or clear the search query to see approved fundraisers."
+            action={
+              <Link href="/campaigns" className="btn btn-secondary">
+                Clear filters
+              </Link>
+            }
+            icon={<HeartHandshake className="h-5 w-5" />}
+          />
         ) : (
           <>
             <p className="mb-4 text-sm text-slate-600">

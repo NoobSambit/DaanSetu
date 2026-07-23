@@ -11,6 +11,9 @@ const config: Config = {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
+        surface: "var(--surface)",
+        canvas: "var(--background)",
+        muted: "var(--foreground-tertiary)",
         primary: {
           DEFAULT: "#2563eb",
           50: "#eff6ff",

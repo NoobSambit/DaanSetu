@@ -80,19 +80,16 @@ export async function getPartnershipRequestsForCampaign(
   return data as unknown as PartnershipRequestWithDetails[];
 }
 
-export async function hasAppliedForPartnership(
-  corporateCampaignId: string,
+export async function getAppliedCorporateCampaignIdsForNgo(
   ngoId: string,
   supabaseClient?: SupabaseClient,
-): Promise<boolean> {
+): Promise<string[]> {
   const supabase = supabaseClient ?? getBrowserClient();
   const { data, error } = await supabase
     .from("partnership_requests")
-    .select("id")
-    .eq("corporate_campaign_id", corporateCampaignId)
-    .eq("ngo_id", ngoId)
-    .maybeSingle();
+    .select("corporate_campaign_id")
+    .eq("ngo_id", ngoId);
 
   if (error) throw new Error("Partnership status could not be loaded");
-  return Boolean(data);
+  return (data ?? []).map((request) => request.corporate_campaign_id);
 }

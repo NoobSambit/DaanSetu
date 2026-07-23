@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { MapPinned } from "lucide-react";
 
 import SearchFilters from "@/components/SearchFilters";
 import NgoExplorer from "@/components/discovery/NgoExplorer";
+import { EmptyState, PageHeader } from "@/components/ui/PagePrimitives";
 import { parseNgoDiscoveryParams } from "@/lib/discovery/filters";
 import { discoverNgos } from "@/lib/discovery/ngos";
 
@@ -29,16 +31,19 @@ export default async function NGOsPage({
   const result = await discoverNgos(filters);
 
   return (
-    <main className="min-h-[calc(100vh-4rem)] bg-slate-50">
-      <div className="mx-auto max-w-7xl px-4 py-8">
-        <header className="mb-8">
-          <h1 className="mb-2 text-4xl font-bold text-slate-950">
-            Discover NGOs
-          </h1>
-          <p className="text-slate-600">
-            Search published organizations using verified platform records.
-          </p>
-        </header>
+    <main className="page-frame">
+      <div className="page-content">
+        <PageHeader
+          eyebrow="Verified discovery"
+          title="Discover NGOs"
+          description="Search published organizations using verified platform records, location, and cause-specific filters."
+          actions={
+            <Link href="/map" className="btn btn-secondary">
+              <MapPinned className="h-4 w-4" aria-hidden="true" />
+              Browse the map
+            </Link>
+          }
+        />
 
         <SearchFilters filters={filters} />
 
@@ -92,17 +97,16 @@ export default async function NGOsPage({
               )}
             </>
           ) : (
-            <div className="rounded-xl border border-dashed border-slate-300 bg-white p-12 text-center">
-              <h2 className="text-xl font-semibold text-slate-900">
-                No NGOs match these filters
-              </h2>
-              <p className="mt-2 text-slate-600">
-                Clear one or more filters or broaden the distance range.
-              </p>
-              <Link href="/ngos" className="btn btn-secondary mt-5">
-                Reset filters
-              </Link>
-            </div>
+            <EmptyState
+              title="No NGOs match these filters"
+              description="Clear one or more filters or broaden the distance range to see more published organizations."
+              action={
+                <Link href="/ngos" className="btn btn-secondary">
+                  Reset filters
+                </Link>
+              }
+              icon={<MapPinned className="h-5 w-5" />}
+            />
           )}
         </section>
       </div>

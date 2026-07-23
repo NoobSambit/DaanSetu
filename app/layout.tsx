@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import "@fontsource-variable/inter";
 import "@fontsource-variable/playfair-display";
 import "./globals.css";
+import AppChrome from "@/components/AppChrome";
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
 
 export const metadata: Metadata = {
   title: "DaanSetu — A Bridge for Giving | NGO Discovery & Impact Platform",
@@ -25,9 +27,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="scroll-smooth">
-      <body className="min-h-screen bg-white font-sans text-slate-900 antialiased">
-        {children}
+    <html
+      lang="en"
+      className="scroll-smooth"
+      data-theme="light"
+      suppressHydrationWarning
+    >
+      <body className="min-h-screen font-sans antialiased">
+        <ThemeProvider>
+          <AppChrome>{children}</AppChrome>
+        </ThemeProvider>
       </body>
     </html>
   );

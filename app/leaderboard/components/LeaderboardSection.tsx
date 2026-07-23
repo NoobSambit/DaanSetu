@@ -28,9 +28,9 @@ export default function LeaderboardSection({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+    <section className="panel overflow-hidden">
       {/* Section Header */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-gray-200">
+      <div className="border-b bg-slate-50 px-5 py-4 sm:px-6">
         <div className="flex items-center space-x-3">
           <span className="text-3xl">{icon}</span>
           <div>
@@ -41,18 +41,18 @@ export default function LeaderboardSection({
       </div>
 
       {/* Entries List */}
-      <div className="divide-y divide-gray-200">
+      <div className="divide-y divide-slate-200">
         {entries.length === 0 ? (
           <div className="px-6 py-12 text-center">
             <p className="text-gray-500">{emptyMessage}</p>
           </div>
         ) : (
           entries.map((entry) => (
-            <div
+            <article
               key={entry.rank}
-              className={`px-6 py-4 flex items-center space-x-4 ${
-                entry.rank <= 3 ? "bg-yellow-50" : "hover:bg-gray-50"
-              } transition`}
+              className={`flex items-center space-x-4 px-5 py-4 transition sm:px-6 ${
+                entry.rank <= 3 ? "bg-amber-50" : "hover:bg-slate-50"
+              }`}
             >
               {/* Rank/Medal */}
               <div className="flex-shrink-0 w-12 text-center">
@@ -81,10 +81,10 @@ export default function LeaderboardSection({
                   </span>
                 </div>
               )}
-            </div>
+            </article>
           ))
         )}
       </div>
-    </div>
+    </section>
   );
 }
